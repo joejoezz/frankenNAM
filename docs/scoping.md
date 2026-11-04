@@ -194,3 +194,24 @@ Phase 0 is done and under budget: see `docs/phase0-case-2026110100.md` (comparis
   and all three 24 h precip windows; GFS slightly closer for MSLP/Z500 at f84. One case only.
 - Phase 0 spend ≈ $10.6 compute; S3 holds ~295 GB (~$7/month), 203 GB of it 3-hourly history
   files that can be deleted once the comparison is accepted.
+
+## Decisions after Phase 0 (4 Nov 2026): name, delivery clock, cycle design
+
+- **Name: FrankenNAM.** A GFS head on a NAM body; the name says so. Public wording always carries
+  "a community recast of the retired NAM" so nobody reads it as NOAA's. frankennam.com/.org looked
+  unregistered on 4 Nov 2026 (whois).
+- **Delivery target: match the old NAM clock** (ops awphys84 landed at cycle + 2 h 42 min). Joe:
+  "hitting fast delivery times is going to be a key component of this being a success."
+- **Cycle design: tm06 spin-up.** The 12Z run starts at 06Z from the 06Z GFS analysis (on AWS by
+  ~09:45Z), integrates 6 h of NAM physics to 12Z, and 12Z is f00 of the product; boundaries from
+  the 06Z GFS f006-f090. Same for 00Z from the 18Z GFS. 90 h of integration on a 32-core node
+  (4 h 45 min at the Phase 0 rate) puts f84 at ~cycle + 2 h 45 min with no quota increase.
+  Boundary files are produced while the model runs (as ops did) so launch waits only for the
+  analysis and the first boco. Noah soil cycles from the previous FrankenNAM run.
+- **Honesty line under every product:** "Initialized from the 06Z GFS analysis with a 6 h NAM
+  spin-up. No observations after 06Z." By convention it is a 12Z run (f00 valid 12Z, same tm06
+  structure as ops); in information content it lags the 12Z GFS by ~6 h because there is no DA.
+- **Phase 1 hindcast arms:** archived NAM (reference), FrankenNAM tm06 spin-up (product), and a
+  same-cycle GFS-analysis start (reference) so the information-lag cost at short leads is
+  measured, not guessed. ~$4 per case per arm.
+- Quota raise (32 vCPU) is optional now: wanted for margin, not required for the clock.
