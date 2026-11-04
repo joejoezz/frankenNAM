@@ -39,10 +39,12 @@ format, same Vtable). `seed_prep` in `recast.sh` extracts those records with wgr
 instantaneous WEASD: the file also carries an accumulated-snowfall WEASD record of the same
 discipline/parameter/level, which ungrib would otherwise take) and **blanks TMP:surface over
 water** (`-rpn rcl_1:mask` with the LAND field) so that the skin temperature is seeded over land
-only and the GFS SST survives everywhere. ungrib expands the bitmap with zeros, and a
-`from_input=SEED` METGRID.TBL entry for SKINTEMP (`run/parm/METGRID.TBL.seed`, appended to
-`nam_METGRID.TBL.NMM_gfsgrib2`) declares `missing_value=0.` so those points are missing for the
-interpolator.
+only and the GFS SST survives everywhere. wgrib2 writes those undefined points through
+the complex-packing missing-value management (not a bitmap), so g2/ungrib expand them as
+9.999e20, and a `from_input=SEED` METGRID.TBL entry for SKINTEMP (`run/parm/METGRID.TBL.seed`,
+appended to `nam_METGRID.TBL.NMM_gfsgrib2`) declares `missing_value=9.999e+20` (the value the
+NAM's own soil entries use) so those points are missing for the interpolator and the GFS value
+underneath survives.
 
 ### metgrid precedence finding (NPS `metgrid/src/process_domain_module.F90`)
 `fg_name` sources are processed in list order. For every field of a later source, metgrid
@@ -194,6 +196,11 @@ components, 24 h precipitation; the soil trace table)
   remote shell's command line); anchored patterns.
 - The build box root volume (gp3 default 125 MB/s) throttled 16 parallel ungribs to ~9.5 min;
   raised to 500 MB/s / 6000 IOPS ($0.02/h).
+- The first 9 h test aborted (SIGABRT) 2 min into the init: nemsinterp had printed
+  `min,max for TSK 233.9 9.999E+20`. The blanked water points of the seed's skin temperature had
+  come through as 9.999e20 (complex-packing missing values, not a bitmap with zeros as I had
+  assumed), and a `missing_value=0.` table entry did not catch them. Fixed with
+  `missing_value=9.999e+20`; the IC extremes are now checked and printed by `recast.sh nemsinterp`.
 - wgrib2 `-match` with alternations needs care: `:APCP:surface:12-24` does not match
   `:APCP:surface:12-24 hour acc fcst:` with a trailing `:` in the pattern.
 

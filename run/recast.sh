@@ -20,6 +20,7 @@
 #        PRODUCTS=1 (tm06: grid-218 awphys files after each UPP file, run/products.sh)
 #        S3PROD=s3://nam-recast-617711905691/products (where products.sh uploads; empty = no upload)
 #        NPS_CLEAN=1 deletes each NPS stage's inputs once the next stage has consumed them (83 GB for 90 h)
+#        IC_ONLY=1 makes metgrid/nemsinterp do the initial condition only (re-seeding tests)
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 
@@ -192,6 +193,7 @@ stage_metgrid() {
     fi
     $(mpi_cmd $NPS_NP core) $EXEC/metgrid.exe > metgrid.out 2>&1
     ls met_nmb.d01.*.dio )
+  [ "${IC_ONLY:-0}" = 1 ] && return 0
   log "metgrid bocos (nam.METGRID.TBL.bocos, serial, 2 times per stream as ops)"
   mkdir -p metgrid_bc/out
   onem() {
@@ -207,7 +209,7 @@ stage_metgrid() {
   for s in $(seq 0 6 $FHMAX); do e=$((s + 3)); [ $e -gt $FHMAX ] && e=$FHMAX; echo "$s $e"; done \
     | xargs -P 16 -L1 bash -c 'cd $RUNDIR && onem $0 $1'
   ls metgrid_bc/out | wc -l
-  [ "${NPS_CLEAN:-0}" = 1 ] && rm -rf ungrib/f?? ungrib/out/FILE:*
+  [ "${NPS_CLEAN:-0}" = 1 ] && { rm -rf ungrib/f??; find ungrib/out -name "FILE:*" ! -name "FILE:$(wpsdate $START)" -delete; }   # keep the IC time for a re-run of the IC
   tl "metgrid done"
 }
 
@@ -218,7 +220,9 @@ stage_nemsinterp() {
     cp ../metgrid_ic/namelist.nps .
     ln -sf ../metgrid_ic/met_nmb.d01.*.dio .
     $(mpi_cmd $NPS_NP core) $EXEC/nemsinterp.exe > nemsinterp.out 2>&1
-    ls -l input_domain_01_nemsio )
+    ls -l input_domain_01_nemsio
+    grep -A0 "min,max for TSK\|min,max for SMC\|min,max for STC\|min,max for SNO" nemsinterp.out | head -12 )
+  [ "${IC_ONLY:-0}" = 1 ] && return 0
   log "nemsinterp bocos: 12 h streams of 5 met files (exnam_nemsinterp_boco1-7)"
   mkdir -p bocos
   onen() {
