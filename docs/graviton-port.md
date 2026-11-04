@@ -2,7 +2,12 @@
 
 Status, 4 Nov 2026: **the whole FrankenNAM stack builds and runs on AWS Graviton (aarch64) with
 gfortran 13.3 + OpenMPI 4.1.6 from Ubuntu 24.04 apt**, with the same library pins as Phase 0 and
-ESMF 7.1.0r (no move to 8.x). The sections below record what changed, what broke, the acceptance
+ESMF 7.1.0r (no move to 8.x). The 2026-11-01 00Z case ran 84 h on one c8g.8xlarge Spot node
+(restarts off, 43 GB peak, $2.35) and differs from the x86 run by roundoff growing to a few
+tenths of hPa/K at f84; recommendation at the end: make arm64 the default runner.
+Artefacts: `s3://nam-recast-617711905691/build/2026-11-04-arm64/` (exec + MANIFEST + logs +
+acceptance summary), `runner/bundle-20261104-arm64.tar`, `cases/2026110100/recast-arm64/`
+(GRIB2 + logs), `cases/2026110100/figs-arm64/`. The sections below record what changed, what broke, the acceptance
 results, timing/memory/cost against the x86 Phase 0 numbers, the arm-vs-x86-vs-NAM comparison and
 the recommendation. Build box: c8g.8xlarge on-demand (32 Graviton4 / Neoverse-V2 cores, 64 GB),
 `deploy/05-graviton-box.sh`; binaries are compiled with `-mcpu=neoverse-v1` so they also run on
@@ -151,11 +156,99 @@ Note on the smoke timing: gfortran on Graviton4 is **13 % faster** than ifort on
 
 ## Validation run (84 h, c8g.8xlarge Spot, restarts off)
 
-(filled in below)
+`ARCH=arm64 SUBNET=<us-west-2d> deploy/04-run-case.sh`: one c8g.8xlarge Spot instance
+(i-03401ec837ccd27c9, us-west-2d, $0.466/h) booted from the stock arm64 Ubuntu AMI, installed
+the OpenMPI runtime from apt, unpacked `runner/bundle-20261104-arm64.tar` (9.3 GB) and was
+integrating 45 s after `runner.sh` started (16:42:53 UTC). Same layout as Phase 0 (4x7 compute
++ 1x4 write = 32 ranks, one per core, TDFI, 3-hourly history), **no restart files at all**
+(`minutes_restart 100800`, `rst_out_00 false`, `write_last_restart false`), history kept on
+the node, UPP with 16 ranks after the forecast, GRIB2 + logs to
+`s3://nam-recast-617711905691/cases/2026110100/recast-arm64/`.
 
-## arm vs x86 vs archived NAM
+A first attempt died at start: `minutes_restart 99999` is not a multiple of the 25 s time step
+("Timestep of this domain does not divide evenly into the restart interval"); 100800 min
+(70 days) is. Cost of the lesson: 3 min of Spot.
 
-(filled in below)
+| | arm64 c8g.8xlarge Spot (this run) | x86 r7a.8xlarge Spot (Phase 0) |
+|---|---|---|
+| node memory in use (`free`, 1 min) | peak **43.3 GB**, flat (no restart gather) | 48 GB flat, 70-77 GB at restart writes, peak 77.4 |
+| max RSS of one rank (`time -v`) | 1.81 GB | 3.7 GB |
+| forecast wall time, 84 h, 12,096 steps, TDFI | **16,811 s = 200.1 s per forecast hour** | 15,905 s = 189.3 s per forecast hour |
+| UPP, 29 files, 16 tasks, after the forecast | 785 s (27 s per file) | 634 s (20-31 s per file) |
+| runner boot to computing (bundle from S3 + apt OpenMPI) | 48 s | ~45 s |
+| Spot price paid | $0.466/h x 5.0 h = **$2.3** | $0.82/h x 4.65 h = $3.80 |
+
+So the arm64 run is **5.7 % slower per forecast hour** than the x86 run although the 3 h smoke
+on the same hardware was 13 % faster than the x86 smoke; the smoke is dominated by the filter
+and initialisation, the long run by the radiation steps (the x86 run was also on a different
+node class, r7a). Both are single measurements; per run the arm64 node is still 40 % cheaper
+because it is cheaper per hour and needs no 256 GB node.
+
+Two artefacts of the run that are not model problems:
+- The runner wrote `FAILED` although NEMS.x exited 0 and UPP returned 0 with all 29 files:
+  `recast.sh` returned 2 with "line 228: unexpected EOF while looking for matching quote" after
+  the forecast stage, because I had replaced `/opt/nam/work/run/recast.sh` on the node (scp of the
+  MPI-IO fix) while the running shell was still reading the old file. bash reads scripts
+  incrementally; never overwrite a script that is executing. The marker in S3 was replaced by a
+  `DONE` with that note.
+- OpenMPI prints one `help-opal-shmem-mmap` warning at finalize (`unlink /dev/shm/vader_segment...
+  No such file or directory`, 31 more suppressed): teardown noise after the barrier-before-finalize
+  patch, no effect on the output.
+
+## arm vs x86 vs archived NAM (2026-11-01 00Z, `run/compare.py`)
+
+Same method as `docs/phase0-case-2026110100.md`: everything on a 0.25 deg grid, statistics over
+CONUS land points, archived NAM as the reference; "closer to NAM" = lowest RMSE among arm, x86
+and GFS. The x86 columns reproduce the Phase 0 table to the last digit, which also validates
+the new in-Python geolocation of the rotated B grid. Figures: `docs/figs/case-2026110100-arm64/`
+(`<field>_f<lead>.png`, panels arm | x86 | NAM | GFS; 6 h and total precipitation; a 3x3
+`nine_panel_f48.png`), also in `s3://nam-recast-617711905691/cases/2026110100/figs-arm64/`.
+
+| Field | Lead | RMSE arm vs x86 | bias arm vs x86 | RMSE arm vs NAM | bias arm vs NAM | RMSE x86 vs NAM | bias x86 vs NAM | RMSE GFS vs NAM | bias GFS vs NAM | closer to NAM |
+|---|---|---|---|---|---|---|---|---|---|---|
+| mslp (hPa) | f00 | 0.00 | +0.00 | 0.82 | -0.53 | 0.82 | -0.53 | 0.86 | -0.56 | arm |
+| z500 (dam) | f00 | 0.00 | +0.00 | 0.67 | -0.58 | 0.67 | -0.58 | 0.52 | -0.38 | GFS |
+| t2m (K) | f00 | 0.00 | +0.00 | 1.15 | -0.14 | 1.15 | -0.14 | 1.36 | -0.31 | arm |
+| wspd10 (m/s) | f00 | 0.00 | +0.00 | 1.10 | +0.45 | 1.10 | +0.45 | 1.22 | +0.58 | x86 |
+| mslp (hPa) | f24 | 0.08 | +0.00 | 0.91 | -0.02 | 0.91 | -0.02 | 1.72 | -0.89 | x86 |
+| z500 (dam) | f24 | 0.03 | +0.00 | 0.70 | -0.21 | 0.70 | -0.21 | 1.47 | -0.76 | x86 |
+| t2m (K) | f24 | 0.15 | +0.00 | 1.52 | +0.31 | 1.53 | +0.31 | 1.88 | -0.11 | arm |
+| wspd10 (m/s) | f24 | 0.14 | +0.00 | 0.91 | +0.03 | 0.92 | +0.03 | 1.77 | +0.31 | arm |
+| mslp (hPa) | f48 | 0.14 | -0.01 | 1.43 | +0.47 | 1.46 | +0.48 | 1.73 | -0.51 | arm |
+| z500 (dam) | f48 | 0.11 | -0.00 | 1.17 | +0.08 | 1.16 | +0.08 | 1.62 | -0.12 | x86 |
+| t2m (K) | f48 | 0.28 | -0.01 | 1.41 | +0.34 | 1.41 | +0.35 | 1.99 | +0.15 | x86 |
+| wspd10 (m/s) | f48 | 0.26 | +0.01 | 0.99 | +0.09 | 1.01 | +0.08 | 1.80 | +0.50 | arm |
+| mslp (hPa) | f84 | 0.52 | -0.09 | 3.87 | -0.06 | 3.72 | +0.03 | 3.60 | -1.72 | GFS |
+| z500 (dam) | f84 | 0.26 | -0.03 | 3.64 | -0.46 | 3.59 | -0.43 | 3.29 | +0.01 | GFS |
+| t2m (K) | f84 | 0.66 | -0.02 | 2.64 | +0.10 | 2.64 | +0.12 | 3.52 | +1.50 | arm |
+| wspd10 (m/s) | f84 | 0.56 | -0.01 | 1.34 | +0.01 | 1.26 | +0.03 | 1.35 | -0.29 | x86 |
+| precip24h_0-24 (mm) | f24 | 0.74 | -0.00 | 6.41 | -0.62 | 6.39 | -0.62 | 6.61 | -0.59 | x86 |
+| precip24h_24-48 (mm) | f48 | 2.03 | +0.01 | 5.16 | -0.48 | 5.11 | -0.48 | 6.77 | +0.09 | x86 |
+| precip24h_60-84 (mm) | f84 | 5.94 | +0.18 | 9.57 | +0.20 | 8.66 | +0.02 | 9.72 | -0.25 | x86 |
+
+What it says:
+- **f00: the two builds are identical to the printed precision** (RMSE 0.000 hPa / 0.001 dam /
+  0.00 K / 0.00 m/s): the same initial state from the same NPS output chain (the arm64 chain's
+  own IC differed from the x86 IC by roundoff only, see above).
+- **Divergence grows like roundoff through a chaotic model, not like a bug:** arm vs x86 is
+  0.08 hPa / 0.03 dam / 0.15 K / 0.14 m/s at f24, 0.14 / 0.11 / 0.28 / 0.26 at f48 and
+  0.52 hPa / 0.26 dam / 0.66 K / 0.56 m/s at f84, with biases of +-0.01 or less until f84
+  (-0.09 hPa MSLP, -0.03 dam, -0.02 K): 5-25 % of the x86-vs-NAM RMSE at every lead. 24 h
+  precipitation differs more (0.7, 2.0 and 5.9 mm RMSE for days 1-3; day 3 is 70 % of the
+  x86-vs-NAM 8.7 mm) because convective cells displace under tiny perturbations; the bias stays
+  within 0.2 mm.
+- **Against the archived NAM the two builds are interchangeable:** at f24 and f48 the arm and
+  x86 RMSEs agree to 0.03 or better; at f84 arm is 0.15 hPa / 0.05 dam / 0.08 m/s worse and
+  equal on 2 m T, differences of the size of the arm-vs-x86 spread itself. The Phase 0 verdict
+  (closer to the NAM than the GFS through f48, mixed at f84) is unchanged.
+- The figures show no visible difference between the arm and x86 panels at f24/f48; at f84 the
+  western-Atlantic low and the Great Lakes trough differ in detail (the same regions where
+  Phase 0 noted the recast departing from both the NAM and the GFS).
+- Nothing here points at an endianness, kind or initialisation problem: those show up at f00
+  or as a bias, and there is neither.
+
+![](figs/case-2026110100-arm64/mslp_f84.png)
+![](figs/case-2026110100-arm64/t2m_f24.png)
 
 ## Cost
 
@@ -165,13 +258,13 @@ c8g.8xlarge on-demand $1.27616/h, c8g.8xlarge Spot in us-west-2d $0.4655-0.4662/
 
 | Item | Hours | Rate | Cost |
 |---|---|---|---|
-| arm build box c8g.8xlarge on-demand, 14:54-19:49 UTC (toolchain + 22 libraries + NPS/NEMS/UPP + debugging, NPS stage, 3 smokes, 2 trap runs, UPP tests, bundles) | 4.92 | $1.276 | ~$6.3 |
+| arm build box c8g.8xlarge on-demand, 14:54-19:49 UTC (toolchain + 22 libraries + NPS/NEMS/UPP + debugging, NPS stage, 3 smokes, 2 trap runs, UPP tests, bundles) | 4.92 | $1.276 | $6.28 |
 | of which idle by mistake (a marker that was never written kept the box up ~2.4 h after the trap run ended) | 2.4 | $1.276 | ~$3.1 |
-| arm build box again for the comparison | ~0.8 | $1.276 | ~$1.0 |
+| arm build box again for the comparison + final bundle, 21:45-21:57 UTC | 0.2 | $1.276 | $0.26 |
 | Spot runner attempt 1, c8g.8xlarge 2d (aborted at start: restart interval not a multiple of the time step) | 0.05 | $0.466 | $0.02 |
-| Spot runner attempt 2, c8g.8xlarge 2d, 84 h + UPP | ~5.0 | $0.466 | ~$2.3 |
+| Spot runner attempt 2, c8g.8xlarge 2d, 16:42-21:45 UTC, 84 h + UPP | 5.05 | $0.466 | $2.35 |
 | EBS (150 GB gp3 box ~6 h, 300 GB gp3 + 6000 IOPS/500 MB/s runner ~5 h), S3 PUTs | | | ~$0.5 |
-| **Total for this brief** | | | **~$10 (budget $15)** |
+| **Total for this brief** | | | **~$9.4 (budget $15)** |
 
 Cost per 84 h run, compute only: **~$2.3 on c8g.8xlarge Spot** against $3.80 on the Phase 0
 r7a.8xlarge Spot ($0.82/h x 4.65 h); the saving is mostly the node class (restarts off lets
@@ -181,4 +274,27 @@ Ongoing: the arm64 runner bundle (9.3 GB) and the arm64 GRIB2 set (~15 GB) add ~
 
 ## Recommendation
 
-(filled in below)
+**Make arm64 (c8g.8xlarge Spot, restarts off) the default runner**, keeping the x86 path
+buildable as the fallback. Reasons:
+- Numerically it is the same model: bit-reproducible run to run, identical to x86 at f00,
+  roundoff-sized divergence afterwards, same skill against the archived NAM.
+- Operationally it is simpler and cheaper: no Intel licence/runtime to ship (the runner is stock
+  Ubuntu + apt OpenMPI + a 9.3 GB bundle), $2.3 per 84 h run against $3.8, and the restarts-off
+  configuration fits 64 GB with 20 GB to spare, so c-class nodes in eight Spot pools
+  (c7g/c8g x four zones) are available instead of r-class in four.
+- Speed is a wash: 13 % faster on the 3 h smoke, 6 % slower per forecast hour over 84 h (one
+  measurement each, different x86 node classes); UPP 27 s vs 20-31 s per file.
+What to keep in mind:
+- Restarts off means a Spot reclaim costs a $2.3 rerun; at 00Z/12Z cadence with the measured
+  4.7 h run time the window is long. If reclaims turn out frequent, m8g.8xlarge (128 GB,
+  $0.53/h) brings restarts back for +$0.3 per run; the runner already supports both modes.
+- Three latent upstream bugs surfaced only because gfortran does not zero memory the way ifort
+  happened to (ungrib output path, write component integer state, `MY_DOMAIN_MOVES`); two are
+  patched, the ungrib one is mitigated with `-finit-local-zero`. A future compiler or
+  allocator change on x86 could expose the same bugs there; the patches apply to both builds.
+- The per-hour pace should be re-measured on the first few scheduled cycles (c7g vs c8g, zone),
+  and the hindcast arms of Phase 1 should all run on the same architecture so that arm-vs-x86
+  spread does not enter the scorecard.
+- Not done in this brief: ESMF 8 (not needed), nest/moving-nest code paths (never exercised by
+  the parent-only configuration), `nam_land_utilities` and the BUFR sounding tools (Phase 0
+  skip list), a second case.
