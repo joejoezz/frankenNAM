@@ -18,5 +18,11 @@ collide on macOS.
 
 ## Layout
 
-- `deploy/01-build-box.sh` creates/starts the x86 build instance; `deploy/02-stop.sh` stops it.
-- `docs/` scoping and build notes.
+- `deploy/01-build-box.sh` creates/starts the x86 build instance; `deploy/02-stop.sh` stops it;
+  `deploy/05-graviton-box.sh` / `deploy/06-stop-arm.sh` do the same for the arm64 (c8g) box;
+  `deploy/04-run-case.sh` launches a Spot runner for a case (`ARCH=arm64` for Graviton).
+- `build/` the toolchain, library and model build scripts (Intel oneAPI on x86, gfortran +
+  OpenMPI on arm64, picked by `TOOLCHAIN` in `build/versions.sh`); patches in `build/patches/`.
+- `run/` the recast driver (NPS, NEMS.x, UPP), runner, bundle, acceptance and comparison scripts.
+- `docs/` scoping, build notes (`build-notes.md` x86, `graviton-port.md` arm64), run notes,
+  briefs and the case comparison.

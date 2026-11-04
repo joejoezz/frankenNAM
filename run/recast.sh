@@ -1,11 +1,13 @@
 #!/bin/bash
 # NAM 12 km parent-domain cold-start recast: GFS -> NPS -> NEMS.x (NMMB) -> UPP.
 # Follows exnam_coldstart_prep.sh, exnam_{ungrib,metgrid}_boco.sh, exnam_nemsinterp_boco*.sh,
-# exnam_fcst.sh and exnam_post.sh with plain paths and Intel MPI; see run/README.md.
+# exnam_fcst.sh and exnam_post.sh with plain paths and Intel MPI or OpenMPI; see run/README.md.
 #
 # usage: recast.sh <stage...>   stages: ungrib metgrid nemsinterp fcst post sync  (or: nps, all)
 # env:   CYCLE=2026110100 FHMAX=84 INPES=4 JNPES=7 WRITE_GROUPS=1 WRITE_TASKS=4 NPOST=8
 #        RUNDIR=/opt/nam/runs/$CYCLE  S3RUN=s3://.../cases/$CYCLE/recast  FILTER=3
+#        RESTMIN=720 RST00=true WRTLAST=true (restarts; RESTMIN=99999 RST00=false WRTLAST=false = none)  SYNC_HISTORY=1
+#        NEMS_EXE=/opt/nam/work/exec/NEMS.x (NEMS_debug.x for the trap build)
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 
@@ -26,11 +28,29 @@ RUNDIR=${RUNDIR:-/opt/nam/runs/$CYCLE}
 S3RUN=${S3RUN:-s3://nam-recast-617711905691/cases/$CYCLE/recast}
 cyc=${CYCLE:8:2}
 
-# toolchain runtime (Intel MPI mpirun); no module, no prod_util
-set +eu; source /opt/intel/oneapi/setvars.sh --force >/dev/null 2>&1; set -eu
+# toolchain runtime; no module, no prod_util. Intel MPI for the x86/oneAPI build (Phase 0),
+# OpenMPI for the arm64/gfortran build (Graviton port): picked by what is installed.
 export OMP_NUM_THREADS=1 OMP_STACKSIZE=1G KMP_STACKSIZE=1G
-export I_MPI_FABRICS=${I_MPI_FABRICS:-shm} I_MPI_PIN_DOMAIN=${I_MPI_PIN_DOMAIN:-core}
+if [ -f /opt/intel/oneapi/setvars.sh ]; then
+  MPI=intel
+  set +eu; source /opt/intel/oneapi/setvars.sh --force >/dev/null 2>&1; set -eu
+  export I_MPI_FABRICS=${I_MPI_FABRICS:-shm} I_MPI_PIN_DOMAIN=${I_MPI_PIN_DOMAIN:-core}
+else
+  MPI=openmpi
+  export OMPI_MCA_btl=${OMPI_MCA_btl:-self,vader}   # single node: shared memory only, no tcp probing
+fi
+export MPI
 ulimit -s unlimited || true
+# mpi_cmd <ntasks> <core|none> [cpu list]: the mpirun prefix. Intel MPI pins through
+# I_MPI_PIN_DOMAIN/I_MPI_PIN_PROCESSOR_LIST (exported by the callers, as in Phase 0); OpenMPI
+# needs explicit --bind-to core (its default for >2 ranks is socket) and --cpu-set for a subset.
+mpi_cmd() {
+  local n=$1 bind=$2 cpus=${3:-}
+  if [ "$MPI" = intel ]; then echo "mpirun -n $n -ppn $n"
+  elif [ -n "$cpus" ]; then echo "mpirun -n $n --cpu-set $cpus --bind-to core --map-by core"
+  elif [ "$bind" = core ]; then echo "mpirun -n $n --bind-to core --map-by core"
+  else echo "mpirun -n $n --bind-to none"; fi
+}
 
 ndate() { date -u -d "${2:0:8} ${2:8:2}:00 UTC $1 hours" +%Y%m%d%H; }   # ndate <+-h> <yyyymmddhh>
 wpsdate() { echo "${1:0:4}-${1:4:2}-${1:6:2}_${1:8:2}"; }
@@ -70,7 +90,7 @@ stage_metgrid() {
     cp $PARM/nam_METGRID.TBL.NMM_gfsgrib2 METGRID.TBL
     cp $FIX/nam_geo_nmb.d01.dio geo_nmb.d01.dio
     ln -sf ../ungrib/out/FILE:$(wpsdate $CYCLE) .
-    mpirun -n $NPS_NP $EXEC/metgrid.exe > metgrid.out 2>&1
+    $(mpi_cmd $NPS_NP core) $EXEC/metgrid.exe > metgrid.out 2>&1
     ls met_nmb.d01.*.dio )
   log "metgrid bocos (nam.METGRID.TBL.bocos, serial, 2 times per stream as ops)"
   mkdir -p metgrid_bc/out
@@ -94,7 +114,7 @@ stage_nemsinterp() {
   mkdir -p nemsinterp_ic; ( cd nemsinterp_ic; rm -f input_domain_01* boco.*
     cp ../metgrid_ic/namelist.nps .
     ln -sf ../metgrid_ic/met_nmb.d01.*.dio .
-    mpirun -n $NPS_NP $EXEC/nemsinterp.exe > nemsinterp.out 2>&1
+    $(mpi_cmd $NPS_NP core) $EXEC/nemsinterp.exe > nemsinterp.out 2>&1
     ls -l input_domain_01_nemsio )
   log "nemsinterp bocos: 12 h streams of 5 met files (exnam_nemsinterp_boco1-7)"
   mkdir -p bocos
@@ -103,10 +123,10 @@ stage_nemsinterp() {
     mkdir -p nemsinterp_bc/s$s; cd nemsinterp_bc/s$s; rm -f boco.* input_domain* met_nmb*
     mk_nps $PARM/nam_namelist.nps_bocos $(ndate +$s $CYCLE) $(ndate +$e $CYCLE)
     for h in $(seq $s 3 $e); do ln -sf ../../metgrid_bc/out/met_nmb.d01.$(wpsdate $(ndate +$h $CYCLE)):00:00.dio .; done
-    mpirun -n 4 $EXEC/nemsinterp.exe > nemsinterp.out 2>&1 || { tail nemsinterp.out; return 1; }
+    $(mpi_cmd 4 none) $EXEC/nemsinterp.exe > nemsinterp.out 2>&1 || { tail nemsinterp.out; return 1; }   # 8 streams share the node: no pinning
     for b in boco.*; do mv $b ../../bocos/$(printf 'boco.%04d' $((10#${b#boco.} + s))); done
   }
-  export -f onen ndate wpsdate mk_nps; export CYCLE PARM EXEC RUNDIR FHMAX
+  export -f onen ndate wpsdate mk_nps mpi_cmd; export CYCLE PARM EXEC RUNDIR FHMAX MPI
   seq 0 12 $((FHMAX - 1)) | xargs -P 8 -I{} bash -c 'cd $RUNDIR && onen {}'
   ls bocos
 }
@@ -115,7 +135,7 @@ stage_fcst() {
   local nt=$((INPES * JNPES + WRITE_GROUPS * WRITE_TASKS)) y=${CYCLE:0:4}
   log "fcst ${FHMAX} h: ${INPES}x${JNPES} compute + ${WRITE_GROUPS}x${WRITE_TASKS} write = $nt tasks, filter_method $FILTER"
   mkdir -p fcst; cd fcst
-  local restart=false rst00=true
+  local restart=false rst00=${RST00:-true}   # RST00=false: no f00 restart file (restarts off)
   last=$(ls nmmb_rst_01_nio_*h_00m_00.00s 2>/dev/null | sort | tail -1 || true)
   if [ -n "${last:-}" ] && [ "${RESUME:-1}" = 1 ]; then   # Spot recovery (exnam_fcst RESTARTNZF)
     log "restarting from $last"; mv -f "$last" restart_file_01_nemsio; restart=true; rst00=false; FILTER=0
@@ -126,7 +146,7 @@ stage_fcst() {
       -e "s:YEND:${e:0:4}:" -e "s:MEND:${e:4:2}:" -e "s:DEND:${e:6:2}:" -e "s:HEND:${e:8:2}:" \
       -e "s:INPES:$INPES:" -e "s:JNPES:$JNPES:" -e "s:WRITE_GROUPS:$WRITE_GROUPS:" -e "s:WRITE_TASKS:$WRITE_TASKS:" \
       -e "s:LENGTH:$FHMAX:" -e "s:RESINT:$RESTMIN:" -e "s:REST\b:$restart:" -e "s:FREE:true:" -e "s:OUTRST:$rst00:" \
-      -e "s:WRTLAST:true:" -e "s:PFLAG:false:" -e "s:FILTEROPTION:$FILTER:" -e "s:USE_RADAR:0:" \
+      -e "s:WRTLAST:${WRTLAST:-true}:" -e "s:PFLAG:false:" -e "s:FILTEROPTION:$FILTER:" -e "s:USE_RADAR:0:" \
       -e "s:NUMDOM:1:" -e "s:NCHILD:0:" \
       -e "s:PRECIPBUCKET:${PCPBUCKET:-12}:" -e "s:HEATBUCKET:6:" -e "s:CLOUDBUCKET:6:" \
       -e "s:LWBUCKET:6:" -e "s:SWBUCKET:6:" -e "s:EVAPBUCKET:6:" \
@@ -151,8 +171,9 @@ stage_fcst() {
   ln -sf $FIX/nam_global_o3clim.txt fort.48
   export LANG=en_US
   [ -n "${FCST_CPUS:-}" ] && export I_MPI_PIN_PROCESSOR_LIST=$FCST_CPUS   # keep clear of concurrent UPP
-  /usr/bin/time -v mpirun -n $nt -ppn $nt $EXEC/NEMS.x > nems.out 2> nems.err
-  log "NEMS.x exit $?"
+  local exe=${NEMS_EXE:-$EXEC/NEMS.x}
+  /usr/bin/time -v $(mpi_cmd $nt core "${FCST_CPUS:-}") $exe > nems.out 2> nems.err
+  log "$(basename $exe) exit $?"
 }
 
 stage_post() { # UPP per history file; GRIB2 outputs BGDAWP/BGRDSF/BGRD3D as exnam_post.sh
@@ -176,7 +197,7 @@ stage_post() { # UPP per history file; GRIB2 outputs BGDAWP/BGRDSF/BGRD3D as exn
       printf '%s\n' "$RUNDIR/$h" binarynemsio grib2 "${v:0:4}-${v:4:2}-${v:6:2}_${v:8:2}:00:00" NMM > itag
       local t0=$SECONDS
       [ -n "${POST_CPUS:-}" ] && export I_MPI_PIN_PROCESSOR_LIST=$POST_CPUS
-      mpirun -n $NPOST $EXEC/ncep_post < itag > post_f$fh.out 2>&1
+      $(mpi_cmd $NPOST core "${POST_CPUS:-}") $EXEC/ncep_post < itag > post_f$fh.out 2>&1
       for k in BGDAWP BGRDSF BGRD3D; do
         [ -s $k.GrbF$fh ] && mv $k.GrbF$fh ../grib2/nam.t${cyc}z.$(echo $k | tr A-Z a-z)${fh}.tm00.grib2
       done
@@ -188,7 +209,7 @@ stage_post() { # UPP per history file; GRIB2 outputs BGDAWP/BGRDSF/BGRD3D as exn
 stage_sync() {
   aws s3 sync --only-show-errors grib2 $S3RUN/grib2/ --exclude "*" --include "*bgdawp*"
   aws s3 sync --only-show-errors grib2 $S3RUN/grib2-all/
-  aws s3 sync --only-show-errors fcst $S3RUN/history/ --exclude "*" --include "nmmb_hst_*" --include "nmmb_rst_*" --include "*.ctl"
+  [ "${SYNC_HISTORY:-1}" = 1 ] && aws s3 sync --only-show-errors fcst $S3RUN/history/ --exclude "*" --include "nmmb_hst_*" --include "nmmb_rst_*" --include "*.ctl"
   aws s3 cp --only-show-errors --recursive . $S3RUN/logs/ --exclude "*" --include "*.out" --include "*.err" \
     --include "*/configure_file_01" --include "post_times.txt" --include "*.log"
 }

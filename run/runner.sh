@@ -1,10 +1,14 @@
 #!/bin/bash
-# Runner-node driver (c7a.48xlarge from the build-box AMI): forecast + post for $CYCLE with
-# hourly S3 syncs; resumes from the newest restart in S3 after a Spot interruption.
+# Runner-node driver: forecast + post for $CYCLE with hourly S3 syncs; resumes from the newest
+# restart in S3 after a Spot interruption (unless NO_RESTART=1). Env: CYCLE, S3SUB (recast |
+# recast-arm64), NO_RESTART, SYNC_HISTORY (recast.sh), layout overrides.
 set -uo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 export CYCLE=${CYCLE:-2026110100}
-export RUNDIR=/opt/nam/runs/$CYCLE S3RUN=s3://nam-recast-617711905691/cases/$CYCLE/recast
+export RUNDIR=/opt/nam/runs/$CYCLE S3RUN=s3://nam-recast-617711905691/cases/$CYCLE/${S3SUB:-recast}
+# NO_RESTART=1: no restart files at all (RESTMIN past the run, no f00 restart) so the run fits a
+# 64 GB node (Phase 0: restarts pushed the peak from 48 to 77 GB); a Spot reclaim then means a rerun.
+if [ "${NO_RESTART:-0}" = 1 ]; then export RESTMIN=99999 RST00=false WRTLAST=false; fi
 mkdir -p $RUNDIR/fcst $RUNDIR/grib2
 cd "$HERE"
 # c7a has no SMT: a c7a.48xlarge is 192 physical cores. Use 168 compute + 2x8 write tasks
@@ -23,7 +27,7 @@ fi
 lscpu | grep -E "^CPU\(s\)|Thread|Model name" >> $RUNDIR/runner.log 2>/dev/null || true
 echo "layout ${INPES}x${JNPES} + ${WRITE_GROUPS}x${WRITE_TASKS}, post $NPOST" >> $RUNDIR/runner.log
 echo "runner start $(date -u +%FT%TZ) $(curl -s http://169.254.169.254/latest/meta-data/instance-type 2>/dev/null)" | tee -a $RUNDIR/runner.log
-aws s3 sync --only-show-errors $S3RUN/history/ $RUNDIR/fcst/ --exclude "*" --include "nmmb_rst_*"
+[ "${NO_RESTART:-0}" = 1 ] || aws s3 sync --only-show-errors $S3RUN/history/ $RUNDIR/fcst/ --exclude "*" --include "nmmb_rst_*"
 aws s3 sync --only-show-errors $S3RUN/grib2-all/ $RUNDIR/grib2/
 ./recast.sh fcst > $RUNDIR/fcst.log 2>&1 &
 FPID=$!

@@ -50,6 +50,18 @@ on-demand; a 64 GB c7a.8xlarge runs out of memory at the first restart write, se
 physical cores; c7a has no SMT, `lscpu` shows 1 thread per core) 12 x 14 = 168 compute + 2 x 8
 write = 184 tasks pinned to cores 0-183, UPP on cores 184-191.
 
-`compare.py <case dir> <out dir>` puts recast, archived NAM and GFS on a 0.25 deg grid and
+`compare.py <case dir> <out dir>` puts recast(s), archived NAM and GFS on a 0.25 deg grid and
 writes the figures and the RMSE/bias table (needs `wgrib2` for the B-grid coordinates and a
-venv with numpy, scipy, eccodes, matplotlib, cartopy).
+venv with numpy, scipy, eccodes, matplotlib, cartopy). If `<case dir>/recast-arm64/grib2`
+exists it is added as a source: panels become arm | x86 | NAM | GFS and the table carries
+arm vs x86, arm vs NAM, x86 vs NAM and GFS vs NAM.
+
+## arm64 (Graviton) runs
+
+The same scripts drive the gfortran/OpenMPI build (`docs/graviton-port.md`): `recast.sh` picks
+Intel MPI or OpenMPI by what is installed (`mpi_cmd` adds `--bind-to core` / `--cpu-set` for
+OpenMPI, whose default is socket binding), `runner.sh` takes `S3SUB=recast-arm64 NO_RESTART=1`
+(no restart files at all so the run fits 64 GB) and `SYNC_HISTORY=0`. `run/bundle.sh` packs
+the runner tar (`runner/bundle-<date>-arm64.tar`), `deploy/04-run-case.sh ARCH=arm64` launches a
+c8g.8xlarge Spot runner from it, `run/smoke.sh` runs the build-box acceptance set (two 3 h
+smokes + cmp, UPP, PRMSL stats, 1 h trap build), `run/cmp_nemsio.py` compares nemsio files.

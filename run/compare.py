@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""Recast vs archived NAM vs GFS for one cycle, on a common 0.25 deg grid (20-60N, 130-60W).
+"""Recast(s) vs archived NAM vs GFS for one cycle, on a common 0.25 deg grid (20-60N, 130-60W).
 
-usage: compare.py <case dir> <out dir>
-  <case dir>/recast/grib2/nam.t00z.bgdawpFF.tm00.grib2   (UPP, native rotated B grid)
-  <case dir>/nam-archive/nam.t00z.awphysFF.tm00.grib2   (grid 218)
+usage: compare.py <case dir> <out dir>        (env LEADS=24,48,84)
+  <case dir>/recast/grib2/nam.t00z.bgdawpFF.tm00.grib2         x86 / ifort recast (UPP, rotated B grid)
+  <case dir>/recast-arm64/grib2/nam.t00z.bgdawpFF.tm00.grib2   arm64 / gfortran recast (optional; used if present)
+  <case dir>/nam-archive/nam.t00z.awphysFF.tm00.grib2          archived NAM (grid 218)
   <case dir>/gfs/gfs.t00z.pgrb2.0p25.fFFF
-Writes PNGs and stats.md / stats.csv to <out dir>.
+Writes PNGs (one panel per source: arm | x86 | NAM | GFS) and stats.md / stats.csv to <out dir>:
+RMSE/bias over CONUS land for arm vs x86, arm vs NAM, x86 vs NAM and GFS vs NAM (NAM = reference).
 """
 import sys, os, glob
 import numpy as np
@@ -26,6 +28,7 @@ GLON, GLAT = np.meshgrid(LON, LAT)
 
 def path(src, fh):
     if src == "recast": return f"{CASE}/recast/grib2/nam.t00z.bgdawp{fh:02d}.tm00.grib2"
+    if src == "arm":    return f"{CASE}/recast-arm64/grib2/nam.t00z.bgdawp{fh:02d}.tm00.grib2"
     if src == "nam":    return f"{CASE}/nam-archive/nam.t00z.awphys{fh:02d}.tm00.grib2"
     return f"{CASE}/gfs/gfs.t00z.pgrb2.0p25.f{fh:03d}"
 
@@ -110,7 +113,12 @@ def cum(src, t):
 
 def precip(src, a, b): return cum(src, b) - cum(src, a)
 
-SRCS = [("recast", "Recast (NMMB cold start from GFS)"), ("nam", "Archived NAM"), ("gfs", "GFS")]
+HAVE_ARM = os.path.isdir(f"{CASE}/recast-arm64/grib2")
+SRCS = ([("arm", "FrankenNAM arm64 (gfortran)")] if HAVE_ARM else []) + \
+       [("recast", "FrankenNAM x86 (ifort)" if HAVE_ARM else "Recast (NMMB cold start from GFS)"), ("nam", "Archived NAM"), ("gfs", "GFS")]
+# (a, b): statistics of a - b. NAM is the reference for the model comparisons; arm vs x86 isolates the port.
+PAIRS = ([("arm", "recast"), ("arm", "nam")] if HAVE_ARM else []) + [("recast", "nam"), ("gfs", "nam")]
+PAIR_LABEL = {"arm": "arm", "recast": "x86" if HAVE_ARM else "recast", "nam": "NAM", "gfs": "GFS"}
 PLOTS = {
     "mslp":   dict(cmap="viridis", levels=np.arange(976, 1045, 4), units="hPa"),
     "z500":   dict(cmap="viridis", levels=np.arange(510, 600, 6), units="dam"),
@@ -122,7 +130,8 @@ PLOTS = {
 
 def panel(fields, title, kind, fname):
     p = PLOTS[kind]
-    fig, axs = plt.subplots(1, 3, figsize=(18, 5.2), subplot_kw=dict(projection=ccrs.LambertConformal(-100, 40)))
+    n = len(fields)
+    fig, axs = plt.subplots(1, n, figsize=(6 * n, 5.2), subplot_kw=dict(projection=ccrs.LambertConformal(-100, 40)))
     for ax, (lab, f) in zip(axs, fields):
         ax.set_extent([-128, -62, 21, 56], ccrs.PlateCarree())
         ext = "max" if kind == "precip" else "both"
@@ -144,35 +153,41 @@ def main():
         d = (a - ref)[conus & np.isfinite(a) & np.isfinite(ref)]
         return np.sqrt(np.mean(d ** 2)), np.mean(d)
 
-    rows = []
+    rows = []   # (field, lead, {pair: (rmse, bias)})
     LEADS = [int(x) for x in os.environ.get("LEADS", "24,48,84").split(",")]
+    FIGS = os.environ.get("FIGS", "1") == "1"
     for fh in LEADS:
         for kind in ["mslp", "z500", "t2m", "wspd10", "rh700"]:
+            if fh == 0 and kind == "rh700": continue
             f = {s: field(s, fh, kind) for s, _ in SRCS}
-            panel([(lab, f[s]) for s, lab in SRCS], f"{kind}  f{fh:02d}  valid 2026-11-01 00Z +{fh} h", kind, f"{kind}_f{fh:02d}.png")
+            if FIGS and fh > 0:
+                panel([(lab, f[s]) for s, lab in SRCS], f"{kind}  f{fh:02d}  valid 2026-11-01 00Z +{fh} h", kind, f"{kind}_f{fh:02d}.png")
             if kind in ("mslp", "z500", "t2m", "wspd10"):
-                rr, br = stats(f["recast"], f["nam"]); rg, bg = stats(f["gfs"], f["nam"])
-                rows.append((kind, fh, rr, br, rg, bg))
-    for b in [x for x in (24, 48, 72) if x <= max(LEADS)]:
-        f = {s: precip(s, b - 6, b) for s, _ in SRCS}
-        panel([(lab, f[s]) for s, lab in SRCS], f"6 h precipitation ending f{b:02d}", "precip", f"precip6h_f{b:02d}.png")
+                rows.append((kind, fh, {(a, b): stats(f[a], f[b]) for a, b in PAIRS}))
+    if FIGS:
+        for b in [x for x in (24, 48, 72) if x <= max(LEADS)]:
+            f = {s: precip(s, b - 6, b) for s, _ in SRCS}
+            panel([(lab, f[s]) for s, lab in SRCS], f"6 h precipitation ending f{b:02d}", "precip", f"precip6h_f{b:02d}.png")
     for a, b in [(0, 24), (24, 48), (60, 84)]:
         if b > max(LEADS): continue
         f = {s: precip(s, a, b) for s, _ in SRCS}
-        rr, br = stats(f["recast"], f["nam"]); rg, bg = stats(f["gfs"], f["nam"])
-        rows.append((f"precip24h_{a}-{b}", b, rr, br, rg, bg))
-    if max(LEADS) >= 84:
+        rows.append((f"precip24h_{a}-{b}", b, {(x, y): stats(f[x], f[y]) for x, y in PAIRS}))
+    if FIGS and max(LEADS) >= 84:
         f = {s: precip(s, 0, 84) for s, _ in SRCS}
         panel([(lab, f[s]) for s, lab in SRCS], "Total precipitation f00-f84", "precip", "precip_total_f84.png")
 
     units = dict(mslp="hPa", z500="dam", t2m="K", wspd10="m/s")
+    names = [f"{PAIR_LABEL[a]} vs {PAIR_LABEL[b]}" for a, b in PAIRS]
     with open(f"{OUT}/stats.csv", "w") as c, open(f"{OUT}/stats.md", "w") as m:
-        c.write("field,lead,rmse_recast,bias_recast,rmse_gfs,bias_gfs\n")
-        m.write("| Field | Lead | RMSE recast | bias recast | RMSE GFS | bias GFS | closer to NAM |\n|---|---|---|---|---|---|---|\n")
-        for k, fh, rr, br, rg, bg in rows:
+        c.write("field,lead," + ",".join(f"rmse_{n.replace(' ', '_')},bias_{n.replace(' ', '_')}" for n in names) + "\n")
+        m.write("| Field | Lead | " + " | ".join(f"RMSE {n} | bias {n}" for n in names) + " | closer to NAM |\n")
+        m.write("|---|---|" + "---|---|" * len(PAIRS) + "---|\n")
+        for k, fh, st in rows:
             u = units.get(k, "mm")
-            c.write(f"{k},{fh},{rr:.3f},{br:.3f},{rg:.3f},{bg:.3f}\n")
-            m.write(f"| {k} ({u}) | f{fh:02d} | {rr:.2f} | {br:+.2f} | {rg:.2f} | {bg:+.2f} | {'recast' if rr < rg else 'GFS'} |\n")
+            c.write(f"{k},{fh}," + ",".join(f"{st[p][0]:.3f},{st[p][1]:.3f}" for p in PAIRS) + "\n")
+            model = {PAIR_LABEL[a]: st[(a, b)][0] for a, b in PAIRS if b == "nam"}
+            m.write(f"| {k} ({u}) | f{fh:02d} | " + " | ".join(f"{st[p][0]:.2f} | {st[p][1]:+.2f}" for p in PAIRS)
+                    + f" | {min(model, key=model.get)} |\n")
     print(open(f"{OUT}/stats.md").read())
 
 if __name__ == "__main__":
