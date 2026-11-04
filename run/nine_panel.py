@@ -15,7 +15,8 @@ case, out = args[0], args[1]
 fh = int(args[2]) if len(args) > 2 else 48
 init = dt.datetime(2026, 11, 1, 0)
 valid = init + dt.timedelta(hours=fh)
-cols = [("recast", "FrankenNAM (NMMB, GFS cold start)"), ("nam", "Archived NAM (operational)"), ("gfs", "GFS 0.25°")]
+cols = ([("tm06", "FrankenNAM tm06 (GFS C-6 + 6 h spin-up)")] if c.HAVE_TM06 else [("recast", "FrankenNAM (NMMB, GFS cold start)")]) + \
+       [("nam", "Archived NAM (operational)"), ("gfs", "GFS 0.25°")]
 rows = [
     ("z500",   "500 hPa height", c.PLOTS["z500"],   lambda s: c.field(s, fh, "z500"),   np.arange(510, 600, 6)),
     ("mslp",   "MSLP",           c.PLOTS["mslp"],   lambda s: c.field(s, fh, "mslp"),   np.arange(976, 1045, 4)),
