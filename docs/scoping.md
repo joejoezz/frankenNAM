@@ -157,3 +157,19 @@ would be GFS-filled through a two-source metgrid. Costs that deferred it: no pub
 no overlap with the NAM archive for validation, a young model's biases in the background, and
 the two-source preprocessor work. RAP was considered and dropped: retires with RRFS v2 and
 does not cover the NAM parent domain.
+
+### Product and cost decisions (4 Nov 2026)
+
+- **Cycles: 00Z and 12Z only.** Halves compute: ~$40-60/day on x86 Spot, ~$20-30/day once on
+  Graviton.
+- **Storage: GRIB2 + Icechunk/Zarr.** GRIB2 on the familiar 12 km grid with `.idx` sidecars for
+  forecaster tooling and byte-range field fetches; an Icechunk/Zarr store (same pattern as the
+  ENSO store) for our own consumption: wsis point extraction, maps, verification, apps. Raw
+  native model output is discarded after post-processing. 30-day product archive ≈ $8/month;
+  egress is the only data cost that scales with users, so public products lean on maps,
+  soundings and point data rather than whole-run GRIB downloads.
+- **Graviton port is critical, not optional.** It is a Phase 1 task: gfortran build of NPS,
+  NEMS and UPP (`conf/configure.nems.Linux.gnu` exists in the tree; OpenMPI or MPICH instead of
+  Intel MPI; expect `-fallow-argument-mismatch`-class fixes), validated against the x86 run of
+  the same case (not bit-for-bit, but statistically indistinguishable at 84 h). Target runner:
+  c8g.48xlarge Spot (192 Graviton4 cores, ≈ $2.8/h), one node, ≈ 3.5-4 h per 84 h run.
