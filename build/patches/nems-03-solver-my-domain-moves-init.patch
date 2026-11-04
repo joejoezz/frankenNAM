@@ -1,0 +1,15 @@
+Reason: the solver internal state's MY_DOMAIN_MOVES is set only inside the I_AM_A_NEST block of SOLVER_INITIALIZE, so for a parent domain it is an uninitialised component of the allocated internal state; ifort/x86 happened to read it as .FALSE., gfortran/aarch64 reads a nonzero pattern as .TRUE. and SOLVER_RUN then calls ESMF_AttributeGet('MOVE_NOW') every timestep on an attribute nobody sets (ESMF_RC_ATTR_NOTSET, 20496 error lines in a 3 h run). MOVE_NOW itself is preset .FALSE. before that call, so the forecast was unaffected; the flag is now initialised to .FALSE. and overridden for nests as before.
+--- a/sorc/nam_nems_nmmb.fd/src/atmos/nmm/module_SOLVER_GRID_COMP.F90	2026-11-04 08:53:45
++++ b/sorc/nam_nems_nmmb.fd/src/atmos/nmm/module_SOLVER_GRID_COMP.F90	2026-11-04 08:53:45
+@@ -1602,6 +1602,11 @@
+ !
+         int_state%I_AM_A_NEST=I_AM_A_NEST
+ !
++!***  nam-recast: MY_DOMAIN_MOVES is only extracted below for nests; a parent domain's copy
++!***  stayed uninitialised (ifort/x86 happened to see .FALSE., gfortran/aarch64 sees .TRUE.,
++!***  which makes SOLVER_RUN try to read a MOVE_NOW attribute that no one sets, every step).
++        int_state%MY_DOMAIN_MOVES=.FALSE.
++!
+         IF(I_AM_A_NEST)THEN
+ !
+ !-----------------------------------------------------------------------

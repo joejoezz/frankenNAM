@@ -72,6 +72,17 @@ icpx in Phase 0), `ESMF_F90COMPILEOPTS` = the GCC relaxations. Build time 173 s 
 - Configure: `F77 = mpif90 ...` had to be defined. `atmos/nmm/makefile` compiles the
   `n_*.f` GFS-definition modules with `$(F77)`, which no WCOSS2 configure defines;
   `n_module_gfs_mpi_def.f` includes `mpif.h`, and ifort found it through setvars' `CPATH`.
+- `nems-03-solver-my-domain-moves-init.patch` (found by reading the smoke run's stderr, which
+  x86 never printed): the solver internal state's `MY_DOMAIN_MOVES` is only extracted inside the
+  `I_AM_A_NEST` block of `SOLVER_INITIALIZE`, so for the parent domain it is an **uninitialised
+  component of the allocated internal state**. ifort/x86 happened to read it as `.FALSE.`;
+  gfortran/aarch64 reads a nonzero pattern as `.TRUE.`, and `SOLVER_RUN` then calls
+  `ESMF_AttributeGet('MOVE_NOW')` every timestep on an attribute nobody sets
+  (`ESMF_RC_ATTR_NOTSET` = 57; 20,496 `ERROR: Extract the MOVE_NOW flag` lines in a 3 h run,
+  732 steps x 28 ranks). `MOVE_NOW` is preset `.FALSE.` right before that call and nothing else
+  reads the flag for a parent, so the forecast was not affected (verified: the history of a smoke
+  run with the fix is bit-identical to the one without, see the acceptance table). The flag is
+  now initialised to `.FALSE.` and overridden for nests as before.
 - Everything else compiled with warnings only (type/rank mismatches downgraded by
   `-fallow-argument-mismatch`). NEMS.x links in about 4 min of wall time on 32 cores (x86: 160 s).
 
@@ -124,7 +135,8 @@ the stack without ESMF took about 4 min.
 | max RSS of a rank (time -v, mpirun tree) | 1.65 GB | 2.2 GB |
 | UPP on the smoke output (16 tasks) | **15 s (f00) / 16 s (f03)** after `uppgnu-02`; 1189 / 1199 GRIB2 messages, BGDAWP 475 / 500 MB (x86: 475 / 500 MB) | 21 s / file |
 | `wgrib2 -stats` PRMSL | f00: mean 1012.1, min 975.8, max 1038.8 hPa; f03: mean 1012.4, min 970.8, max 1046.0 hPa; no undefined points | f84 range 969.7-1062.1 hPa |
-| 1 h run, hourly history, no filter, **trap build** (`-O0 -g -fcheck=all -finit-real=snan -ffpe-trap=invalid,zero,overflow`) | no floating-point trap; the run aborts 17 s in, while the write (quilt) tasks write the f00 history: `NEMSIO_WRITEREC` returns an error on a 2-D integer record and `module_WRITE_GRID_COMP.F90:4100` prints "Failed to write output to file! Aborting!" (504 MB of the 4.86 GB file written). Nothing in the dynamics/physics had run yet. The write path therefore relies on zero-initialised locals (the brief's trap flags leave integers/logicals uninitialised); a second variant with integers zeroed (`DEBUG_EXTRA=-finit-local-zero`, reals still sNaN) is reported below. | 258 s (optimised) |
+| 1 h run, hourly history, no filter, **trap build B**: the same flags plus `-finit-local-zero` (integers/logicals zero, reals still sNaN) | **completes: exit 0, 1288 s (21.5 min at -O0 with bounds checks), f00 and f01 history written, no floating-point trap, no runtime check failure**, node peak 42.0 GB. So the dynamics, physics and I/O of the first hour never operate on an uninitialised real; what the production build's `-finit-local-zero` papers over is integer/logical state, in the write component (trap build A) and in `MY_DOMAIN_MOVES` (nems-03). | - |
+| 1 h run, hourly history, no filter, **trap build A** (exactly `-O0 -g -fcheck=all -finit-real=snan -ffpe-trap=invalid,zero,overflow`) | no floating-point trap; the run aborts 17 s in, while the write (quilt) tasks write the f00 history: `NEMSIO_WRITEREC` returns an error on a 2-D integer record and `module_WRITE_GRID_COMP.F90:4100` prints "Failed to write output to file! Aborting!" (504 MB of the 4.86 GB file written). Nothing in the dynamics/physics had run yet. The write path therefore relies on zero-initialised locals (the brief's trap flags leave integers/logicals uninitialised); a second variant with integers zeroed (`DEBUG_EXTRA=-finit-local-zero`, reals still sNaN) is reported below. | 258 s (optimised) |
 
 A trap of its own: the 150 GB build-box disk filled up during the acceptance runs (the 84 h NPS
 intermediates are 83 GB: ungrib 26, metgrid 38, nemsinterp streams 19). The symptoms were a UPP
