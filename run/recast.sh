@@ -4,7 +4,7 @@
 # exnam_fcst.sh, exnam_post.sh and nam_prdgen5.sh with plain paths and Intel MPI or OpenMPI;
 # see run/README.md and docs/tm06-design.md.
 #
-# usage: recast.sh <stage...>   stages: stage ungrib metgrid nemsinterp fcst post products sync  (or: nps, all)
+# usage: recast.sh <stage...>   stages: stage ungrib seed metgrid nemsinterp fcst post products sync  (or: nps, all)
 # env:   CYCLE=2026110100 (product cycle C)  MODE=tm06|anl
 #          tm06 (default): the model starts at START = C-6 h from GFS cycle C-6 f000, boundaries
 #               f003..f090 (3-hourly), integrates 90 h; integration hour 6 is product f00. The Noah
@@ -138,6 +138,21 @@ seed_prep() { # <seed grib2> <out>: the land-state records only, skin T blanked 
   wgrib2 -s "$out"
 }
 
+stage_seed() { # the soil seed: one serial ungrib of the prepared seed file with its own Vtable and prefix
+  local seed; seed=$(seed_file)
+  if [ -z "$seed" ]; then log "no soil seed: the Noah state comes from the GFS"; return 0; fi
+  log "ungrib soil seed $seed -> SEED:$(wpsdate $START)"
+  mkdir -p ungrib/out ungrib/seed; ( cd ungrib/seed; rm -f SEED:* FILE:* GRIBFILE.*
+    seed_prep "$seed" $PWD/seed.grib2 > seed.inv
+    cp $HERE/parm/Vtable.SEED Vtable
+    mk_nps $PARM/nam_namelist.nps_bocos $START $START
+    sed -i "s/^ out_format = 'WPS'/ out_format = 'WPS',\n prefix = 'SEED'/" namelist.nps
+    ln -sf $PWD/seed.grib2 GRIBFILE.AAA
+    $EXEC/ungribs.exe > ungrib.out 2>&1 || { echo "ungrib seed failed"; tail ungrib.out; exit 1; }
+    [ -s SEED:$(wpsdate $START) ] || { echo "no SEED intermediate file"; tail -20 ungrib.out; exit 1; }
+    mv SEED:$(wpsdate $START) ../out/ )
+}
+
 stage_ungrib() { # one serial ungrib per GFS file, all in parallel (ops: 7 streams of 5 files)
   log "ungrib GFS $START f00..f$FHMAX"
   tl "ungrib start"
@@ -154,21 +169,7 @@ stage_ungrib() { # one serial ungrib per GFS file, all in parallel (ops: 7 strea
   export -f one ndate wpsdate mk_nps; export START PARM GFSDIR EXEC pcyc RUNDIR
   fhrs | xargs -P ${NPS_PARALLEL:-16} -I{} bash -c 'cd $RUNDIR && one {}'
   ls ungrib/out | wc -l
-  local seed; seed=$(seed_file)
-  if [ -n "$seed" ]; then
-    log "ungrib soil seed $seed -> SEED:$(wpsdate $START)"
-    mkdir -p ungrib/seed; ( cd ungrib/seed; rm -f SEED:* FILE:* GRIBFILE.*
-      seed_prep "$seed" $PWD/seed.grib2 > seed.inv
-      cp $HERE/parm/Vtable.SEED Vtable
-      mk_nps $PARM/nam_namelist.nps_bocos $START $START
-      sed -i "s/^ out_format = 'WPS'/ out_format = 'WPS',\n prefix = 'SEED'/" namelist.nps
-      ln -sf $PWD/seed.grib2 GRIBFILE.AAA
-      $EXEC/ungribs.exe > ungrib.out 2>&1 || { echo "ungrib seed failed"; tail ungrib.out; exit 1; }
-      [ -s SEED:$(wpsdate $START) ] || { echo "no SEED intermediate file"; tail -20 ungrib.out; exit 1; }
-      mv SEED:$(wpsdate $START) ../out/ )
-  else
-    log "no soil seed: the Noah state comes from the GFS"
-  fi
+  stage_seed
   tl "ungrib done"
 }
 

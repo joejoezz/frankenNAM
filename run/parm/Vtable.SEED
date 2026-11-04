@@ -10,15 +10,7 @@ Param| Type |Level1|Level2| Name     | Units   | Description                    
   85 | 112  |  40  | 100  | ST040100 | K       | T 40-100 cm below ground layer (Upper)  |  2  |  0  |  2  | 106 |
   85 | 112  | 100  | 200  | ST100200 | K       | T 100-200 cm below ground layer (Bottom)|  2  |  0  |  2  | 106 |
   81 |   1  |   0  |      | LANDSEA  | proprtn | Land/Sea flag (1=land,0=sea in NAM)     |  2  |  0  |  0  |   1 |
-  11 |   1  |   0  |      | SKINTEMP | K       | Skin temperature (land only; water blank)|  0  |  0  |  0  |   1 |
+  11 |   1  |   0  |      | SKINTEMP | K       | Skin temperature (can use for SST also) |  0  |  0  |  0  |   1 |
   65 |   1  |   0  |      | SNOW     | kg m-2  | Water equivalent snow depth             |  0  |  1  | 13  |   1 |
  223 |   1  |   0  |      | CANWAT   | kg m-2  | Plant Canopy Surface Water              |  2  |  0  | 196 |   1 |
 -----+------+------+------+----------+---------+-----------------------------------------+-----------------------+
-#
-# Soil-seed Vtable for the FrankenNAM tm06 cycle: the Noah land state read from a grid-218
-# NAM-format GRIB2 file valid at the model start (hindcast: the archived nam.tPPz.awphys00;
-# live: FrankenNAM's own previous product valid at that time). Rows are copied from
-# parm/nam_Vtable.NAM so the metgrid names match the GFS source (nam_Vtable.GFS.bocos) and
-# NPS metgrid merges them field by field (see docs/tm06-design.md, "metgrid precedence").
-# Not here on purpose: SEAICE and SST (stay GFS), SOILHGT/PSFC/PMSL and all 3-D fields.
-# SKINTEMP is blanked over water by run/recast.sh (seed_prep) so the GFS SST survives.
