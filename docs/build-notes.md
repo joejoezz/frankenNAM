@@ -43,7 +43,7 @@ logs in `/opt/nam/work/logs`.
 | UPP (`ncep_post` + `nam_post0`, serial make) | 199 s |
 | **total** | **1047 s (17.5 min)** |
 
-Whole session including the debugging described below: about 1.3 h of box time (03:46-05:00 UTC), roughly $2.20.
+Whole session including the debugging described below: about 1.2 h of box time (03:46-04:56 UTC), roughly $2.
 
 ## Toolchain and libraries that worked
 
