@@ -134,41 +134,46 @@ def panel(fields, title, kind, fname):
     fig.savefig(f"{OUT}/{fname}", dpi=90, bbox_inches="tight"); plt.close(fig)
     print("wrote", fname)
 
-# CONUS land mask from GFS f000 land-sea mask
-lsm = regrid("gfs", *read("gfs", 0, "lsm"))
-conus = (lsm > 0.5) & (GLAT >= 25) & (GLAT <= 50) & (GLON >= 235) & (GLON <= 293)
+def main():
+    global conus
+    # CONUS land mask from GFS f000 land-sea mask
+    lsm = regrid("gfs", *read("gfs", 0, "lsm"))
+    conus = (lsm > 0.5) & (GLAT >= 25) & (GLAT <= 50) & (GLON >= 235) & (GLON <= 293)
 
-def stats(a, ref):
-    d = (a - ref)[conus & np.isfinite(a) & np.isfinite(ref)]
-    return np.sqrt(np.mean(d ** 2)), np.mean(d)
+    def stats(a, ref):
+        d = (a - ref)[conus & np.isfinite(a) & np.isfinite(ref)]
+        return np.sqrt(np.mean(d ** 2)), np.mean(d)
 
-rows = []
-LEADS = [int(x) for x in os.environ.get("LEADS", "24,48,84").split(",")]
-for fh in LEADS:
-    for kind in ["mslp", "z500", "t2m", "wspd10", "rh700"]:
-        f = {s: field(s, fh, kind) for s, _ in SRCS}
-        panel([(lab, f[s]) for s, lab in SRCS], f"{kind}  f{fh:02d}  valid 2026-11-01 00Z +{fh} h", kind, f"{kind}_f{fh:02d}.png")
-        if kind in ("mslp", "z500", "t2m", "wspd10"):
-            rr, br = stats(f["recast"], f["nam"]); rg, bg = stats(f["gfs"], f["nam"])
-            rows.append((kind, fh, rr, br, rg, bg))
-for b in [x for x in (24, 48, 72) if x <= max(LEADS)]:
-    f = {s: precip(s, b - 6, b) for s, _ in SRCS}
-    panel([(lab, f[s]) for s, lab in SRCS], f"6 h precipitation ending f{b:02d}", "precip", f"precip6h_f{b:02d}.png")
-for a, b in [(0, 24), (24, 48), (60, 84)]:
-    if b > max(LEADS): continue
-    f = {s: precip(s, a, b) for s, _ in SRCS}
-    rr, br = stats(f["recast"], f["nam"]); rg, bg = stats(f["gfs"], f["nam"])
-    rows.append((f"precip24h_{a}-{b}", b, rr, br, rg, bg))
-if max(LEADS) >= 84:
-    f = {s: precip(s, 0, 84) for s, _ in SRCS}
-    panel([(lab, f[s]) for s, lab in SRCS], "Total precipitation f00-f84", "precip", "precip_total_f84.png")
+    rows = []
+    LEADS = [int(x) for x in os.environ.get("LEADS", "24,48,84").split(",")]
+    for fh in LEADS:
+        for kind in ["mslp", "z500", "t2m", "wspd10", "rh700"]:
+            f = {s: field(s, fh, kind) for s, _ in SRCS}
+            panel([(lab, f[s]) for s, lab in SRCS], f"{kind}  f{fh:02d}  valid 2026-11-01 00Z +{fh} h", kind, f"{kind}_f{fh:02d}.png")
+            if kind in ("mslp", "z500", "t2m", "wspd10"):
+                rr, br = stats(f["recast"], f["nam"]); rg, bg = stats(f["gfs"], f["nam"])
+                rows.append((kind, fh, rr, br, rg, bg))
+    for b in [x for x in (24, 48, 72) if x <= max(LEADS)]:
+        f = {s: precip(s, b - 6, b) for s, _ in SRCS}
+        panel([(lab, f[s]) for s, lab in SRCS], f"6 h precipitation ending f{b:02d}", "precip", f"precip6h_f{b:02d}.png")
+    for a, b in [(0, 24), (24, 48), (60, 84)]:
+        if b > max(LEADS): continue
+        f = {s: precip(s, a, b) for s, _ in SRCS}
+        rr, br = stats(f["recast"], f["nam"]); rg, bg = stats(f["gfs"], f["nam"])
+        rows.append((f"precip24h_{a}-{b}", b, rr, br, rg, bg))
+    if max(LEADS) >= 84:
+        f = {s: precip(s, 0, 84) for s, _ in SRCS}
+        panel([(lab, f[s]) for s, lab in SRCS], "Total precipitation f00-f84", "precip", "precip_total_f84.png")
 
-units = dict(mslp="hPa", z500="dam", t2m="K", wspd10="m/s")
-with open(f"{OUT}/stats.csv", "w") as c, open(f"{OUT}/stats.md", "w") as m:
-    c.write("field,lead,rmse_recast,bias_recast,rmse_gfs,bias_gfs\n")
-    m.write("| Field | Lead | RMSE recast | bias recast | RMSE GFS | bias GFS | closer to NAM |\n|---|---|---|---|---|---|---|\n")
-    for k, fh, rr, br, rg, bg in rows:
-        u = units.get(k, "mm")
-        c.write(f"{k},{fh},{rr:.3f},{br:.3f},{rg:.3f},{bg:.3f}\n")
-        m.write(f"| {k} ({u}) | f{fh:02d} | {rr:.2f} | {br:+.2f} | {rg:.2f} | {bg:+.2f} | {'recast' if rr < rg else 'GFS'} |\n")
-print(open(f"{OUT}/stats.md").read())
+    units = dict(mslp="hPa", z500="dam", t2m="K", wspd10="m/s")
+    with open(f"{OUT}/stats.csv", "w") as c, open(f"{OUT}/stats.md", "w") as m:
+        c.write("field,lead,rmse_recast,bias_recast,rmse_gfs,bias_gfs\n")
+        m.write("| Field | Lead | RMSE recast | bias recast | RMSE GFS | bias GFS | closer to NAM |\n|---|---|---|---|---|---|---|\n")
+        for k, fh, rr, br, rg, bg in rows:
+            u = units.get(k, "mm")
+            c.write(f"{k},{fh},{rr:.3f},{br:.3f},{rg:.3f},{bg:.3f}\n")
+            m.write(f"| {k} ({u}) | f{fh:02d} | {rr:.2f} | {br:+.2f} | {rg:.2f} | {bg:+.2f} | {'recast' if rr < rg else 'GFS'} |\n")
+    print(open(f"{OUT}/stats.md").read())
+
+if __name__ == "__main__":
+    main()
