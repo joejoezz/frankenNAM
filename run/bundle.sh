@@ -13,7 +13,7 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 CYCLE=${1:-2026110100}
 BUCKET=nam-recast-617711905691
 ARCH=$(uname -m); SUFFIX=""; [ "$ARCH" = aarch64 ] && SUFFIX=-arm64
-NAME=bundle-$(date -u +%Y%m%d)$SUFFIX.tar
+NAME=bundle-$(date -u +%Y%m%d)${BUNDLE_TAG:+-$BUNDLE_TAG}$SUFFIX.tar   # BUNDLE_TAG=tm06 -> bundle-YYYYMMDD-tm06-arm64.tar
 mkdir -p /opt/nam/work/run; cp "$HERE"/*.sh "$HERE"/*.py /opt/nam/work/run/ 2>/dev/null || true
 cp -r "$HERE"/parm /opt/nam/work/run/ 2>/dev/null || true
 [ -x /opt/nam/work/exec/wgrib2 ] || cp "$(command -v wgrib2)" /opt/nam/work/exec/wgrib2

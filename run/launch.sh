@@ -89,7 +89,7 @@ run_instances() { # run_instances <type> <subnet> <userdata> <name tag> [market 
   aws ec2 run-instances --image-id "$AMI" --instance-type "$type" --subnet-id "$subnet" \
     --security-group-ids "$SG" --key-name $NAME --iam-instance-profile Name=$NAME-ec2 "$@" \
     --instance-initiated-shutdown-behavior terminate \
-    --block-device-mappings "DeviceName=/dev/sda1,Ebs={VolumeSize=${DISK_GB:-300},VolumeType=gp3,Iops=6000,Throughput=500,DeleteOnTermination=true}" \
+    --block-device-mappings "DeviceName=/dev/sda1,Ebs={VolumeSize=${DISK_GB:-300},VolumeType=gp3,${DISK_PERF-Iops=6000,Throughput=500,}DeleteOnTermination=true}" \
     --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$tag},{Key=project,Value=$NAME},{Key=cycle,Value=$CYCLE}]" \
                          "ResourceType=volume,Tags=[{Key=project,Value=$NAME}]" \
     --user-data "$ud" --query 'Instances[0].InstanceId' --output text
@@ -130,7 +130,7 @@ aws s3 cp --only-show-errors /var/log/nam-recast-relay.log s3://$BUCKET/cases/$C
 shutdown -h now
 EOS
 )
-  IID=$(DISK_GB=8 run_instances t4g.nano "${SUBNETS%%,*}" "$RELAYDATA" $NAME-relay)
+  IID=$(DISK_GB=8 DISK_PERF= run_instances t4g.nano "${SUBNETS%%,*}" "$RELAYDATA" $NAME-relay)   # gp3 baseline: 8 GB cannot carry 6000 IOPS
   echo "relay $IID will launch $CYCLE $MODE $ARCH once no runner is alive"
   exit 0
 fi
