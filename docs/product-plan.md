@@ -28,11 +28,11 @@ keep it running; it is not the point.
   Monthly keeps the obligation to one billing period; the terms say the service can be wound down
   with a month's notice and no further charges.
 - **Founding members: the first 15 paying subscribers.** The promise: once the paying-subscriber
-  pledge is filled (proposed: **30 paying subscribers**, about twice break-even), founders drop to
+  pledge is filled (**20 paying subscribers**, decided 4 Nov 2026), founders drop to
   **$9.99/month** and stay there for as long as their subscription remains active. Stripe handles
   this as a price swap on their subscription. The counter is public on the subscribe page.
 - **Comped access (NWS offices, educators): only once a baseline of paying subscribers subsidises
-  it.** Proposed rule: no comps until the pledge (30) is filled; then at most one comp per five
+  it.** Rule: no comps until the pledge (20) is filled; then at most one comp per five
   paying subscribers, reviewed every six months, revocable if the paying base shrinks. Comped keys
   are ordinary keys with the same fair-use expectations.
 - Stripe Checkout + customer portal; webhook toggles the subscriber key.
@@ -44,11 +44,17 @@ keep it running; it is not the point.
   that would otherwise eat a $10-15 plan (a full-pull user ≈ 108 GB/month ≈ $9 on CloudFront).
 - File names and prefixes identical to the operational NAM (decided earlier).
 - Break-even ≈ 12-15 subscribers at $14.99 against ~$200/month of compute + transfer; at the
-  30-subscriber pledge with 15 founders at $9.99, revenue ≈ $375/month.
+  20-subscriber pledge with 15 founders at $9.99, revenue ≈ $225/month, roughly costs.
 - Subscriptions run through the LLC.
+
+## Transparency: publish what it costs
+The site carries a running cost page: compute per cycle and per month, transfer, storage, the
+subscriber count against the pledge, and the **startup cost of the resurrection** (Phase 0 ≈ $10.6,
+Graviton port ≈ $9.4, Phase 1 target < $50, plus the engineering time, stated honestly). Updated
+from the AWS cost allocation tag `project=nam-recast` and the Stripe subscriber count.
 
 ## Not yet decided
 - Whether the maps stay fully free forever (recommended: yes, they are the funnel and the
   community service) and whether BUFKIT files sit in the free or paid tier.
 - Region of the R2 bucket, custom domain for grids, status/alerting page.
-- The exact pledge number (30 proposed) and the comp ratio (1 per 5 proposed).
+- The comp ratio (1 per 5 proposed).
