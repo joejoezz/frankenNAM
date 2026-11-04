@@ -1,0 +1,58 @@
+Reason: ESMF 7.1.0r's bundled Sacado re-exports its templated min/max into namespace std, which breaks std::min<size_t>() inside GCC 13 libstdc++ <unordered_map> (icpx uses the system libstdc++); keep min/max in Sacado only.
+diff --git a/src/Infrastructure/Mesh/include/sacado/Sacado_MathFunctions.hpp b/src/Infrastructure/Mesh/include/sacado/Sacado_MathFunctions.hpp
+index f1eab1a..81685cd 100644
+--- a/src/Infrastructure/Mesh/include/sacado/Sacado_MathFunctions.hpp
++++ b/src/Infrastructure/Mesh/include/sacado/Sacado_MathFunctions.hpp
+@@ -98,7 +98,7 @@ UNARYFUNC_MACRO(abs, AbsOp)
+ 
+ #undef UNARYFUNC_MACRO
+ 
+-#define BINARYFUNC_MACRO(OP,FADOP)					\
++#define BINARYFUNC_MACRO_DECL(OP,FADOP)					\
+ namespace Sacado {							\
+ 									\
+   namespace Fad {							\
+@@ -219,7 +219,8 @@ namespace Sacado {							\
+   }									\
+ 									\
+ }									\
+-                                                                        \
++
++#define BINARYFUNC_MACRO(OP,FADOP) BINARYFUNC_MACRO_DECL(OP,FADOP) \
+ namespace std {                                                         \
+   using Sacado::Fad::OP;						\
+   using Sacado::CacheFad::OP;						\
+@@ -230,8 +231,15 @@ namespace std {                                                         \
+ 
+ BINARYFUNC_MACRO(atan2, Atan2Op)
+ BINARYFUNC_MACRO(pow, PowerOp)
+-BINARYFUNC_MACRO(max, MaxOp)
+-BINARYFUNC_MACRO(min, MinOp)
++
++// nam-recast: max/min are NOT re-exported into namespace std. With libstdc++ >= 8,
++// std::min<size_t>(a,b) inside <unordered_map> instantiates Sacado Expr<unsigned long>
++// and fails hard. Sacado code calls them unqualified (ADL) so nothing else changes.
++#define BINARYFUNC_MACRO_NOSTD(OP,FADOP) BINARYFUNC_MACRO_DECL(OP,FADOP)
++BINARYFUNC_MACRO_NOSTD(max, MaxOp)
++BINARYFUNC_MACRO_NOSTD(min, MinOp)
++#undef BINARYFUNC_MACRO_NOSTD
++#undef BINARYFUNC_MACRO_DECL
+ 
+ #undef BINARYFUNC_MACRO
+ 
+diff --git a/src/Infrastructure/Mesh/include/sacado/Sacado_Tay_CacheTaylorOps.hpp b/src/Infrastructure/Mesh/include/sacado/Sacado_Tay_CacheTaylorOps.hpp
+index 37eaa85..b6d28af 100644
+--- a/src/Infrastructure/Mesh/include/sacado/Sacado_Tay_CacheTaylorOps.hpp
++++ b/src/Infrastructure/Mesh/include/sacado/Sacado_Tay_CacheTaylorOps.hpp
+@@ -1530,10 +1530,7 @@ TAYLOR_SFINAE_BINARYOP_MACRO(min, MinOp)
+ 
+ #undef TAYLOR_SFINAE_BINARYOP_MACRO
+ 
+-namespace std {
+-  using Sacado::Tay::min;
+-  using Sacado::Tay::max;
+-}
++// nam-recast: Sacado::Tay::min/max not re-exported into std (breaks libstdc++ >= 8)
+ 
+ namespace Sacado {
+ 

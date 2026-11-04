@@ -1,0 +1,15 @@
+Reason: bufr 11.5.0 always builds test/, which downloads test data from a URL that now 404s; gate it behind ENABLE_TESTS (OFF).
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -90,7 +90,10 @@
+ 
+ add_subdirectory(tables)
+ 
+-add_subdirectory(test)
++option(ENABLE_TESTS "Build tests (downloads test data)" OFF)
++if(ENABLE_TESTS)
++  add_subdirectory(test)
++endif()
+ 
+ # Generate doxygen documentation if desired.
+ if(ENABLE_DOCS)
