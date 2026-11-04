@@ -19,8 +19,10 @@ if [ "${CLEAN:-1}" = 1 ]; then gmake clean > "$NAM_WORK/logs/nems_clean.log" 2>&
 t0=$SECONDS
 # DEBUG=on selects the conf file's trap build (gfortran: -O0 -fcheck=all -finit-real=snan
 # -ffpe-trap=...); the result is kept apart as NEMS_debug.x. Always clean when switching.
-OUT=NEMS.x; [ "${DEBUG:-off}" = on ] && OUT=NEMS_debug.x
-gmake nmm J=-j${NEMS_J:-8} DEBUG=${DEBUG:-off} 2>&1 | tee "$NAM_WORK/logs/nems_build${DEBUG:+_debug}.log" | grep -E "Error|error #|is created" || true
+# DEBUG_EXTRA adds flags to the trap build (e.g. -finit-local-zero to zero integers/logicals
+# while reals stay signalling NaN), DEBUG_TAG names the result NEMS_debug<tag>.x.
+OUT=NEMS.x; [ "${DEBUG:-off}" = on ] && OUT=NEMS_debug${DEBUG_TAG:-}.x
+gmake nmm J=-j${NEMS_J:-8} DEBUG=${DEBUG:-off} DEBUG_EXTRA="${DEBUG_EXTRA:-}" 2>&1 | tee "$NAM_WORK/logs/nems_build${DEBUG:+_debug}.log" | grep -E "Error|error #|is created" || true
 [ -x ../exe/NEMS.x ] || { echo "NEMS.x NOT BUILT"; grep -nE "Error|error" "$NAM_WORK/logs/nems_build${DEBUG:+_debug}.log" | head -30; exit 1; }
 cp ../exe/NEMS.x "$NAM_EXEC/$OUT"
 echo "$OUT built in $((SECONDS - t0)) s"

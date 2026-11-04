@@ -53,7 +53,7 @@ FINCS       = $(ESMF_INC) -I$(NEMSIO_INC) $(NETCDF_INC)
 ifeq ($(DEBUG),on)
   # no -finit-local-zero here on purpose: reals start as signalling NaN so that any reliance
   # on Intel's -init=zero traps. array-temps is a warning printer, not a check; it is left out.
-  TRAPS     = -fcheck=all,no-array-temps -finit-real=snan -ffpe-trap=invalid,zero,overflow
+  TRAPS     = -fcheck=all,no-array-temps -finit-real=snan -ffpe-trap=invalid,zero,overflow $(DEBUG_EXTRA)
   OPTS_NMM  = -O0
   OPTS_GFS  = -O0
   OPTS_GEN  = -O0

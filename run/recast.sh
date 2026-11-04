@@ -6,7 +6,8 @@
 # usage: recast.sh <stage...>   stages: ungrib metgrid nemsinterp fcst post sync  (or: nps, all)
 # env:   CYCLE=2026110100 FHMAX=84 INPES=4 JNPES=7 WRITE_GROUPS=1 WRITE_TASKS=4 NPOST=8
 #        RUNDIR=/opt/nam/runs/$CYCLE  S3RUN=s3://.../cases/$CYCLE/recast  FILTER=3
-#        RESTMIN=720 RST00=true WRTLAST=true (restarts; RESTMIN=99999 RST00=false WRTLAST=false = none)  SYNC_HISTORY=1
+#        RESTMIN=720 RST00=true WRTLAST=true (restarts; RESTMIN=100800 RST00=false WRTLAST=false = none;
+#        RESTMIN*60 must be a multiple of the 25 s timestep)  SYNC_HISTORY=1
 #        NEMS_EXE=/opt/nam/work/exec/NEMS.x (NEMS_debug.x for the trap build)
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -38,6 +39,9 @@ if [ -f /opt/intel/oneapi/setvars.sh ]; then
 else
   MPI=openmpi
   export OMPI_MCA_btl=${OMPI_MCA_btl:-self,vader}   # single node: shared memory only, no tcp probing
+  # UPP writes GRIB2 with MPI-IO; OpenMPI's default OMPIO component dies with SIGBUS on rank 0
+  # (aarch64, 4.1.6) and ROMIO works, so exclude OMPIO (the name-independent form of io=romio321).
+  export OMPI_MCA_io=${OMPI_MCA_io:-^ompio}
 fi
 export MPI
 ulimit -s unlimited || true

@@ -104,9 +104,30 @@ All 21 NCEPLIBS/netCDF/HDF5/jasper/png/zlib builds went through with gfortran un
 from the generic GNU flags (`-fcommon` for the C, the mismatch relaxations for the Fortran);
 the stack without ESMF took about 4 min.
 
-## Acceptance on the build box
+### UPP, second problem (found by the smoke-test post)
+- `uppgnu-02-null-pointer-size.patch`: `gengrb2msg` takes `size()` of the POINTER components
+  `level2`, `scale_fact_fixed_sfc2`, ... of `param_t`, which are `=> null()` for parameters whose
+  `post_avblflds.xml` entry lacks them. `size()` of a disassociated pointer is undefined; ifort's
+  zeroed descriptor returns 0 and the code relies on it, gfortran dereferences it and `ncep_post`
+  segfaults (`grib2_module.f:704`, rank 13, after the CIN/PLPL/LTNG fields). A null-safe
+  `psize()` generic replaces the calls (GNU path only).
 
-(filled in below as the runs complete)
+## Acceptance on the build box (c8g.8xlarge, 32 cores, `run/smoke.sh`)
+
+| Check | arm64 result | x86 Phase 0 |
+|---|---|---|
+| NPS, 84 h of GFS: ungrib / metgrid / nemsinterp | 351 / 467 / 511 s | 380 / 380 / 479 s |
+| nemsinterp IC and bocos vs the x86 files | not bit-identical: median relative difference 1e-7 (IC) to 1e-6 (bocos); the largest absolute differences are 0.52 Pa in the pressure records (~1e5 Pa) and 3.6 in one boco.0000 record; 305 of 488 IC records differ (`run/cmp_nemsio.py`) | - |
+| 3 h smoke, TDFI, 4x7 + 1x4, run 1 / run 2 | **829 s / 844 s** (exit 0) | 969 s |
+| history files run 1 vs run 2 (`cmp`) | **bit-identical** (f00 and f03, 4.86 GB each, and the .ctl files) | not tested |
+| node memory peak during the smoke (`free`, 30 s) | 43.1 GB used | ~48 GB flat (84 h run) |
+| max RSS of a rank (time -v, mpirun tree) | 1.65 GB | 2.2 GB |
+| UPP on the smoke output | first attempt segfault (above); after `uppgnu-02` see below | 21 s / file (16 tasks) |
+| `wgrib2 -stats` PRMSL f00/f03 | see below | f84 range 969.7-1062.1 hPa |
+| 1 h run, hourly history, no filter, **trap build** (`-O0 -g -fcheck=all -finit-real=snan -ffpe-trap=invalid,zero,overflow`) | no floating-point trap; the run aborts 17 s in, while the write (quilt) tasks write the f00 history: `NEMSIO_WRITEREC` returns an error on a 2-D integer record and `module_WRITE_GRID_COMP.F90:4100` prints "Failed to write output to file! Aborting!" (504 MB of the 4.86 GB file written). Nothing in the dynamics/physics had run yet. The write path therefore relies on zero-initialised locals (the brief's trap flags leave integers/logicals uninitialised); a second variant with integers zeroed (`DEBUG_EXTRA=-finit-local-zero`, reals still sNaN) is reported below. | 258 s (optimised) |
+
+Note on the smoke timing: gfortran on Graviton4 is **13 % faster** than ifort on the c7a
+(Genoa) build box for this run, the opposite of the 10-25 % slowdown the plan assumed.
 
 ## Validation run (84 h, c8g.8xlarge Spot, restarts off)
 

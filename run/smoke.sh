@@ -33,8 +33,9 @@ if [ "${SKIP_SMOKE:-0}" != 1 ]; then
   for fh in 00 03; do $WG $OUT/smoke_a/grib2/nam.t00z.bgdawp$fh.tm00.grib2 -match ":PRMSL:" -stats 2>&1 | tee -a $SUM; done
 fi
 if [ "${SKIP_DEBUG:-0}" != 1 ]; then
-  run $OUT/dbg1h FHMAX=1 FILTER=0 HISTMIN=60 NEMS_EXE=/opt/nam/work/exec/NEMS_debug.x
-  ls $OUT/dbg1h/fcst/nmmb_hst_01_nio_* 2>/dev/null | tee -a $SUM
-  grep -n -A12 -m3 "SIGFPE\|Fortran runtime error\|signal" $OUT/dbg1h/fcst/nems.err | head -60 | tee -a $SUM
+  D=$OUT/${DBG_NAME:-dbg1h}
+  run $D FHMAX=1 FILTER=0 HISTMIN=60 NEMS_EXE=${DBG_EXE:-/opt/nam/work/exec/NEMS_debug.x}
+  ls -l $D/fcst/nmmb_hst_01_nio_* 2>/dev/null | awk '{print $5, $9}' | tee -a $SUM
+  grep -n -B3 -A12 -m3 "SIGFPE\|Fortran runtime error\|signal\|Aborting\|MPI_ABORT" $D/fcst/nems.err | grep -v "its=\|ims=\|ids=" | head -60 | tee -a $SUM
 fi
 echo "== done $(date -u +%FT%TZ)" >> $SUM

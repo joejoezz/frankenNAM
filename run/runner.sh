@@ -8,7 +8,9 @@ export CYCLE=${CYCLE:-2026110100}
 export RUNDIR=/opt/nam/runs/$CYCLE S3RUN=s3://nam-recast-617711905691/cases/$CYCLE/${S3SUB:-recast}
 # NO_RESTART=1: no restart files at all (RESTMIN past the run, no f00 restart) so the run fits a
 # 64 GB node (Phase 0: restarts pushed the peak from 48 to 77 GB); a Spot reclaim then means a rerun.
-if [ "${NO_RESTART:-0}" = 1 ]; then export RESTMIN=99999 RST00=false WRTLAST=false; fi
+# RESTMIN must be a multiple of the 25 s timestep (minutes*60 mod 25 = 0, i.e. of 5 min) or NEMS
+# aborts at start ("Timestep of this domain does not divide evenly into the restart interval").
+if [ "${NO_RESTART:-0}" = 1 ]; then export RESTMIN=100800 RST00=false WRTLAST=false; fi   # 70 days
 mkdir -p $RUNDIR/fcst $RUNDIR/grib2
 cd "$HERE"
 # c7a has no SMT: a c7a.48xlarge is 192 physical cores. Use 168 compute + 2x8 write tasks
@@ -33,8 +35,12 @@ aws s3 sync --only-show-errors $S3RUN/grib2-all/ $RUNDIR/grib2/
 FPID=$!
 ( while kill -0 $FPID 2>/dev/null; do sleep 3000; ./recast.sh sync >> $RUNDIR/sync.log 2>&1; done ) &
 ( while kill -0 $FPID 2>/dev/null; do echo "$(date -u +%T) $(free -m | awk '/Mem:/{print "used_mb="$3, "avail_mb="$7}')" >> $RUNDIR/mem.log; sleep 60; done ) &
+# Executables fixed while a run is in progress can be dropped into runner/exec-<arch>/ in S3;
+# they are picked up before UPP runs (the forecast binary is never replaced under a running job).
+refresh_exec() { aws s3 sync --only-show-errors --exclude "NEMS*" s3://nam-recast-617711905691/runner/exec-$(uname -m)/ /opt/nam/work/exec/ 2>/dev/null || true; }
 if [ "${POST_AFTER:-0}" = 1 ]; then
   wait $FPID; FRC=$?
+  refresh_exec
   ./recast.sh post > $RUNDIR/post.log 2>&1; PRC=$?
 else
   sleep 120

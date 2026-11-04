@@ -1,0 +1,109 @@
+Reason: gengrb2msg takes size() of the POINTER components level/level2/scale/scale_fact_fixed_sfc1/2 of param_t, which are '=> null()' for parameters whose post_avblflds.xml entry lacks them; size() of a disassociated pointer is undefined, ifort's zeroed descriptor returns 0 and the code relies on that, gfortran dereferences it and ncep_post segfaults at grib2_module.f:704 (rank 13, after CIN/PLPL/LTNG). A null-safe psize() generic replaces the calls; applied on the GNU toolchain only.
+--- a/sorc/nam_nceppost.fd/sorc/ncep_post.fd/grib2_module.f	2026-11-04 08:37:49
++++ b/sorc/nam_nceppost.fd/sorc/ncep_post.fd/grib2_module.f	2026-11-04 08:37:49
+@@ -15,6 +15,9 @@
+ !
+   implicit none
+   private
++  interface psize
++    module procedure psize_r, psize_i
++  end interface psize
+ ! ------------------------------------------------------------------------
+ !
+ !--- general grib2 info provided by post control file
+@@ -664,23 +667,23 @@
+ !
+        coordlist=0
+        numcoord=0
+-!       print *,'size(level)=',size(pset%param(nprm)%level),'nlvl=',nlvl, &
++!       print *,'size(level)=',psize(pset%param(nprm)%level),'nlvl=',nlvl, &
+ !       'lev_type=',trim(pset%param(nprm)%fixed_sfc1_type),'fldlvl1=', &
+ !        fldlvl1,'fldlvl2=',fldlvl2
+ !lvl is shown in ctl file
+        if(fldlvl1==0.and.fldlvl2==0) then
+    
+-         if(size(pset%param(nprm)%level)>1.and.size(pset%param(nprm)%level)>=nlvl) then
++         if(psize(pset%param(nprm)%level)>1.and.psize(pset%param(nprm)%level)>=nlvl) then
+            scaled_val_fixed_sfc1=nint(pset%param(nprm)%level(nlvl))
+-         else if(size(pset%param(nprm)%level)==1) then
++         else if(psize(pset%param(nprm)%level)==1) then
+            scaled_val_fixed_sfc1=nint(pset%param(nprm)%level(1))
+          else
+            scaled_val_fixed_sfc1=0
+          endif
+-         if(size(pset%param(nprm)%scale_fact_fixed_sfc1)>1.and. &
+-           size(pset%param(nprm)%scale_fact_fixed_sfc1)>=nlvl) then
++         if(psize(pset%param(nprm)%scale_fact_fixed_sfc1)>1.and. &
++           psize(pset%param(nprm)%scale_fact_fixed_sfc1)>=nlvl) then
+            scale_fct_fixed_sfc1=pset%param(nprm)%scale_fact_fixed_sfc1(nlvl)
+-         else if(size(pset%param(nprm)%scale_fact_fixed_sfc1)==1) then
++         else if(psize(pset%param(nprm)%scale_fact_fixed_sfc1)==1) then
+            scale_fct_fixed_sfc1=pset%param(nprm)%scale_fact_fixed_sfc1(1)
+          else
+            scale_fct_fixed_sfc1=0
+@@ -695,20 +698,20 @@
+        endif
+ 
+        fixed_sfc2_type=pset%param(nprm)%fixed_sfc2_type
+-       if(size(pset%param(nprm)%level2)>1.and.size(pset%param(nprm)%level2)<nlvl) then
++       if(psize(pset%param(nprm)%level2)>1.and.psize(pset%param(nprm)%level2)<nlvl) then
+          fixed_sfc2_type=''
+        endif
+-       if(size(pset%param(nprm)%level2)>1.and.size(pset%param(nprm)%level2)>=nlvl) then
++       if(psize(pset%param(nprm)%level2)>1.and.psize(pset%param(nprm)%level2)>=nlvl) then
+          scaled_val_fixed_sfc2=nint(pset%param(nprm)%level2(nlvl))
+-       else if(size(pset%param(nprm)%level2)==1) then
++       else if(psize(pset%param(nprm)%level2)==1) then
+          scaled_val_fixed_sfc2=nint(pset%param(nprm)%level2(1))
+        else
+          scaled_val_fixed_sfc2=0
+        endif
+-       if(size(pset%param(nprm)%scale_fact_fixed_sfc2)>1 .and. &
+-          size(pset%param(nprm)%scale_fact_fixed_sfc2)>=nlvl) then
++       if(psize(pset%param(nprm)%scale_fact_fixed_sfc2)>1 .and. &
++          psize(pset%param(nprm)%scale_fact_fixed_sfc2)>=nlvl) then
+          scale_fct_fixed_sfc2=pset%param(nprm)%scale_fact_fixed_sfc2(nlvl)
+-       else if(size(pset%param(nprm)%scale_fact_fixed_sfc2)==1) then
++       else if(psize(pset%param(nprm)%scale_fact_fixed_sfc2)==1) then
+          scale_fct_fixed_sfc2=pset%param(nprm)%scale_fact_fixed_sfc2(1)
+        else
+          scale_fct_fixed_sfc2=0
+@@ -903,14 +906,14 @@
+          where(abs(datafld1)>=SPVAL)bmap=.false.
+        endif
+ !
+-       if(size(pset%param(nprm)%level)==size(pset%param(nprm)%scale)) then
+-         if(size(pset%param(nprm)%level)==1) nlvl=1
++       if(psize(pset%param(nprm)%level)==psize(pset%param(nprm)%scale)) then
++         if(psize(pset%param(nprm)%level)==1) nlvl=1
+          if(nlvl/=0) then
+            fldscl=nint(pset%param(nprm)%scale(nlvl))
+          else
+            fldscl=0
+          endif
+-       else if (size(pset%param(nprm)%scale)==1) then
++       else if (psize(pset%param(nprm)%scale)==1) then
+          fldscl=nint(pset%param(nprm)%scale(1))
+        endif
+ !
+@@ -1356,4 +1359,20 @@
+ !
+ !-------------------------------------------------------------------------------------
+ !
++
++! nam-recast: size() of a disassociated POINTER component is undefined; ifort happens to return
++! 0 (zeroed descriptor) and gengrb2msg relies on that for params without <level2> /
++! <scale_fact_fixed_sfc2> entries, gfortran segfaults. psize() returns 0 for a null pointer.
++  function psize_r(p) result(n)
++    real, dimension(:), pointer :: p
++    integer :: n
++    n = 0
++    if (associated(p)) n = size(p)
++  end function psize_r
++  function psize_i(p) result(n)
++    integer, dimension(:), pointer :: p
++    integer :: n
++    n = 0
++    if (associated(p)) n = size(p)
++  end function psize_i
+   end module grib2_module
