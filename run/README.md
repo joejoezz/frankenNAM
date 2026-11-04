@@ -35,7 +35,7 @@ RUNDIR=/opt/nam/runs/smoke3h FHMAX=3 run/recast.sh fcst post     # after linking
 
 # big node: AMI of the build box, then one Spot c7a.48xlarge that runs run/runner.sh and terminates
 deploy/03-runner-ami.sh
-deploy/04-run-case.sh            # 'ondemand' as the argument if Spot capacity is refused
+TYPE=r7a.8xlarge SUBNET=<subnet with capacity> deploy/04-run-case.sh   # 'ondemand' as the argument if Spot is refused
 ```
 
 `runner.sh` pulls any restart already in S3 (Spot recovery), runs `fcst` in the background,
@@ -43,7 +43,10 @@ deploy/04-run-case.sh            # 'ondemand' as the argument if Spot capacity i
 `DONE` or `FAILED` to the S3 case prefix, and the user-data shuts the instance down (shutdown =
 terminate).
 
-Decomposition: smoke test 4 x 7 compute + 1 x 4 write = 32 tasks. On a c7a.48xlarge (192
+Decomposition: smoke test 4 x 7 compute + 1 x 4 write = 32 tasks; the 2026110100 84 h run used
+the same layout on an r7a.8xlarge (the account's EC2 vCPU quotas are 32 for both Spot and
+on-demand; a 64 GB c7a.8xlarge runs out of memory at the first restart write, see
+`docs/run-notes.md`). 84 h took 4 h 25 min (189 s per forecast hour) plus 11 min of UPP. On a c7a.48xlarge (192
 physical cores; c7a has no SMT, `lscpu` shows 1 thread per core) 12 x 14 = 168 compute + 2 x 8
 write = 184 tasks pinned to cores 0-183, UPP on cores 184-191.
 

@@ -13,9 +13,12 @@ NC=$(nproc)
 if [ "$NC" -ge 190 ]; then
   export INPES=${INPES:-12} JNPES=${JNPES:-14} WRITE_GROUPS=${WRITE_GROUPS:-2} WRITE_TASKS=${WRITE_TASKS:-8}
   export FCST_CPUS=0-183 POST_CPUS=184-191 NPOST=8
-else
+elif [ "$NC" -ge 96 ]; then
   export INPES=${INPES:-8} JNPES=${JNPES:-11} WRITE_GROUPS=${WRITE_GROUPS:-1} WRITE_TASKS=${WRITE_TASKS:-8}
   export NPOST=${NPOST:-4}
+else   # 32-core node (the account's 32-vCPU quota): smoke-test layout, UPP after the forecast
+  export INPES=${INPES:-4} JNPES=${JNPES:-7} WRITE_GROUPS=${WRITE_GROUPS:-1} WRITE_TASKS=${WRITE_TASKS:-4}
+  export NPOST=${NPOST:-16} POST_AFTER=1
 fi
 lscpu | grep -E "^CPU\(s\)|Thread|Model name" >> $RUNDIR/runner.log 2>/dev/null || true
 echo "layout ${INPES}x${JNPES} + ${WRITE_GROUPS}x${WRITE_TASKS}, post $NPOST" >> $RUNDIR/runner.log
@@ -25,11 +28,17 @@ aws s3 sync --only-show-errors $S3RUN/grib2-all/ $RUNDIR/grib2/
 ./recast.sh fcst > $RUNDIR/fcst.log 2>&1 &
 FPID=$!
 ( while kill -0 $FPID 2>/dev/null; do sleep 3000; ./recast.sh sync >> $RUNDIR/sync.log 2>&1; done ) &
-sleep 120
-WAIT=1 ./recast.sh post > $RUNDIR/post.log 2>&1; PRC=$?
-wait $FPID; FRC=$?
+( while kill -0 $FPID 2>/dev/null; do echo "$(date -u +%T) $(free -m | awk '/Mem:/{print "used_mb="$3, "avail_mb="$7}')" >> $RUNDIR/mem.log; sleep 60; done ) &
+if [ "${POST_AFTER:-0}" = 1 ]; then
+  wait $FPID; FRC=$?
+  ./recast.sh post > $RUNDIR/post.log 2>&1; PRC=$?
+else
+  sleep 120
+  WAIT=1 ./recast.sh post > $RUNDIR/post.log 2>&1; PRC=$?
+  wait $FPID; FRC=$?
+fi
 echo "fcst rc=$FRC post rc=$PRC $(date -u +%FT%TZ)" | tee -a $RUNDIR/runner.log
 ./recast.sh sync >> $RUNDIR/sync.log 2>&1
 aws s3 cp --only-show-errors $RUNDIR/runner.log $S3RUN/logs/runner.log
-for f in fcst.log post.log sync.log; do aws s3 cp --only-show-errors $RUNDIR/$f $S3RUN/logs/$f; done
+for f in fcst.log post.log sync.log mem.log; do aws s3 cp --only-show-errors $RUNDIR/$f $S3RUN/logs/$f; done
 [ $FRC = 0 ] && [ $PRC = 0 ] && echo done | aws s3 cp - $S3RUN/DONE || echo "fcst=$FRC post=$PRC" | aws s3 cp - $S3RUN/FAILED
