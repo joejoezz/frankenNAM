@@ -122,3 +122,71 @@ region us-west-2, requested value 192. Use case: "Batch numerical weather predic
 (FrankenNAM, a community recast of the retired NOAA NAM) on r7a/m7a Spot instances, up to six
 8xlarge nodes concurrently, each job 4-5 h, S3 in/out, no public-facing service on the nodes."
 Also raise "Running On-Demand Standard instances" to 96 if offered, for fallback.
+
+## Revision 4 Nov 2026 (evening): Graviton first, lean budget under $50
+
+Joe: the project rests on delivering runs as cheaply as possible; Phase 1 budget target < $50.
+
+### What the Graviton port entails
+Toolchain: gfortran 13 + OpenMPI (apt, Ubuntu 24.04 arm64); no Intel compilers on ARM.
+The tree already has `src/conf/configure.nems.Linux.gnu` with the right semantics
+(`-fdefault-real-8 -fdefault-double-8`, `-fconvert=big-endian`, `-fno-range-check`, `-O3`).
+Two things it lacks versus the WCOSS2 Intel config: `-init=zero` (the code relies on
+zero-initialised locals; use `-finit-local-zero`, and catch the rest with a debug build using
+`-finit-real=snan -ffpe-trap=invalid` on the 3 h smoke) and `-fallow-argument-mismatch`
+(GCC ≥ 10 rejects the MPI buffer mismatches a 2017 code is full of). Intel's `-fp-model precise`
+maps to plain `-O2`/`-O3` without `-ffast-math`. NCEPLIBS, netCDF, CRTM, bufr all build with
+gfortran (that is their CI). NPS and UPP have GNU stanzas from their WPS/UPP ancestry.
+**Main risk: ESMF 7.1.0r on aarch64** (its build system predates arm64 Linux; fallback is ESMF 8.x
+with small NEMS API patches). Validation: same 2026-11-01 00Z case on Graviton vs the x86 run vs
+the archive (differences should be roundoff at f00 growing to tenths of hPa/K by f84, within the
+x86-vs-archive error), plus bit-for-bit reproducibility between two Graviton runs. Keep the
+Intel-MPI barrier patch (harmless). Effort 1-2 agent days; ~$12.
+
+### What it is worth, with today's Spot prices (us-west-2, cheapest zone, 4 Nov 2026)
+| Node (32 cores) | RAM | Spot $/h | 90 h run at Phase 0 speed |
+|---|---|---|---|
+| r7a.8xlarge (Phase 0) | 256 GB | 0.82 | $4.10 |
+| m7a.8xlarge | 128 GB | 0.61 | $3.05 |
+| c7a.8xlarge, restarts off | 64 GB | 0.58 | $2.90 |
+| c8g.8xlarge Graviton4, restarts off | 64 GB | 0.47 | $2.35 if gfortran matches ifort speed; $2.90 if 25 % slower |
+| m8g.8xlarge Graviton4 | 128 GB | 0.53 | $2.65-3.30 |
+
+Honest reading: the earlier "Graviton halves the cost" came from 48xlarge prices and does not
+hold at 8xlarge; here Graviton is 15-20 % cheaper per hour and gfortran code is usually 10-25 %
+slower than ifort, so the port saves $0-0.60 per run. The bigger levers are free: drop the
+r-class node (restarts off, 64 GB c-class; a Spot reclaim then costs a $3 rerun, which at
+typical interruption rates is pennies per run) and pick the cheapest zone at launch. The port's
+real value is **capacity and price diversity**: two instance families and eight Spot pools
+instead of four, and a hedge against x86 Spot spikes. Floor for daily operations at 00Z+12Z:
+about $150-180/month compute for the full parent domain; nothing short of changing the model
+(domain, levels, time step) goes below that.
+
+### Lean Phase 1 (target < $50, ceiling $60)
+| Item | Runs | Cost |
+|---|---|---|
+| Graviton port: Spot c8g.4xlarge dev box ~10 h, three 3 h smokes, one 84 h validation run on c8g.8xlarge | | $12 |
+| Restarts-off / 64 GB memory check (part of the validation run) | | $0 |
+| tm06 spin-up driver, streamed bocos, buckets, soil seed: short 6-12 h tests + one full 90 h run of the Phase 0 case | 8 short + 1 full | $8 |
+| Hindcast: 5 new cases, tm06 arm (+ the Phase 0 case = 6) | 5 | $15 |
+| Analysis-start reference arm on 2 of those cases | 2 | $6 |
+| Dress rehearsal, one live 12Z cycle | 1 | $3 |
+| S3 (transient ≤ 200 GB), MRMS/ASOS pulls | | $4 |
+| **Total** | | **≈ $48** |
+
+What is cut and what it costs us: the hindcast shrinks from 18 cases to 6, so the Phase 1
+scorecard is indicative, not a verdict; no on-demand x86 box time (all development on Spot
+Graviton nodes from the S3 bundle); no quota increase needed (6 serial runs fit in a week).
+The verdict then comes from **live verification from day one of Phase 2**: at ~$6/day, the
+first month of 00Z/12Z cycles is 60 verified runs, more than any hindcast we would pay for,
+and it is the product anyway. Phase 2 must therefore ship the verification pipeline with the
+first cycle, not after.
+
+Standing cost to kill: the stopped x86 build box's 300 GB EBS volume costs ~$24/month, half
+the Phase 1 budget. Everything on it is reproducible (`build/build_all.sh`, 17.5 min; binaries
+and the 12.5 GB runner bundle are in S3). Recommendation: terminate it once the Graviton box
+exists; keep a Graviton dev box only on Spot and only while an agent is working.
+
+Cleanup done 4 Nov: Phase 0 history (203 GB) and the duplicate GRIB2 set (32 GB) deleted;
+bucket now ~60 GB (~$1.40/month): x86 reference GRIB2 (16 GB, needed for the Graviton
+validation), staged GFS/NAM inputs for the case (25 GB), fix files, runner bundle, figures.
