@@ -39,9 +39,10 @@ ARCH_OPT   ?= -mcpu=neoverse-v1
 GNU_LEGACY  = -fallow-argument-mismatch -fallow-invalid-boz -fno-range-check -ffree-line-length-none
 
 FC          = mpif90 -g -fbacktrace -fopenmp $(ARCH_OPT) $(GNU_LEGACY)
-# atmos/nmm/makefile compiles the n_*.f GFS-definition modules with $(F77) (undefined on WCOSS2,
-# where the environment supplied it); give it the same compiler and flags explicitly.
-F77         = gfortran -g -fbacktrace -fopenmp $(ARCH_OPT) $(GNU_LEGACY) -fconvert=big-endian
+# atmos/nmm/makefile compiles the n_*.f GFS-definition modules with $(F77), which no configure
+# file defines (on WCOSS2/x86 the environment supplied ifort and the MPI include path came from
+# the module/setvars CPATH). n_module_gfs_mpi_def.f includes mpif.h, so it must be the MPI wrapper.
+F77         = mpif90 -g -fbacktrace -fopenmp $(ARCH_OPT) $(GNU_LEGACY) -fconvert=big-endian
 
 FREE        = -ffree-form
 FIXED       = -ffixed-form

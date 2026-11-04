@@ -1,0 +1,15 @@
+Reason: ungrib's edition_num reads the GRIB discipline/edition bytes with gbyte(), which resolves to w3nco's integer-word unpacker; that routine assumes big-endian word layout and returns the reserved bytes (0) on little-endian aarch64, so every GFS file is treated as neither GRIB1 nor GRIB2 and ungrib writes nothing. g2's g2_gbytec (character based, endian independent, already linked) has the same argument list; the same change was made upstream in WPS.
+--- a/sorc/nam_nps.fd/sorc/NMMB_init/NPS/ungrib/src/rd_grib2.F90	2026-11-04 07:26:59
++++ b/sorc/nam_nps.fd/sorc/NMMB_init/NPS/ungrib/src/rd_grib2.F90	2026-11-04 07:26:59
+@@ -788,9 +788,9 @@
+    
+          ! Unpack Section 0 - Indicator Section to extract GRIB edition field
+          iofst=8*(istart+5)
+-         call gbyte(cgrib,discipline,iofst,8)     ! Discipline
++         call g2_gbytec(cgrib,discipline,iofst,8)     ! Discipline (nam-recast: g2_gbytec, byte based)
+          iofst=iofst+8
+-         call gbyte(cgrib,grib_edition,iofst,8)   ! GRIB edition number
++         call g2_gbytec(cgrib,grib_edition,iofst,8)   ! GRIB edition number
+ 
+          print *, 'ungrib - grib edition num',  grib_edition
+          CALL BACLOSE(junit,IOS)
