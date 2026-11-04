@@ -8,6 +8,7 @@ BUILD_DIR=$(cd "$(dirname "$0")" && pwd)
 source "$BUILD_DIR/env.sh"; source "$BUILD_DIR/common.sh"
 stage_src
 apply_src_patches upp
+[ "$TOOLCHAIN" = gnu ] && apply_src_patches uppgnu   # gfortran-only: timef() replacement
 LOG=$NAM_WORK/logs; t0=$SECONDS
 
 cd "$NAM_SRC/sorc/nam_nceppost.fd/sorc/ncep_post.fd"

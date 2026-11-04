@@ -1,0 +1,26 @@
+Reason: WRFPOST.f times its phases with timef(), an Intel Fortran portability routine (libifport, "seconds since the first call", REAL(8)) that gfortran does not provide; ncep_post fails to link with "undefined reference to timef_". Add an equivalent built on system_clock; applied on the GNU toolchain only (prefix uppgnu), the Intel build keeps libifport's.
+--- /dev/null
++++ b/sorc/nam_nceppost.fd/sorc/ncep_post.fd/timef.f90
+@@ -0,0 +1,13 @@
++! nam-recast: replacement for Intel's TIMEF portability function (gfortran has none).
++! Returns wall-clock seconds elapsed since the first call, as REAL(8), like libifport.
++function timef() result(t)
++  implicit none
++  real(kind=8) :: t
++  integer(kind=8) :: c, r
++  integer(kind=8), save :: c0 = -1_8
++  call system_clock(count=c, count_rate=r)
++  if (c0 < 0_8) c0 = c
++  t = real(c - c0, kind=8) / real(r, kind=8)
++end function timef
++
++
+--- a/sorc/nam_nceppost.fd/sorc/ncep_post.fd/makefile_module
++++ b/sorc/nam_nceppost.fd/sorc/ncep_post.fd/makefile_module
+@@ -104,7 +104,7 @@
+         AllGETHERV_GSD.o MSFPS.o SELECT_CHANNELS.o ALLOCATE_ALL.o INITPOST_NEMS_MPIIO.o ASSIGNNEMSIOVAR.o \
+-        INITPOST_GFS_NEMS_MPIIO.o 
++        INITPOST_GFS_NEMS_MPIIO.o timef.o
+ 
+ 
+ .SUFFIXES: .F .f .o .f90 .c
