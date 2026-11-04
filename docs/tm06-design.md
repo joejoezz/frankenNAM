@@ -162,7 +162,8 @@ a runner cannot launch its successor while it is itself alive: RunInstances is r
 on-demand instance (~$0.004/h, same role and tags) that waits until no `nam-recast-runner` is
 running, launches the queued runner (retrying zones and Spot capacity), uploads its log and
 terminates. Once the pending raise to 64 vCPU lands the direct launch succeeds and the relay is
-never used. Zones are tried in the order 2d, 2a, 2c, 2b (2d had the cheapest c8g Spot,
+never used. The relay is on-demand (2 of the 32 on-demand vCPU), so the arm build box (32 vCPU
+on-demand) must be stopped while a chain can fire; it is, during runs. Zones are tried in the order 2d, 2a, 2c, 2b (2d had the cheapest c8g Spot,
 $0.466/h, on 4 Nov 2026). Chain test result in section 6.
 
 ## 5. Stage clock (measured) and projected live clock
