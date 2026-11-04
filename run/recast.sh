@@ -39,9 +39,9 @@ if [ -f /opt/intel/oneapi/setvars.sh ]; then
 else
   MPI=openmpi
   export OMPI_MCA_btl=${OMPI_MCA_btl:-self,vader}   # single node: shared memory only, no tcp probing
-  # UPP writes GRIB2 with MPI-IO; OpenMPI's default OMPIO component dies with SIGBUS on rank 0
-  # (aarch64, 4.1.6) and ROMIO works, so exclude OMPIO (the name-independent form of io=romio321).
-  export OMPI_MCA_io=${OMPI_MCA_io:-^ompio}
+  # UPP writes GRIB2 with MPI-IO. Both OpenMPI components work (a SIGBUS first blamed on OMPIO
+  # was a full disk); ROMIO is kept because the arm64 validation run used it. OMPI_MCA_io= clears it.
+  export OMPI_MCA_io=${OMPI_MCA_io-^ompio}
 fi
 export MPI
 ulimit -s unlimited || true

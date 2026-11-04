@@ -122,9 +122,16 @@ the stack without ESMF took about 4 min.
 | history files run 1 vs run 2 (`cmp`) | **bit-identical** (f00 and f03, 4.86 GB each, and the .ctl files) | not tested |
 | node memory peak during the smoke (`free`, 30 s) | 43.1 GB used | ~48 GB flat (84 h run) |
 | max RSS of a rank (time -v, mpirun tree) | 1.65 GB | 2.2 GB |
-| UPP on the smoke output | first attempt segfault (above); after `uppgnu-02` see below | 21 s / file (16 tasks) |
-| `wgrib2 -stats` PRMSL f00/f03 | see below | f84 range 969.7-1062.1 hPa |
+| UPP on the smoke output (16 tasks) | **15 s (f00) / 16 s (f03)** after `uppgnu-02`; 1189 / 1199 GRIB2 messages, BGDAWP 475 / 500 MB (x86: 475 / 500 MB) | 21 s / file |
+| `wgrib2 -stats` PRMSL | f00: mean 1012.1, min 975.8, max 1038.8 hPa; f03: mean 1012.4, min 970.8, max 1046.0 hPa; no undefined points | f84 range 969.7-1062.1 hPa |
 | 1 h run, hourly history, no filter, **trap build** (`-O0 -g -fcheck=all -finit-real=snan -ffpe-trap=invalid,zero,overflow`) | no floating-point trap; the run aborts 17 s in, while the write (quilt) tasks write the f00 history: `NEMSIO_WRITEREC` returns an error on a 2-D integer record and `module_WRITE_GRID_COMP.F90:4100` prints "Failed to write output to file! Aborting!" (504 MB of the 4.86 GB file written). Nothing in the dynamics/physics had run yet. The write path therefore relies on zero-initialised locals (the brief's trap flags leave integers/logicals uninitialised); a second variant with integers zeroed (`DEBUG_EXTRA=-finit-local-zero`, reals still sNaN) is reported below. | 258 s (optimised) |
+
+A trap of its own: the 150 GB build-box disk filled up during the acceptance runs (the 84 h NPS
+intermediates are 83 GB: ungrib 26, metgrid 38, nemsinterp streams 19). The symptoms were a UPP
+rank dying with SIGBUS (exit 135) and a GRIB2 file 186 KB short, which looked like an OpenMPI
+MPI-IO (OMPIO) problem until `df` was checked; with space freed both OMPIO and ROMIO write the
+files correctly. Delete `ungrib/`, `metgrid_bc/` and `nemsinterp_bc/` after `recast.sh nps`,
+or give the box 300 GB as the x86 one had.
 
 Note on the smoke timing: gfortran on Graviton4 is **13 % faster** than ifort on the c7a
 (Genoa) build box for this run, the opposite of the 10-25 % slowdown the plan assumed.
