@@ -190,3 +190,14 @@ exists; keep a Graviton dev box only on Spot and only while an agent is working.
 Cleanup done 4 Nov: Phase 0 history (203 GB) and the duplicate GRIB2 set (32 GB) deleted;
 bucket now ~60 GB (~$1.40/month): x86 reference GRIB2 (16 GB, needed for the Graviton
 validation), staged GFS/NAM inputs for the case (25 GB), fix files, runner bundle, figures.
+
+## W5 Graviton port: DONE 4 Nov 2026 (details in `docs/graviton-port.md`)
+Whole stack builds on arm64 with gfortran 13 + OpenMPI 4.1, ESMF 7.1.0r kept (three new patches),
+eight patches total, every one explained. Validation on the Phase 0 case: 84 h in 16,811 s on
+c8g.8xlarge Spot ($0.466/h) = **$2.35 per run** vs $3.80 on the x86 r7a; 200 s per forecast hour
+vs 189 on x86 (6 % slower, within noise of the price gap); peak 43 GB, fits 64 GB with restarts
+off; bit-reproducible run to run; identical to x86 at f00, roundoff divergence to tenths of hPa/K
+by f84, same skill vs the archived NAM. Three latent upstream bugs surfaced (uninitialised
+MY_DOMAIN_MOVES, ungrib edition detection, UPP size() on null pointers), all fixed at source.
+**Decision: arm64 c8g.8xlarge Spot, restarts off, is the default runner; x86 path kept and
+exercised as fallback.** Spent $9.4 of the $15. Both build boxes stopped.
