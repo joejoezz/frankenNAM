@@ -201,3 +201,64 @@ by f84, same skill vs the archived NAM. Three latent upstream bugs surfaced (uni
 MY_DOMAIN_MOVES, ungrib edition detection, UPP size() on null pointers), all fixed at source.
 **Decision: arm64 c8g.8xlarge Spot, restarts off, is the default runner; x86 path kept and
 exercised as fallback.** Spent $9.4 of the $15. Both build boxes stopped.
+
+## Next: Phase 1 step 2 (laid out 4 Nov 2026 evening, after the Graviton port)
+
+Everything below runs on arm64 (c8g.8xlarge Spot, restarts off, $2.35 per 84 h). Remaining
+budget ≈ $38 of the $50 target. Three agent briefs in sequence, A → B → C.
+
+### A. The product configuration: tm06 spin-up driver, soil seeding, products (~$10, ~1 day)
+1. **tm06 cycle in `run/recast.sh`:** for product cycle C, inputs are GFS cycle C−6: f000 as IC,
+   f003…f090 as bocos (all 3-hourly). Integrate 90 h; integration hour 6 = product f00. History
+   3-hourly (hourly timed once in C). 3 h precipitation buckets so the product's accumulations
+   can be rebuilt on the C clock.
+   *Simplification found while laying this out:* the whole C−6 GFS (to f090) is on AWS by about
+   C−2:00 (f084 landed at +3:57 in the 3 Nov check), so **streamed boundary files are unnecessary**
+   for the clock; NPS runs the IC as soon as f000 lands (C−2:15) and the bocos right after.
+   Expected clock on one 32-core Graviton node: model start ≈ C−2:00, f24 products ≈ C−0:15
+   (yes, before the nominal cycle time), **f84 ≈ C+3:10**, against the old NAM's C+2:42. A
+   48-core node (c8g.12xlarge, 96 GB) would bring f84 to ≈ C+1:45 if scaling holds; that needs
+   the Spot vCPU quota raised from 32 to 64 (free to request; recommended now).
+2. **Product labelling:** UPP writes reference time C−6 and fh 6…90; a product step rewrites each
+   GRIB2 to reference time C, fh 0…84, with `wgrib2 -set_date/-set_ftime`, and builds the 12 h and
+   run-total APCP records the old `awphys` files carried from the 3 h buckets. Honesty line in the
+   product README and the index page.
+3. **Soil seeding/cycling through metgrid (one mechanism for both uses):** ungrib a second GRIB2
+   source carrying the four Noah soil layers (0-10/10-40/40-100/100-200 cm, the same layering as
+   the GFS), snow depth/SWE, canopy water and skin T, and let metgrid prefer it over the GFS for
+   those fields. In hindcasts the source is the archived NAM `awphys00` valid at C−6; live, it is
+   FrankenNAM's own previous product valid at the same time. SST, sea ice and snow cover stay GFS.
+4. **Grid 218 products:** rebuild wgrib2 on arm64 with IPOLATES, interpolate the native B grid to
+   grid 218, write `.idx` files, name files like the old NAM (`frankennam.tCCz.awphysFF.grib2`,
+   not `nam.`). Zarr/Icechunk is deferred to Phase 2 (only wsis needs it).
+5. **Self-chaining runners:** a runner finishes, writes its DONE, and launches the next job from
+   an S3 queue file (the role gets `ec2:RunInstances` scoped to the `nam-recast` tag). This runs
+   the hindcast with no laptop in the loop and is the seed of Phase 2 scheduling.
+6. **Acceptance:** the Phase 0 case re-run as a tm06 product (GFS 2025-10-31 18Z → product
+   2026-11-01 00Z): 29 grid-218 files with correct reference time/fh and sane PRMSL; comparison of
+   tm06 vs the Phase 0 analysis-start run vs the archived NAM at f00/f24/f48/f84 (f00 is the first
+   look at the 6 h information lag plus the spin-up gain); soil fields at f00 traceable to the
+   archive; timing of each stage. `docs/tm06-design.md` with the results.
+
+### B. Hindcast and scorecard (~$20, ~2 days wall, mostly waiting)
+- 5 new cases + the Phase 0 case, tm06 arm on all six; analysis-start arm on 2. Candidates
+  (Joe to add or swap): 2024-11-19 12Z PNW bomb cyclone + atmospheric river; 2025-01-21 00Z Gulf
+  Coast snowstorm (p-type); 2025-03-14 12Z Plains severe + blizzard; one Northeast winter storm
+  and one lake-effect/arctic-outbreak case from winter 2025-26; one summer MCS or quiet day.
+- Verification against observations: ASOS 2 m T/Td/10 m wind (Iowa Mesonet archive), MRMS
+  gauge-corrected 24 h QPE (AWS `noaa-mrms-pds`), SNOTEL precipitation (wsis fetchers), p-type by
+  eye on the Gulf case. Plus the grid-to-grid stats against the archive and the GFS.
+- `docs/phase1-scorecard.md`: tables by lead, 9-panels per case, the honest one-page summary.
+
+### C. Dress rehearsal (~$3, half a day)
+- An EventBridge schedule at C−2:15 (09:45Z/21:45Z) → Lambda → RunInstances launches the arm64
+  runner, which waits for the GFS files, runs NPS, model, post, products, and writes a timeline.
+  One live 12Z cycle, nothing published. Report every stage's clock against the old NAM's.
+- Then the Phase 1 report and the Phase 2 go/no-go.
+
+### Decisions for Joe before A starts
+1. File the Spot vCPU quota raise 32 → 64 now (free; needed only if the C+3:10 f84 is not good
+   enough; also lets a hindcast run overlap a test).
+2. Case list: any must-have cases for the six.
+3. Runner role may launch runners (self-chaining), scoped to the project tag. Recommended.
+4. 3-hourly history for the hindcast (hourly measured once in C). Recommended.
