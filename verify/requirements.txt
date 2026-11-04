@@ -1,0 +1,11 @@
+numpy
+scipy
+pandas
+pyarrow
+matplotlib
+cartopy
+shapely
+pyproj
+eccodes>=2.38
+boto3
+requests
