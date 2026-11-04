@@ -28,5 +28,5 @@ printf '%s\n' /opt/intel/oneapi/compiler/$ONEAPI_FORTRAN_VER/lib /opt/intel/onea
 sudo ldconfig
 
 sudo mkdir -p "$NAM_ROOT/work" "$NAM_ROOT/libs"; sudo chown -R "$(id -u):$(id -g)" "$NAM_ROOT/work" "$NAM_ROOT/libs"
-source /opt/intel/oneapi/setvars.sh --force >/dev/null 2>&1 || true
+set +eu; source /opt/intel/oneapi/setvars.sh --force >/dev/null 2>&1; set -eu   # setvars.sh trips nounset
 ifort --version 2>&1 | grep -v remark | head -1; icx --version | head -1
