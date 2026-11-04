@@ -1,0 +1,11 @@
+Reason: build_config/Linux.gfortran.default/ESMC_Conf.h typedefs size_t without including <stddef.h>; with GCC >= 11 libstdc++ no longer drags it in transitively, so every C++ file fails with "size_t does not name a type" (the Intel config header is not affected).
+--- a/build_config/Linux.gfortran.default/ESMC_Conf.h
++++ b/build_config/Linux.gfortran.default/ESMC_Conf.h
+@@ -27,6 +27,7 @@
+ #endif
+ 
+ #if defined (__cplusplus)
++#include <stddef.h>
+ // Typedef to match the data type of the 'hidden' string length
+ // argument that Fortran uses when passing CHARACTER strings.
+ #if (__GNUC__ > 7)

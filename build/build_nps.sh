@@ -9,7 +9,14 @@ stage_src
 apply_src_patches nps
 
 # what modulefiles/wcoss2/v4.1.0_build exports, with Intel MPI wrappers in place of Cray ftn/cc
-export COMP_MP=mpiifort COMPILER=ifort C_COMP=icx C_COMP_MP=mpiicc
+# (x86) or the OpenMPI wrappers + gfortran/gcc (gnu, with our own configure.nps files)
+if [ "$TOOLCHAIN" = gnu ]; then
+  export COMP_MP=mpif90 COMPILER=gfortran C_COMP=gcc C_COMP_MP=mpicc
+  CONF_DMPAR=$BUILD_DIR/nps/configure.nps_awsarm_gnu_dmpar CONF_SERIAL=$BUILD_DIR/nps/configure.nps_awsarm_gnu_serial
+else
+  export COMP_MP=mpiifort COMPILER=ifort C_COMP=icx C_COMP_MP=mpiicc
+  CONF_DMPAR=configure.nps_wcoss2_dmpara CONF_SERIAL=configure.nps_wcoss2_serial
+fi
 # NPS Makefiles link "-L$(NETCDF_LIB) -lnetcdf" and relied on the Cray ftn wrapper to add
 # -lnetcdff; put -lnetcdff (and rpaths) into NETCDF_LIB instead of patching four Makefiles.
 export NETCDF_LIB="$NETCDF/lib -Wl,-rpath,$NETCDF/lib -Wl,-rpath,$HDF5/lib -lnetcdff"
@@ -20,7 +27,7 @@ cd "$NAM_SRC/sorc/nam_nps.fd/sorc/NMMB_init/NPS"
 
 need() { [ -e "$1" ] || { echo "MISSING $1 (see $2)"; grep -nE "rror|undefined reference" "$2" | head -40; exit 1; }; }
 
-cp configure.nps_wcoss2_dmpara configure.nps
+cp "$CONF_DMPAR" configure.nps
 for t in geogrid metgrid ungrib nemsinterp; do
   ./compile $t > "$LOG/nps_dmpar_$t.log" 2>&1 || true
   need $t.exe "$LOG/nps_dmpar_$t.log"
@@ -28,7 +35,7 @@ for t in geogrid metgrid ungrib nemsinterp; do
 done
 ./clean > /dev/null 2>&1 || true
 
-cp configure.nps_wcoss2_serial configure.nps
+cp "$CONF_SERIAL" configure.nps
 ./compile metgrid > "$LOG/nps_serial_metgrid.log" 2>&1 || true
 need metgrid.exe "$LOG/nps_serial_metgrid.log"; cp -L metgrid.exe "$NAM_EXEC/metgrid_serial.exe"
 ./compile ungrib > "$LOG/nps_serial_ungrib.log" 2>&1 || true

@@ -9,6 +9,13 @@ export NAM_EXEC=$NAM_WORK/exec
 export LIBS_ROOT=$NAM_ROOT/libs
 export LIBSRC=$NAM_WORK/libsrc
 
+# Toolchain switch: intel (x86, Phase 0) or gnu (gfortran + OpenMPI; the Graviton/arm64 port).
+# Defaults by machine; override with TOOLCHAIN=gnu on x86 to test the GNU path there.
+export ARCH=${ARCH:-$(uname -m)}
+case $ARCH in aarch64|arm64) export TOOLCHAIN=${TOOLCHAIN:-gnu} ;; *) export TOOLCHAIN=${TOOLCHAIN:-intel} ;; esac
+export GFORTRAN_VER=13                # Ubuntu 24.04 apt gfortran-13 (13.3)
+export OPENMPI_PKG=openmpi            # Ubuntu 24.04 apt OpenMPI 4.1.6
+
 export ONEAPI_FORTRAN_VER=2024.2   # ifort 2021.13 (classic)
 export ONEAPI_CPP_VER=2024.2       # icx/icpx; icc/icpc no longer ship
 export IMPI_VER=2021.13

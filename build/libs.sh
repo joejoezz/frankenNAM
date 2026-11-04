@@ -1,14 +1,22 @@
 #!/bin/bash
-# Build the NAM library stack under /opt/nam/libs/<name>-<ver> with Intel oneAPI 2024.2.
+# Build the NAM library stack under /opt/nam/libs/<name>-<ver> with the toolchain env.sh selects
+# (Intel oneAPI 2024.2 on x86, gfortran + OpenMPI on arm64).
 # Idempotent: a library whose prefix holds .built is skipped. Usage: libs.sh [name ...]
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 source "$HERE/env.sh"
 mkdir -p "$LIBSRC" "$LIBS_ROOT" "$NAM_WORK/logs/libs"
 
-# Clang-based icx is strict about pre-C99 code that old configure scripts and libraries use.
-export CFLAGS="-O2 -fPIC -Wno-error=implicit-function-declaration -Wno-error=implicit-int -Wno-error=int-conversion -Wno-error=incompatible-function-pointer-types"
-export FFLAGS="-O2 -fPIC" FCFLAGS="-O2 -fPIC" CXXFLAGS="-O2 -fPIC"
+if [ "$TOOLCHAIN" = gnu ]; then
+  # -fcommon: pre-C99 duplicate tentative definitions (GCC >= 10 defaults to -fno-common).
+  export CFLAGS="-O2 -fPIC -fcommon $ARCH_FLAGS"
+  export FFLAGS="-O2 -fPIC $GNU_LEGACY_FFLAGS $ARCH_FLAGS" CXXFLAGS="-O2 -fPIC $ARCH_FLAGS"
+else
+  # Clang-based icx is strict about pre-C99 code that old configure scripts and libraries use.
+  export CFLAGS="-O2 -fPIC -Wno-error=implicit-function-declaration -Wno-error=implicit-int -Wno-error=int-conversion -Wno-error=incompatible-function-pointer-types"
+  export FFLAGS="-O2 -fPIC" CXXFLAGS="-O2 -fPIC"
+fi
+export FCFLAGS="$FFLAGS"
 
 fetch() { # fetch <dir> <repo> <tag>
   local d=$LIBSRC/$1
@@ -33,7 +41,7 @@ cmake_lib() { # cmake_lib <name> <ver> <repo> <tag> [cmake args...]
   apply_patches "$s" "$n"
   rm -rf "$s/_build"; mkdir -p "$s/_build"; cd "$s/_build"
   cmake .. -DCMAKE_INSTALL_PREFIX="$pre" -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_C_COMPILER=icx -DCMAKE_Fortran_COMPILER=ifort -DCMAKE_CXX_COMPILER=icpx \
+    -DCMAKE_C_COMPILER=$CC -DCMAKE_Fortran_COMPILER=$FC -DCMAKE_CXX_COMPILER=$CXX \
     -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH:-}" -DCMAKE_INSTALL_LIBDIR=lib \
     -DENABLE_TESTS=OFF -DBUILD_TESTING=OFF "$@"
   make -j"$NPROC"; make install
@@ -56,7 +64,7 @@ b_jasper() {
   local pre=$LIBS_ROOT/jasper-$jasper_ver; done_ "$pre" && { echo "skip jasper"; return; }
   local s; s=$(fetch jasper-$jasper_ver jasper-software/jasper version-$jasper_ver)
   rm -rf "$s/_b"; mkdir "$s/_b"; cd "$s/_b"
-  cmake .. -DCMAKE_INSTALL_PREFIX="$pre" -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=icx \
+  cmake .. -DCMAKE_INSTALL_PREFIX="$pre" -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=$CC \
     -DJAS_ENABLE_SHARED=OFF -DJAS_ENABLE_LIBJPEG=OFF -DJAS_ENABLE_OPENGL=OFF -DJAS_ENABLE_DOC=OFF \
     -DJAS_ENABLE_PROGRAMS=OFF -DCMAKE_INSTALL_LIBDIR=lib
   make -j"$NPROC"; make install; stamp "$pre" "jasper $jasper_ver"
@@ -85,20 +93,32 @@ b_esmf() {
   local s; s=$(fetch esmf-$esmf_ver esmf-org/esmf "$tag")
   apply_patches "$s" esmf
   cd "$s"
-  export ESMF_DIR=$s ESMF_COMM=intelmpi ESMF_COMPILER=intel ESMF_BOPT=O ESMF_OPTLEVEL=2 ESMF_ABI=64
-  export ESMF_CXXCOMPILER=mpiicpc ESMF_CCOMPILER=mpiicc ESMF_F90COMPILER=mpiifort
+  export ESMF_DIR=$s ESMF_BOPT=O ESMF_OPTLEVEL=2 ESMF_ABI=64
   export ESMF_NETCDF=split ESMF_NETCDF_INCLUDE=$NETCDF/include ESMF_NETCDF_LIBPATH=$NETCDF/lib
   export ESMF_NETCDF_LIBS="-lnetcdff -lnetcdf"
-  # icpx (clang, C++17 by default) rejects 'register' and makes C++11 narrowing in brace
-  # initialisers a hard error; icpc 19 only warned. Pin gnu++11 and downgrade narrowing.
-  export ESMF_CXXCOMPILEOPTS="-std=gnu++11 -Wno-c++11-narrowing -Wno-register"
+  if [ "$TOOLCHAIN" = gnu ]; then
+    export ESMF_COMM=openmpi ESMF_COMPILER=gfortran
+    export ESMF_CXXCOMPILER=mpicxx ESMF_CCOMPILER=mpicc ESMF_F90COMPILER=mpif90
+    # g++ 13 defaults to gnu++17 where 'register' is an error, and C++11 brace narrowing is an
+    # error at any -std; same two problems as icpx in Phase 0. gfortran >= 10 needs the
+    # argument-mismatch relaxation for ESMF 7's Fortran (fixed upstream only in 8.0.1).
+    export ESMF_CXXCOMPILEOPTS="-std=gnu++11 -Wno-narrowing -Wno-register $ARCH_FLAGS"
+    export ESMF_F90COMPILEOPTS="$GNU_LEGACY_FFLAGS $ARCH_FLAGS"
+    export ESMF_CCOMPILEOPTS="$ARCH_FLAGS"
+  else
+    export ESMF_COMM=intelmpi ESMF_COMPILER=intel
+    export ESMF_CXXCOMPILER=mpiicpc ESMF_CCOMPILER=mpiicc ESMF_F90COMPILER=mpiifort
+    # icpx (clang, C++17 by default) rejects 'register' and makes C++11 narrowing in brace
+    # initialisers a hard error; icpc 19 only warned. Pin gnu++11 and downgrade narrowing.
+    export ESMF_CXXCOMPILEOPTS="-std=gnu++11 -Wno-c++11-narrowing -Wno-register"
+  fi
   export ESMF_LAPACK=internal ESMF_PIO=OFF; unset ESMF_XERCES ESMF_XERCES_INCLUDE ESMF_XERCES_LIBPATH  # any value of ESMF_XERCES turns it on
   export ESMF_INSTALL_PREFIX=$pre ESMF_INSTALL_HEADERDIR=include ESMF_INSTALL_MODDIR=mod \
          ESMF_INSTALL_LIBDIR=lib ESMF_INSTALL_BINDIR=bin ESMF_INSTALL_DOCDIR=doc
   make info
   make -j"$NPROC" lib
   make install
-  stamp "$pre" "esmf $esmf_ver ($tag) intelmpi/intel"
+  stamp "$pre" "esmf $esmf_ver ($tag) $ESMF_COMM/$ESMF_COMPILER"
 }
 
 b_bacio()  { cmake_lib bacio  $bacio_ver  NOAA-EMC/NCEPLIBS-bacio  v$bacio_ver; }
@@ -108,7 +128,7 @@ b_w3nco()  { cmake_lib w3nco  $w3nco_ver  NOAA-EMC/NCEPLIBS-w3nco  v$w3nco_ver; 
 b_sigio()  { cmake_lib sigio  $sigio_ver  NOAA-EMC/NCEPLIBS-sigio  v$sigio_ver; }
 b_sfcio()  { cmake_lib sfcio  $sfcio_ver  NOAA-EMC/NCEPLIBS-sfcio  v$sfcio_ver; }
 b_gfsio()  { cmake_lib gfsio  $gfsio_ver  NOAA-EMC/NCEPLIBS-gfsio  v$gfsio_ver; }
-b_nemsio() { cmake_lib nemsio $nemsio_ver NOAA-EMC/NCEPLIBS-nemsio v$nemsio_ver -DCMAKE_Fortran_COMPILER=mpiifort; }
+b_nemsio() { cmake_lib nemsio $nemsio_ver NOAA-EMC/NCEPLIBS-nemsio v$nemsio_ver -DCMAKE_Fortran_COMPILER=$MPIFC; }
 b_w3emc()  { cmake_lib w3emc  $w3emc_ver  NOAA-EMC/NCEPLIBS-w3emc  v$w3emc_ver; }
 b_g2()     { cmake_lib g2     $g2_ver     NOAA-EMC/NCEPLIBS-g2     v$g2_ver; }
 b_g2c()    { cmake_lib g2c    $g2c_ver    NOAA-EMC/NCEPLIBS-g2c    v$g2c_ver; }

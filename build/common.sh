@@ -25,7 +25,13 @@ apply_src_patches() {
 }
 
 print_versions() {
-  echo "== toolchain"; ifort --version 2>&1 | grep -v remark | head -1; icx --version | head -1
-  echo "mpiifort -> $(mpiifort -show | cut -d" " -f1), mpiicc -> $(mpiicc -show | cut -d" " -f1), Intel MPI $IMPI_VER"
+  echo "== toolchain ($TOOLCHAIN, $ARCH)"
+  if [ "$TOOLCHAIN" = gnu ]; then
+    gfortran --version | head -1; gcc --version | head -1
+    echo "mpif90 -> $(mpif90 -show | cut -d" " -f1), $(mpirun --version 2>&1 | head -1)"
+  else
+    ifort --version 2>&1 | grep -v remark | head -1; icx --version | head -1
+    echo "mpiifort -> $(mpiifort -show | cut -d" " -f1), mpiicc -> $(mpiicc -show | cut -d" " -f1), Intel MPI $IMPI_VER"
+  fi
   echo "== libraries"; cat "$LIBS_ROOT"/*/.built 2>/dev/null
 }

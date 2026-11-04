@@ -3,13 +3,27 @@
 _here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 source "$_here/versions.sh"
 
-if [ -z "${SETVARS_COMPLETED:-}" ]; then
-  _u=$-; set +eu
-  source /opt/intel/oneapi/setvars.sh --force >/dev/null 2>&1
-  [[ $_u == *e* ]] && set -e; [[ $_u == *u* ]] && set -u
+if [ "$TOOLCHAIN" = gnu ]; then
+  # gfortran + OpenMPI (apt). OMPI_* pin the compilers the wrappers call.
+  export CC=gcc CXX=g++ FC=gfortran F77=gfortran F90=gfortran
+  export MPIFC=mpif90 MPICC=mpicc MPICXX=mpicxx
+  export OMPI_FC=gfortran OMPI_F77=gfortran OMPI_CC=gcc OMPI_CXX=g++
+  # -mcpu=neoverse-v1: Graviton3 ISA (SVE, bf16) so the binaries run on c7g/m7g as well as the
+  # Graviton4 (neoverse-v2) build box. Empty on x86 if the GNU path is ever used there.
+  case $ARCH in aarch64|arm64) export ARCH_FLAGS=${ARCH_FLAGS:--mcpu=neoverse-v1} ;; *) export ARCH_FLAGS=${ARCH_FLAGS:-} ;; esac
+  # GCC >= 10 rejects the MPI buffer / rank mismatches a 2017 code is full of; BOZ in non-DATA.
+  export GNU_LEGACY_FFLAGS="-fallow-argument-mismatch -fallow-invalid-boz -fno-range-check"
+else
+  if [ -z "${SETVARS_COMPLETED:-}" ]; then
+    _u=$-; set +eu
+    source /opt/intel/oneapi/setvars.sh --force >/dev/null 2>&1
+    [[ $_u == *e* ]] && set -e; [[ $_u == *u* ]] && set -u
+  fi
+  export I_MPI_F90=ifort I_MPI_F77=ifort I_MPI_FC=ifort I_MPI_CC=icx I_MPI_CXX=icpx
+  export CC=icx CXX=icpx FC=ifort F77=ifort F90=ifort
+  export MPIFC=mpiifort MPICC=mpiicc MPICXX=mpiicpc
+  export ARCH_FLAGS="" GNU_LEGACY_FFLAGS=""
 fi
-export I_MPI_F90=ifort I_MPI_F77=ifort I_MPI_FC=ifort I_MPI_CC=icx I_MPI_CXX=icpx
-export CC=icx CXX=icpx FC=ifort F77=ifort F90=ifort
 export NPROC=${NPROC:-$(nproc)}
 
 _p() { echo "$LIBS_ROOT/$1-$2"; }

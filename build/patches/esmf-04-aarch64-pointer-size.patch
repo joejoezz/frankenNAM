@@ -1,0 +1,13 @@
+Reason: ESMF 7.1.0r derives ESMC_POINTER_SIZE from the ABI string macro (S32, Sia64_64, Sx86_64_small, ...); on aarch64 common.mk leaves ESMF_ABISTRING at the plain ABI, so the C++ side is compiled with -DS64 and ESMC_POINTER_SIZE is never defined (ESMF_FortranWordsize fails with "esmc_pointer_size has no IMPLICIT type"). Define it for S64 (8-byte pointers).
+--- a/build_config/Linux.gfortran.default/ESMC_Conf.h
++++ b/build_config/Linux.gfortran.default/ESMC_Conf.h
+@@ -40,6 +40,9 @@
+ #ifdef S32
+ #define ESMC_POINTER_SIZE 4
+ #endif
++#ifdef S64
++#define ESMC_POINTER_SIZE 8
++#endif
+ #ifdef Sia64_64
+ #define ESMC_POINTER_SIZE 8
+ #endif
