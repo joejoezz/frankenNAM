@@ -15,7 +15,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from . import score
-from .common import CASES, PTYPE_CASES, SNOTEL_CASES, LEADS
+from .common import CASES, PTYPE_CASES, PTYPE_BOX, SNOTEL_CASES, LEADS
 from .gribio import Model
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -153,21 +153,24 @@ def main(argv=None):
         rows = []
         for c in PTYPE_CASES:
             if c not in set(T.case): continue
-            for bnd in ("3-36 h", "39-84 h"):
-                t = T[(T.case == c) & (T.band == bnd)].groupby("model")[["n", "agree"]].sum().loc[names]
-                rows.append([f"`{c}`", bnd, int(t.n.iloc[0])] + best_mark(list(100 * t.agree / t.n), "{:.1f}%", low=False))
-        out.append(md_table(rows, ["case", "lead", "n obs-hours"] + [lab(m) for m in names]) + "\n")
+            for area in ("event region", "CONUS"):
+                for bnd in ("3-36 h", "39-84 h"):
+                    t = T[(T.case == c) & (T.area == area) & (T.band == bnd)].groupby("model")[["n", "agree"]].sum().reindex(names)
+                    if not t.n.iloc[0]: continue
+                    rows.append([f"`{c}`", area, bnd, int(t.n.iloc[0])] + best_mark(list(100 * t.agree / t.n), "{:.1f}%", low=False))
+        out.append(md_table(rows, ["case", "area", "lead", "n obs-hours"] + [lab(m) for m in names]) + "\n")
+        out.append("Event regions (lat, lon boxes): " + "; ".join(f"`{c}` {b[0]}-{b[1]} N, {-b[2]}-{-b[3]} W" for c, b in PTYPE_BOX.items()) + ".\n")
         for c in PTYPE_CASES:
             if c not in set(T.case): continue
             for m in names:
-                t = T[(T.case == c) & (T.model == m)].groupby(["obs", "mod"], as_index=False)[["n", "agree"]].sum()
+                t = T[(T.case == c) & (T.model == m) & (T.area == "event region")].groupby(["obs", "mod"], as_index=False)[["n", "agree"]].sum()
                 cats = ["RAIN", "SNOW", "FZRA", "ICEP", "MIX"]; mc = ["RAIN", "SNOW", "FZRA", "ICEP", "NONE"]
                 rows = []
                 for o in cats:
                     x = t[t.obs == o]; tot = int(x.n.sum())
                     if not tot: continue
                     rows.append([o, tot] + [int(x[x["mod"] == k].n.sum()) for k in mc])
-                out.append(f"`{c}` {lab(m)}: rows = observed, columns = model\n"); out.append(md_table(rows, ["obs", "n"] + mc) + "\n")
+                out.append(f"`{c}` event region, {lab(m)}: rows = observed, columns = model\n"); out.append(md_table(rows, ["obs", "n"] + mc) + "\n")
     # ---------- 6. SNOTEL
     if len(N):
         out.append("## 6. SNOTEL 24 h precipitation (western mountain stations)\n")
@@ -220,7 +223,7 @@ def main(argv=None):
             cats, mc = ["RAIN", "SNOW", "FZRA", "ICEP", "MIX"], ["RAIN", "SNOW", "FZRA", "ICEP", "NONE"]
             fig, axs = plt.subplots(1, len(names), figsize=(4.6 * len(names), 4))
             for ax, m in zip(np.atleast_1d(axs), names):
-                t = T[(T.case == c) & (T.model == m)].groupby(["obs", "mod"], as_index=False).n.sum()
+                t = T[(T.case == c) & (T.model == m) & (T.area == "event region")].groupby(["obs", "mod"], as_index=False).n.sum()
                 M = np.array([[t[(t.obs == o) & (t["mod"] == k)].n.sum() for k in mc] for o in cats], float)
                 R = M / np.maximum(M.sum(1, keepdims=True), 1)
                 ax.imshow(R, vmin=0, vmax=1, cmap="Blues")
@@ -229,7 +232,7 @@ def main(argv=None):
                         if M[i, j]: ax.text(j, i, int(M[i, j]), ha="center", va="center", fontsize=8, color="w" if R[i, j] > .5 else "k")
                 ax.set_xticks(range(5)); ax.set_xticklabels(mc, fontsize=8); ax.set_yticks(range(5)); ax.set_yticklabels(cats, fontsize=8)
                 ax.set_xlabel("model"); ax.set_ylabel("observed"); ax.set_title(lab(m), fontsize=10)
-            fig.suptitle(f"P-type confusion (counts; shading = row share), {c} {CASES[c]}", fontsize=10)
+            fig.suptitle(f"P-type confusion, event region (counts; shading = row share), {c} {CASES[c]}", fontsize=10)
             fig.tight_layout(); fig.savefig(figs / f"ptype_{c}.png", dpi=100); plt.close(fig)
             out.append(f"![p-type {c}](figs/{a.tag}/ptype_{c}.png)\n")
     text = "\n".join(out)

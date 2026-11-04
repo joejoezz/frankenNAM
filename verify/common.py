@@ -10,7 +10,7 @@ USER_AGENT = "nam-recast-verify/0.1 (research; low request rate)"
 
 # case id (product cycle C, YYYYMMDDHH) -> short description. P = C - 6 h is the GFS cycle used by tm06.
 CASES = {
-    "2026110100": "Phase 0 case (quiet-ish autumn, CONUS-wide)",
+    "2026110100": "Phase 0 case (autumn, CONUS-wide)",
     "2026012312": "CAD ice storm, GA/Carolinas",
     "2025010512": "Snowcrete, DC (snow to sleet)",
     "2025012100": "Gulf Coast snow",
@@ -19,6 +19,8 @@ CASES = {
     "2025122912": "Lake-effect / Great Lakes snow, late Dec 2025",
 }
 PTYPE_CASES = ("2026012312", "2025010512", "2025012100")     # p-type verification
+PTYPE_BOX = {   # event region (lat0, lat1, lon0, lon1) for the p-type tables
+    "2026012312": (31.0, 37.5, -87.0, -77.0), "2025010512": (36.0, 41.0, -80.0, -74.0), "2025012100": (27.0, 33.0, -98.0, -82.0)}
 SNOTEL_CASES = ("2024111912", "2025031412")
 LEADS = list(range(0, 85, 3))
 

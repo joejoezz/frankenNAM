@@ -14,7 +14,7 @@ Raw sums (n, sum d, sum |d|, sum d^2, contingency counts) are kept so cases can 
 import numpy as np, pandas as pd
 from concurrent.futures import ThreadPoolExecutor
 from . import obs_asos, obs_mrms, obs_snotel
-from .common import WORK, OBS, LEADS, CASES, cycle
+from .common import WORK, OBS, LEADS, CASES, PTYPE_BOX, cycle
 from .gribio import Model
 
 DZMAX = 400.0
@@ -119,6 +119,8 @@ def score_ptype(case, models):
     rec = obs_ptype_matrix(case, st)
     F = {m.name: station_fields(m, case) for m in models}
     rows = []
+    box = PTYPE_BOX.get(case); inbox = np.zeros(len(st), bool) if box is None else (
+        (st.lat.values >= box[0]) & (st.lat.values <= box[1]) & (st.lon.values >= box[2]) & (st.lon.values <= box[3]))
     for m in models:
         pt = F[m.name]["pt"]
         for li, si, t in rec:
@@ -128,9 +130,10 @@ def score_ptype(case, models):
             if mc is None: continue
             oc = next(iter(t)) if len(t) == 1 else "MIX"
             band = "3-36 h" if L <= 36 else "39-84 h"
-            rows.append((case, m.name, band, oc, mc, 1, int(mc in t)))
-    df = pd.DataFrame(rows, columns=["case", "model", "band", "obs", "mod", "n", "agree"])
-    return df.groupby(["case", "model", "band", "obs", "mod"], as_index=False).sum()
+            rows.append((case, m.name, "CONUS", band, oc, mc, 1, int(mc in t)))
+            if inbox[si]: rows.append((case, m.name, "event region", band, oc, mc, 1, int(mc in t)))
+    df = pd.DataFrame(rows, columns=["case", "model", "area", "band", "obs", "mod", "n", "agree"])
+    return df.groupby(["case", "model", "area", "band", "obs", "mod"], as_index=False).sum()
 
 # ------------------------------------------------------------------------------------------ precipitation
 _mask = None
