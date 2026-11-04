@@ -173,3 +173,24 @@ does not cover the NAM parent domain.
   Intel MPI; expect `-fallow-argument-mismatch`-class fixes), validated against the x86 run of
   the same case (not bit-for-bit, but statistically indistinguishable at 84 h). Target runner:
   c8g.48xlarge Spot (192 Graviton4 cores, ≈ $2.8/h), one node, ≈ 3.5-4 h per 84 h run.
+
+## Phase 0 result (4 Nov 2026)
+
+Phase 0 is done and under budget: see `docs/phase0-case-2026110100.md` (comparison), `docs/run-notes.md`
+(what broke), `docs/build-notes.md` (build). Numbers that revise the estimates above:
+
+- **Compute is ~5x cheaper than planned.** The full 954x835x60 parent, 84 h, took 4 h 25 min on
+  32 Genoa cores (r7a.8xlarge Spot, $0.82/h) = ~140 core-hours, not 700. Forecast cost per run
+  **≈ $4** on x86 Spot before the Graviton port. The ops node counts included nests and idle time.
+- **Memory, not CPU, picks the node.** Restart writes gather ~20-30 GB on the write ranks; peak
+  77 GB. A 64 GB node dies at f12 (seen). Use ≥128 GB (m7a/r7a.8xlarge) or more write ranks.
+- **Account quota is 32 vCPU for Spot and on-demand in us-west-2.** A quota increase is needed
+  before any node larger than 8xlarge; c7a.48xlarge also had no capacity in 3 of 4 zones.
+- **Intel MPI hang at exit** fixed by `build/patches/nems-01-barrier-before-finalize.patch`;
+  without it every run loses its last history file.
+- **Runner image = 12.5 GB tar bundle in S3** onto stock Ubuntu (computing 45 s after boot);
+  AMI snapshots of the 300 GB volume were too slow.
+- One-case verdict: recast closer to the archived NAM than the GFS is on all fields at f24/f48
+  and all three 24 h precip windows; GFS slightly closer for MSLP/Z500 at f84. One case only.
+- Phase 0 spend ≈ $10.6 compute; S3 holds ~295 GB (~$7/month), 203 GB of it 3-hourly history
+  files that can be deleted once the comparison is accepted.

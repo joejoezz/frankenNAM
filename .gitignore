@@ -3,3 +3,5 @@ deploy/.build-box
 *.pem
 __pycache__/
 .DS_Store
+deploy/.runner
+deploy/.runner-ami
