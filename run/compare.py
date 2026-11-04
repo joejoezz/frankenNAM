@@ -34,12 +34,30 @@ def path(src, fh):
 
 _ll = {}
 def bgrid_latlon(fname):
+    """lat/lon of the UPP rotated B grid (template 32769): wgrib2 -gridout where it can (needs a
+    wgrib2 with PROJ), else computed from the grid parameters with the NMM rotated-lat/lon
+    formulas (H points; checked against wgrib2's first-point coordinates to 1.5e-5 deg)."""
     if "b" not in _ll:
-        import subprocess, tempfile
+        import subprocess, tempfile, re
         t = tempfile.mktemp(suffix=".txt")
         subprocess.run(["wgrib2", fname, "-d", "1", "-gridout", t], check=True, capture_output=True)
-        a = np.loadtxt(t, delimiter=",")
-        _ll["b"] = (a[:, 2], a[:, 3] % 360); os.remove(t)
+        a = np.loadtxt(t, delimiter=",", ndmin=2) if os.path.getsize(t) else np.zeros((0, 4)); os.remove(t)
+        if a.shape[0] > 0:
+            _ll["b"] = (a[:, 2], a[:, 3] % 360)
+        else:
+            g = subprocess.run(["wgrib2", fname, "-d", "1", "-grid"], check=True, capture_output=True, text=True).stdout
+            nx, ny = map(int, re.search(r"\((\d+) x (\d+)\)", g).groups())
+            num = lambda k: float(re.search(k + r" (-?[\d.]+)", g).group(1))
+            latc, lonc, dlat, dlon = num("lat-center"), num("lon-center"), num("dlat"), num("dlon")
+            tlm = np.deg2rad(-(nx - 1) / 2 * dlon + np.arange(nx) * dlon)
+            tph = np.deg2rad(-(ny - 1) / 2 * dlat + np.arange(ny) * dlat)
+            TLM, TPH = np.meshgrid(tlm, tph)                       # (ny, nx): i fastest, as the GRIB values
+            tph0, tlm0 = np.deg2rad(latc), np.deg2rad(lonc)
+            sinphi = np.cos(tph0) * np.sin(TPH) + np.sin(tph0) * np.cos(TPH) * np.cos(TLM)
+            phi = np.arcsin(np.clip(sinphi, -1, 1))
+            coslam = (np.cos(tph0) * np.cos(TPH) * np.cos(TLM) - np.sin(tph0) * np.sin(TPH)) / np.cos(phi)
+            lam = tlm0 + np.sign(TLM) * np.arccos(np.clip(coslam, -1, 1))
+            _ll["b"] = (np.rad2deg(phi).ravel(), np.rad2deg(lam).ravel() % 360)
     return _ll["b"]
 
 def read(src, fh, short, level=None, step=None):
