@@ -16,7 +16,7 @@ All inputs are server-side copies from the public buckets into `s3://nam-recast-
 | 2025-12-29 12Z (`2025122912`) | 2025-12-29 06Z | Lake-effect / arctic outbreak, Great Lakes, 29 Dec 2025 - 2 Jan 2026 | 18.6 | tm06 |
 
 Total staged: 142.0 GB in 1,016 objects (data + `.idx`). S3 transfer at about 0.02 USD/GB inter-region: about 2.84 USD,
-plus requests of a few cents (see the report for the spend). The data stays until the hindcast is done.
+plus requests of a few cents; storage 142 GB is about 3.3 USD per month while it stays. The data stays until the hindcast is done.
 
 ## Layout under `cases/<C>/` (same naming as the Phase 0 case)
 - `gfs-tm06/gfs.tPPz.pgrb2.0p25.fFFF` + `.idx`: P-cycle GFS f000-f090 every 3 h (31 files, `pgrb2.0p25` only).
