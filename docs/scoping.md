@@ -133,3 +133,27 @@ For comparison the MPAS 120 km 10-day global run was $0.54; this is ~20-50× mor
 - Is this for wsis (a NAM-physics snow input), for the forecaster community (BUFKIT + maps), or both? It changes the product and the egress line.
 - Domain: keep the native 954×835 North American parent (faithful, ~700 core-h) or cut to a CONUS-plus domain (~2-3× cheaper, no longer "the NAM")? Recommend native for Phase 0-1, decide after measuring.
 - Region: us-east-1 puts GFS input and the NAM archive in-region and has hpc7g; us-west-2 is where everything else of ours lives.
+
+## Decisions after Phase 0 kickoff (4 Nov 2026)
+
+- **Initial conditions stay GFS for all current development** (Phase 1 and the first daily
+  runs). Joe, 4 Nov 2026: "all-in on the GFS for current dev steps". Reason: prototyping; the
+  alternatives carry short-term costs that are not worth paying yet.
+- **Soil cycling is in**: seed the Noah soil moisture/temperature from the archived NAM
+  (last operational run for live cycling, the same cycle for hindcasts) and cycle run to run.
+- **Phase 1 comparison arms**: (1) start from the archived NAM's own analysis fields
+  (physics-fidelity control), (2) start from the GFS analysis (the product). The spread
+  between them measures what the NAM's data assimilation was worth at each lead time.
+
+### Future work: RRFS warm start (deferred, not rejected)
+
+RRFS publishes hourly, including the analysis, a 13 km North America pressure-level file
+(T, u, v, q, RH, Z on 45 levels, five hydrometeor species, 297 MB) and a 2-D file (surface
+pressure, terrain, 2 m fields, skin T, masks, snow, 9-layer RUC soil, 128 MB). Its rotated grid
+(centre 55N 113W, ±61° × ±36.9°) covers 80% of the NAM parent, all of it where anyone lives;
+the uncovered fringe (Arctic, Siberia/Europe corners, tropical oceans, northern South America)
+would be GFS-filled through a two-source metgrid. Costs that deferred it: no public archive
+(NOMADS ~10 days, no AWS mirror yet, so we would have to pull and keep ~1.7 GB/day ourselves),
+no overlap with the NAM archive for validation, a young model's biases in the background, and
+the two-source preprocessor work. RAP was considered and dropped: retires with RRFS v2 and
+does not cover the NAM parent domain.
