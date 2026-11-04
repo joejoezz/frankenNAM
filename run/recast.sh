@@ -176,7 +176,7 @@ stage_post() { # UPP per history file; GRIB2 outputs BGDAWP/BGRDSF/BGRD3D as exn
       local t0=$SECONDS
       mpirun -n $NPOST $EXEC/ncep_post < itag > post_f$fh.out 2>&1
       for k in BGDAWP BGRDSF BGRD3D; do
-        [ -s $k$fh.tm00 ] && mv $k$fh.tm00 ../grib2/nam.t${cyc}z.$(echo $k | tr A-Z a-z)${fh}.tm00.grib2
+        [ -s $k.GrbF$fh ] && mv $k.GrbF$fh ../grib2/nam.t${cyc}z.$(echo $k | tr A-Z a-z)${fh}.tm00.grib2
       done
       echo "post f$fh $((SECONDS - t0)) s" | tee -a ../post_times.txt )
     [ -s grib2/nam.t${cyc}z.bgdawp${fh}.tm00.grib2 ] || { echo "UPP f$fh produced no BGDAWP"; tail -30 post/post_f$fh.out; return 1; }

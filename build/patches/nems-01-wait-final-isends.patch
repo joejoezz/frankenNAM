@@ -1,0 +1,55 @@
+Reason: forecast tasks ISend the last history/restart data and only MPI_Wait at the next output time, so after the final output they reach MPI_Finalize with sends pending and NEMS.x hangs under Intel MPI (Cray MPICH tolerated it); wait on the handles in WRITE_DESTROY.
+--- a/sorc/nam_nems_nmmb.fd/src/atmos/nmm/module_WRITE_GRID_COMP.F90
++++ b/sorc/nam_nems_nmmb.fd/src/atmos/nmm/module_WRITE_GRID_COMP.F90
+@@ -120,6 +120,14 @@
+ !
+       INTEGER(kind=KINT),DIMENSION(:),ALLOCATABLE,SAVE :: NCURRENT_GROUP   !<-- The currently active write group
+ !
++!***  nam-recast: the ISend request handles of the forecast tasks live at module level
++!***  so WRITE_DESTROY can complete the last history/restart ISends before MPI_Finalize.
++      INTEGER(kind=KINT),SAVE :: IH_INT =MPI_REQUEST_NULL               &
++                                ,IH_REAL=MPI_REQUEST_NULL
++      INTEGER(kind=KINT),SAVE :: RST_IH_BC  =MPI_REQUEST_NULL           &
++                                ,RST_IH_INT =MPI_REQUEST_NULL           &
++                                ,RST_IH_REAL=MPI_REQUEST_NULL
++!
+       CHARACTER(len=17) :: CONFIGFILE_01_NAME                              !<-- The name of domain #1's configure file
+ !
+       TYPE(ESMF_Config),SAVE :: CF                                         !<-- The configure object for a domain
+@@ -1250,12 +1258,7 @@
+ !***  Local variables
+ !---------------------
+ !
+-      INTEGER(kind=KINT),SAVE :: IH_INT =MPI_REQUEST_NULL               &
+-                                ,IH_REAL=MPI_REQUEST_NULL
+ !
+-      INTEGER(kind=KINT),SAVE :: RST_IH_BC  =MPI_REQUEST_NULL           &
+-                                ,RST_IH_INT =MPI_REQUEST_NULL           &
+-                                ,RST_IH_REAL=MPI_REQUEST_NULL
+ !
+       INTEGER(kind=KINT),SAVE :: IMS,IME,JMS,JME                        &
+                                 ,IHALO,JHALO                            &
+@@ -5803,6 +5806,7 @@
+ !---------------------
+ !
+       INTEGER :: I,J,MYPE,N,RC,RC_DES
++      INTEGER :: IERR_W,JSTAT_W(MPI_STATUS_SIZE)
+ !
+       TYPE(ESMF_VM) :: VM
+ !
+@@ -5813,6 +5817,15 @@
+       RC    =ESMF_SUCCESS
+       RC_DES=ESMF_SUCCESS
+ !
++!***  nam-recast: forecast tasks still own outstanding ISends of the final history and
++!***  restart data (the Waits normally happen at the next output time). Complete them
++!***  before the write components are destroyed; otherwise Intel MPI hangs in MPI_Finalize.
++      CALL MPI_WAIT(IH_INT,JSTAT_W,IERR_W)
++      CALL MPI_WAIT(IH_REAL,JSTAT_W,IERR_W)
++      CALL MPI_WAIT(RST_IH_INT,JSTAT_W,IERR_W)
++      CALL MPI_WAIT(RST_IH_REAL,JSTAT_W,IERR_W)
++      CALL MPI_WAIT(RST_IH_BC,JSTAT_W,IERR_W)
++!
+ !-----------------------------------------------------------------------
+ !***  Retrieve the current VM.
+ !-----------------------------------------------------------------------
