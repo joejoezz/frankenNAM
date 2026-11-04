@@ -262,3 +262,14 @@ budget ≈ $38 of the $50 target. Three agent briefs in sequence, A → B → C.
 2. Case list: any must-have cases for the six.
 3. Runner role may launch runners (self-chaining), scoped to the project tag. Recommended.
 4. 3-hourly history for the hindcast (hourly measured once in C). Recommended.
+
+### Decisions taken 4 Nov 2026 (evening) for step 2
+- Spot vCPU quota raise 32 → 64 (L-34B43A08, us-west-2) **requested by Joe via CLI**; check status before B.
+- Runner role may launch runners (self-chaining), scoped to the project tag: **approved**.
+- 3-hourly history for the hindcast: **approved**; hourly measured once in C.
+- **Filenames and prefixes duplicate the operational NAM exactly** (`nam.YYYYMMDD/nam.tCCz.awphysFF.tm00.grib2`
+  and the same for the other product types we produce, plus `.idx`), so existing users can point
+  their tooling at our bucket/URL and nothing else changes. The FrankenNAM name lives in the
+  bucket/host name, the README, the index page and the honesty line, not in the file names.
+- Cold-air-damming case for the hindcast: to be chosen from events where forecasters publicly
+  credited the NAM (search in progress).
