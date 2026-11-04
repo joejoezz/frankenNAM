@@ -94,9 +94,18 @@ GUST = [
 ]
 GUST_TOP = 300
 
-def build(scale, top):
+def window(scale, lo, hi):
+    """The rows of a scale from edge lo up to (and including) edge hi, so a colour bar shows the
+    range that matters. Values outside the window take the end colours (see build(clip=True))."""
+    return [(e, c) for e, c in scale if lo <= e <= hi]
+
+
+def build(scale, top, clip=False):
+    """clip=True: values below the first edge take its colour (temperature); otherwise they are
+    transparent (precipitation, reflectivity, snow: nothing to draw)."""
     bounds = [lo for lo, _ in scale] + [top]
-    cmap = ListedColormap([c for _, c in scale]).with_extremes(bad="#d9d9d9", under=(0, 0, 0, 0))
+    under = scale[0][1] if clip else (0, 0, 0, 0)
+    cmap = ListedColormap([c for _, c in scale]).with_extremes(bad="#d9d9d9", under=under)
     norm = BoundaryNorm(bounds, cmap.N, clip=False)
     return cmap, norm, bounds
 

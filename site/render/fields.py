@@ -60,8 +60,8 @@ def hl_centres(p_hpa, radius=24, prominence=3.0):
     return out
 
 
-def fill(data, scale, top, ticks, unit, label=None):
-    return {"kind": "fill", "data": data, "scale": scale, "top": top, "ticks": ticks, "unit": unit, "label": label}
+def fill(data, scale, top, ticks, unit, label=None, clip=False):
+    return {"kind": "fill", "data": data, "scale": scale, "top": top, "ticks": ticks, "unit": unit, "label": label, "clip": clip}
 
 
 def contour(data, levels, color="#000", width=1.1, dashed=False, labels=True, bold=None, fmt="%d"):
@@ -103,20 +103,20 @@ def f_t850_wind(d, t, fhr):
     t850 = _under(_clean(d["t850"]) - 273.15, ps, 850)
     u = _under(_clean(d["u850"]), ps, 850) * KT
     v = _under(_clean(d["v850"]), ps, 850) * KT
-    return [fill(t850, cm.T850, cm.T850_TOP, [-40, -30, -20, -10, 0, 10, 20, 30, 40], "°C"),
+    return [fill(t850, cm.window(cm.T850, -30, 30), 32, [-30, -20, -10, 0, 10, 20, 30], "°C", clip=True),
             contour(smooth(np.nan_to_num(t850, nan=20), 1.0), [0], color="#000", width=1.6, labels=False),
             {"kind": "barbs", "u": u, "v": v}], ""
 
 
 def f_t2m(d, t, fhr):
     t2 = F(_clean(d["t2"]))
-    return [fill(t2, cm.T2M, cm.T2M_TOP, list(range(-40, 121, 10)), "°F"),
+    return [fill(t2, cm.window(cm.T2M, -30, 115), 120, list(range(-30, 116, 10)), "°F", clip=True),
             contour(smooth(t2, 1.0), [32], color="#1a4fd8", width=1.5, labels=False)], ""
 
 
 def f_td2m(d, t, fhr):
     td = F(_clean(d["d2"]))
-    return [fill(td, cm.T2M, cm.T2M_TOP, list(range(-40, 91, 10)), "°F"),
+    return [fill(td, cm.window(cm.T2M, -30, 80), 85, list(range(-30, 81, 10)), "°F", clip=True),
             contour(smooth(td, 1.0), [32], color="#1a4fd8", width=1.5, labels=False)], ""
 
 

@@ -96,7 +96,7 @@ def draw_frame(layers, *, grid, ext, base, product, title, init, fhr, period_not
     for L in layers:
         k = L["kind"]
         if k == "fill":
-            cmap, norm, bounds = cm.build(L["scale"], L["top"])
+            cmap, norm, bounds = cm.build(L["scale"], L["top"], L.get("clip", False))
             ax.imshow(L["data"], origin="lower", extent=(gx0, gx1, gy0, gy1), cmap=cmap, norm=norm,
                       interpolation="bilinear", interpolation_stage="data", alpha=0.9, zorder=1, aspect="auto")
             cbar = (cmap, norm, bounds, L["ticks"], L["unit"])
@@ -188,7 +188,11 @@ def draw_frame(layers, *, grid, ext, base, product, title, init, fhr, period_not
                    ncol=4, frameon=False, fontsize=9.5, handlelength=1.6, columnspacing=1.8, borderaxespad=0)
     fig.text(M_SIDE / WIDTH_PX, 9 / h, foot, fontsize=8, color="#777", va="center")
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    fig.savefig(out_path, dpi=DPI, format="png", pil_kwargs={"optimize": False, "compress_level": 3})
+    # 256-colour palette PNG: ~3x smaller than RGB, visually the same for flat discrete fills
+    fig.canvas.draw()
+    from PIL import Image
+    im = Image.fromarray(np.asarray(fig.canvas.buffer_rgba())).convert("RGB")
+    im.quantize(colors=256, method=Image.Quantize.FASTOCTREE, dither=Image.Dither.NONE).save(out_path, optimize=True)
     plt.close(fig)
 
 

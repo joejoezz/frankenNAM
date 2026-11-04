@@ -124,7 +124,7 @@ async function pick(m, c, r, f, hr) {
   $("#tabs").innerHTML = fields.map(x => `<button role="tab" data-f="${x}" title="${idx.fields[x].title}">${idx.fields[x].tab}</button>`).join("");
   $("#notice").style.display = m === "frankennam" ? "none" : "block";
   $("#notice").textContent = m === "frankennam" ? "" : "Archived operational NAM, shown as a reference sample of the maps. This is not FrankenNAM output.";
-  $("#foot").textContent = "Maps on the 12 km grid 218, Lambert conformal. Basemap Natural Earth. Not affiliated with NOAA.";
+  $("#foot").textContent = "Maps on the 12 km grid 218, Lambert conformal. Basemap Natural Earth.";
   document.title = `${idx.label} maps`;
   setField(field, hr);
 }
