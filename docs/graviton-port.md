@@ -131,6 +131,7 @@ the stack without ESMF took about 4 min.
 | nemsinterp IC and bocos vs the x86 files | not bit-identical: median relative difference 1e-7 (IC) to 1e-6 (bocos); the largest absolute differences are 0.52 Pa in the pressure records (~1e5 Pa) and 3.6 in one boco.0000 record; 305 of 488 IC records differ (`run/cmp_nemsio.py`) | - |
 | 3 h smoke, TDFI, 4x7 + 1x4, run 1 / run 2 | **829 s / 844 s** (exit 0) | 969 s |
 | history files run 1 vs run 2 (`cmp`) | **bit-identical** (f00 and f03, 4.86 GB each, and the .ctl files) | not tested |
+| 3 h smoke, run 3 with the `nems-03` binary | 832 s, 0 `MOVE_NOW` errors, history **bit-identical to run 1**: the fix changes nothing numerically (the 84 h validation run used the binary without it) | - |
 | node memory peak during the smoke (`free`, 30 s) | 43.1 GB used | ~48 GB flat (84 h run) |
 | max RSS of a rank (time -v, mpirun tree) | 1.65 GB | 2.2 GB |
 | UPP on the smoke output (16 tasks) | **15 s (f00) / 16 s (f03)** after `uppgnu-02`; 1189 / 1199 GRIB2 messages, BGDAWP 475 / 500 MB (x86: 475 / 500 MB) | 21 s / file |
@@ -158,7 +159,25 @@ Note on the smoke timing: gfortran on Graviton4 is **13 % faster** than ifort on
 
 ## Cost
 
-(filled in below)
+Prices confirmed from the pricing API / Spot history on 4 Nov 2026 (us-west-2):
+c8g.8xlarge on-demand $1.27616/h, c8g.8xlarge Spot in us-west-2d $0.4655-0.4662/h
+(2a-2c were $0.53); Phase 0's r7a.8xlarge Spot was $0.82/h.
+
+| Item | Hours | Rate | Cost |
+|---|---|---|---|
+| arm build box c8g.8xlarge on-demand, 14:54-19:49 UTC (toolchain + 22 libraries + NPS/NEMS/UPP + debugging, NPS stage, 3 smokes, 2 trap runs, UPP tests, bundles) | 4.92 | $1.276 | ~$6.3 |
+| of which idle by mistake (a marker that was never written kept the box up ~2.4 h after the trap run ended) | 2.4 | $1.276 | ~$3.1 |
+| arm build box again for the comparison | ~0.8 | $1.276 | ~$1.0 |
+| Spot runner attempt 1, c8g.8xlarge 2d (aborted at start: restart interval not a multiple of the time step) | 0.05 | $0.466 | $0.02 |
+| Spot runner attempt 2, c8g.8xlarge 2d, 84 h + UPP | ~5.0 | $0.466 | ~$2.3 |
+| EBS (150 GB gp3 box ~6 h, 300 GB gp3 + 6000 IOPS/500 MB/s runner ~5 h), S3 PUTs | | | ~$0.5 |
+| **Total for this brief** | | | **~$10 (budget $15)** |
+
+Cost per 84 h run, compute only: **~$2.3 on c8g.8xlarge Spot** against $3.80 on the Phase 0
+r7a.8xlarge Spot ($0.82/h x 4.65 h); the saving is mostly the node class (restarts off lets
+a 64 GB c-class node do it), the arm64 Spot price itself is 15-20 % under c7a's.
+
+Ongoing: the arm64 runner bundle (9.3 GB) and the arm64 GRIB2 set (~15 GB) add ~$0.55/month in S3.
 
 ## Recommendation
 
