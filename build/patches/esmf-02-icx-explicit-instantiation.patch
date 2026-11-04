@@ -1,0 +1,23 @@
+Reason: explicit template instantiations of MeshObjConn::common_objs/edge_info for vector iterators are guarded by __INTEL_COMPILER, which icpx no longer defines (it defines __INTEL_LLVM_COMPILER); without them libesmf.so has an undefined symbol.
+diff --git a/src/Infrastructure/Mesh/src/ESMCI_MeshObjConn.C b/src/Infrastructure/Mesh/src/ESMCI_MeshObjConn.C
+index d4d9348..559ead2 100644
+--- a/src/Infrastructure/Mesh/src/ESMCI_MeshObjConn.C
++++ b/src/Infrastructure/Mesh/src/ESMCI_MeshObjConn.C
+@@ -566,7 +566,7 @@ template void edge_info<>(MeshObj** node_begin,
+                int *polarity, // out
+                bool
+                );
+-#ifdef __INTEL_COMPILER
++#if defined(__INTEL_COMPILER) || defined(__INTEL_LLVM_COMPILER)
+ // The following instantiation is necessary for Intel-12.0.x on Cray systems.
+ // Intel-12.0.x on regulare Linux systems do not seem to need this. Also
+ // Intel-12.1.x on Cray seems to have fixed the problem again, however, this 
+@@ -711,7 +711,7 @@ template void common_objs<>(MeshObj** in_obj_begin, MeshObj** in_obj_end,
+                  UInt out_obj_type, 
+                  std::vector<MeshObj*> &out_obj);
+ 
+-#ifdef __INTEL_COMPILER
++#if defined(__INTEL_COMPILER) || defined(__INTEL_LLVM_COMPILER)
+ // Intel's icpc version < 11.0 have a problem with implicit template
+ // instantiation if compiled and linked into a shared library.
+ // Use explicit instantiation to help these compilers.
