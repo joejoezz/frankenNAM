@@ -23,8 +23,18 @@ keep it running; it is not the point.
 - Subscribe page with swap-in instructions (wgrib2, Herbie, BUFKIT) and status.
 
 ## Paid tier: the grids (and BUFKIT files)
-- **$14.99/month**, **introductory $120/year** (founding rate; recommend locking it for as long as
-  the subscription stays active, as the ENSO app did with its founding cutoff).
+- **Monthly only, $14.99/month, cancel any time.** No annual plan: a prepaid year is a promise to
+  run the service for a year, and with few subscribers that promise could be impossible to keep.
+  Monthly keeps the obligation to one billing period; the terms say the service can be wound down
+  with a month's notice and no further charges.
+- **Founding members: the first 15 paying subscribers.** The promise: once the paying-subscriber
+  pledge is filled (proposed: **30 paying subscribers**, about twice break-even), founders drop to
+  **$9.99/month** and stay there for as long as their subscription remains active. Stripe handles
+  this as a price swap on their subscription. The counter is public on the subscribe page.
+- **Comped access (NWS offices, educators): only once a baseline of paying subscribers subsidises
+  it.** Proposed rule: no comps until the pledge (30) is filled; then at most one comp per five
+  paying subscribers, reviewed every six months, revocable if the paying base shrinks. Comped keys
+  are ordinary keys with the same fair-use expectations.
 - Stripe Checkout + customer portal; webhook toggles the subscriber key.
 - Access = key in the URL path, validated by a CloudFront Function/Worker and stripped before the
   origin, so every existing tool works unchanged:
@@ -33,11 +43,12 @@ keep it running; it is not the point.
   (~2-3 GB, ~$13/month of AWS egress for 60 cycles). This removes the per-subscriber egress ceiling
   that would otherwise eat a $10-15 plan (a full-pull user ≈ 108 GB/month ≈ $9 on CloudFront).
 - File names and prefixes identical to the operational NAM (decided earlier).
-- Break-even ≈ 12-15 subscribers at $14.99 against ~$200/month of compute + transfer.
-- Subscriptions run through the LLC. Free/comped access for NWS offices and educators is Joe's
-  call later.
+- Break-even ≈ 12-15 subscribers at $14.99 against ~$200/month of compute + transfer; at the
+  30-subscriber pledge with 15 founders at $9.99, revenue ≈ $375/month.
+- Subscriptions run through the LLC.
 
 ## Not yet decided
 - Whether the maps stay fully free forever (recommended: yes, they are the funnel and the
   community service) and whether BUFKIT files sit in the free or paid tier.
 - Region of the R2 bucket, custom domain for grids, status/alerting page.
+- The exact pledge number (30 proposed) and the comp ratio (1 per 5 proposed).
