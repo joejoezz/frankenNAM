@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>What FrankenNAM costs to run</title>
+<meta name="description" content="Running costs, subscriber count and startup costs of FrankenNAM, published openly.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top"><a class="brand" href="index.html">FrankenNAM</a><nav><a href="index.html">Home</a><a href="maps/">Maps</a><a href="scorecard.html">Scorecard</a><a href="costs.html" aria-current="page">Costs</a><a href="subscribe.html">Subscribe</a><a href="terms.html">Terms</a></nav></header>
+<main>
+
+<h1>What it costs to run</h1>
+<p class="lede">Prices are set to cover the computers and the time it takes to keep this running. The numbers are public, and they are marked as measured or as estimates.</p>
+<p class="draft"><b>Draft.</b> Highlighted boxes like <span class="ph">[PLACEHOLDER: this]</span> mark items that need a number, a decision or a tested snippet before launch.</p>
+
+<h2>Subscribers against the pledge</h2>
+<p>Once <b>20 paying subscribers</b> are reached, the founding members (the first 15) drop to $9.99 a month for as long as they stay subscribed.</p>
+<div class="pledge" aria-label="subscribers toward the pledge"><i style="width:0%"></i></div>
+<p>Paying subscribers: <span class="ph">[PLACEHOLDER: from Stripe]</span> of 20. Founding members: <span class="ph">[PLACEHOLDER: from Stripe]</span> of 15.</p>
+
+<h2>Running costs per month</h2>
+<table>
+<tr><th>Item</th><th class="n">Per cycle</th><th class="n">Per month</th><th>Basis</th></tr>
+<tr><td>Compute (forecast)</td><td class="n"><span class="ph">[measured]</span></td><td class="n"><span class="ph">[measured]</span></td><td>AWS Spot, tagged <code>project=nam-recast</code>; two cycles a day</td></tr>
+<tr><td>Compute (post-processing, maps)</td><td class="n"><span class="ph">[measured]</span></td><td class="n"><span class="ph">[measured]</span></td><td>Same tag</td></tr>
+<tr><td>Transfer</td><td class="n"><span class="ph">[measured]</span></td><td class="n"><span class="ph">[measured]</span></td><td>Design estimate: about 2&ndash;3&nbsp;GB per cycle copied from AWS to the grid host, which serves downloads with no egress fee</td></tr>
+<tr><td>Storage</td><td class="n">&ndash;</td><td class="n"><span class="ph">[measured]</span></td><td>Design estimate: about $8 a month for a 30-day archive</td></tr>
+<tr><td>Payments (Stripe fees)</td><td class="n">&ndash;</td><td class="n"><span class="ph">[computed]</span></td><td>Percentage of subscriptions</td></tr>
+<tr><td><b>Total</b></td><td class="n">&nbsp;</td><td class="n"><span class="ph">[computed]</span></td><td>Compared with subscription income below</td></tr>
+</table>
+<p class="small">Figures from the project's planning are estimates until a month of live cycles exists; the table is filled from the AWS cost-allocation tag and the Stripe subscriber count, not typed in by hand.</p>
+
+<h2>Subscription income</h2>
+<table>
+<tr><th>Item</th><th class="n">Monthly</th></tr>
+<tr><td>Subscriptions at current prices</td><td class="n"><span class="ph">[computed from Stripe]</span></td></tr>
+<tr><td>Net after payment fees</td><td class="n"><span class="ph">[computed]</span></td></tr>
+</table>
+
+<h2>What it cost to get here</h2>
+<table>
+<tr><th>Stage</th><th class="n">AWS cost</th><th>Status</th></tr>
+<tr><td>Phase 0: build the model on AWS and run one historical cycle</td><td class="n">about $10.60</td><td>Spent; compute only</td></tr>
+<tr><td>Port to Graviton (cheaper chips)</td><td class="n">about $9.40</td><td>Spent</td></tr>
+<tr><td>Phase 1: hindcast cases and rehearsal</td><td class="n">under $50 planned</td><td>Target; <span class="ph">[PLACEHOLDER: actual when done]</span></td></tr>
+<tr><td>Engineering time</td><td class="n"><span class="ph">[PLACEHOLDER: hours]</span></td><td>Not billed; stated here so the real cost is visible</td></tr>
+</table>
+<p class="small">Startup figures cover cloud compute only. Storage for the build and the early cases is not included in them.</p>
+
+</main>
+<footer class="bot">FrankenNAM is a community recast of the retired NAM, run by <span class="ph">[PLACEHOLDER: LLC name]</span>. <a href="terms.html">Terms</a> &middot; <a href="costs.html">What it costs</a> &middot; <a href="https://theconvergencezone.com">The Convergence Zone</a></footer>
+</body>
+</html>

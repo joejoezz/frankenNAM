@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FrankenNAM scorecard</title>
+<meta name="description" content="Verification of FrankenNAM against observations and the GFS. Skeleton: no scores yet.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top"><a class="brand" href="index.html">FrankenNAM</a><nav><a href="index.html">Home</a><a href="maps/">Maps</a><a href="scorecard.html" aria-current="page">Scorecard</a><a href="costs.html">Costs</a><a href="subscribe.html">Subscribe</a><a href="terms.html">Terms</a></nav></header>
+<main>
+
+<h1>Scorecard</h1>
+<p class="lede">Every cycle is scored against observations and against the GFS, and the tables below are rebuilt from those scores. Nothing on this page has been scored yet.</p>
+<p class="draft"><b>Draft.</b> Highlighted boxes like <span class="ph">[PLACEHOLDER: this]</span> mark items that need a number, a decision or a tested snippet before launch.</p>
+<div class="honest"><p><b>No numbers until there are scores.</b> This page is a skeleton. Cells show a dash until the verification job has produced a value, and no figure here is an estimate or an example.</p></div>
+
+<h2>How it is scored</h2>
+<ul>
+<li>Surface fields against ASOS stations: 2&nbsp;m temperature, 2&nbsp;m dew point, 10&nbsp;m wind speed, sea-level pressure.</li>
+<li>Precipitation against MRMS and, for snow, against SNOTEL snow-water and depth changes.</li>
+<li>Every score is shown for FrankenNAM and for the GFS on the same points, so the comparison is the one a forecaster would make.</li>
+<li>Scores are by lead time, so the weak first hours (no assimilation) are visible and not averaged away.</li>
+</ul>
+<p class="small"><span class="ph">[PLACEHOLDER: exact station list, QC rules and verification windows, from the verify/ pipeline]</span></p>
+
+<h2>Latest cycle</h2>
+<p class="small">Cycle: <span class="ph">[PLACEHOLDER: YYYYMMDD HHZ]</span> &middot; scored <span class="ph">[PLACEHOLDER: time]</span></p>
+<table>
+<tr><th>Field</th><th>Lead</th><th class="n">FrankenNAM bias</th><th class="n">FrankenNAM RMSE</th><th class="n">GFS bias</th><th class="n">GFS RMSE</th><th class="n">Stations</th></tr>
+<tr><td>2&nbsp;m temperature (&deg;F)</td><td>f12</td><td class="n">&ndash;</td><td class="n">&ndash;</td><td class="n">&ndash;</td><td class="n">&ndash;</td><td class="n">&ndash;</td></tr>
+<tr><td>2&nbsp;m temperature (&deg;F)</td><td>f36</td><td class="n">&ndash;</td><td class="n">&ndash;</td><td class="n">&ndash;</td><td class="n">&ndash;</td><td class="n">&ndash;</td></tr>
+<tr><td>2&nbsp;m temperature (&deg;F)</td><td>f60</td><td class="n">&ndash;</td><td class="n">&ndash;</td><td class="n">&ndash;</td><td class="n">&ndash;</td><td class="n">&ndash;</td></tr>
+<tr><td>2&nbsp;m dew point (&deg;F)</td><td>f12, f36, f60</td><td class="n">&ndash;</td><td class="n">&ndash;</td><td class="n">&ndash;</td><td class="n">&ndash;</td><td class="n">&ndash;</td></tr>
+<tr><td>10&nbsp;m wind speed (kt)</td><td>f12, f36, f60</td><td class="n">&ndash;</td><td class="n">&ndash;</td><td class="n">&ndash;</td><td class="n">&ndash;</td><td class="n">&ndash;</td></tr>
+<tr><td>Sea-level pressure (hPa)</td><td>f12, f36, f60</td><td class="n">&ndash;</td><td class="n">&ndash;</td><td class="n">&ndash;</td><td class="n">&ndash;</td><td class="n">&ndash;</td></tr>
+</table>
+
+<h2>Precipitation and snow</h2>
+<table>
+<tr><th>Measure</th><th>Window</th><th class="n">FrankenNAM</th><th class="n">GFS</th></tr>
+<tr><td>24 h precipitation, equitable threat score at 0.25 in</td><td>day 1</td><td class="n">&ndash;</td><td class="n">&ndash;</td></tr>
+<tr><td>24 h precipitation, equitable threat score at 1 in</td><td>day 1</td><td class="n">&ndash;</td><td class="n">&ndash;</td></tr>
+<tr><td>SNOTEL snow-water change, bias (in)</td><td>day 1</td><td class="n">&ndash;</td><td class="n">&ndash;</td></tr>
+</table>
+
+<h2>Running record</h2>
+<p>Daily series of the scores above, with the number of cycles behind each point. Subscriptions open only after several weeks of this record exist.</p>
+<table>
+<tr><th>Cycles scored</th><th>First scored cycle</th><th>Cycles missed or late</th></tr>
+<tr><td class="n"><span class="ph">[PLACEHOLDER: n]</span></td><td><span class="ph">[PLACEHOLDER: date]</span></td><td class="n"><span class="ph">[PLACEHOLDER: n]</span></td></tr>
+</table>
+
+<h2>Hindcast</h2>
+<p>Before live cycles, FrankenNAM is being run on archived cases and compared with the archived operational NAM and the GFS. <span class="ph">[PLACEHOLDER: case table and results from the Phase 1 hindcast, published here only after the cases are scored against observations as well as against the archive]</span></p>
+
+</main>
+<footer class="bot">FrankenNAM is a community recast of the retired NAM, run by <span class="ph">[PLACEHOLDER: LLC name]</span>. <a href="terms.html">Terms</a> &middot; <a href="costs.html">What it costs</a> &middot; <a href="https://theconvergencezone.com">The Convergence Zone</a></footer>
+</body>
+</html>
