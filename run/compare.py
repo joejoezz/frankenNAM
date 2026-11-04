@@ -19,6 +19,7 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 
 CASE, OUT = sys.argv[1], sys.argv[2]
+ec.codes_grib_multi_support_on()   # the archive packs U/V 10 m as sub-messages of one GRIB message
 os.makedirs(OUT, exist_ok=True)
 LAT = np.arange(20, 60.001, 0.25); LON = np.arange(230, 300.001, 0.25)
 GLON, GLAT = np.meshgrid(LON, LAT)
@@ -27,6 +28,16 @@ def path(src, fh):
     if src == "recast": return f"{CASE}/recast/grib2/nam.t00z.bgdawp{fh:02d}.tm00.grib2"
     if src == "nam":    return f"{CASE}/nam-archive/nam.t00z.awphys{fh:02d}.tm00.grib2"
     return f"{CASE}/gfs/gfs.t00z.pgrb2.0p25.f{fh:03d}"
+
+_ll = {}
+def bgrid_latlon(fname):
+    if "b" not in _ll:
+        import subprocess, tempfile
+        t = tempfile.mktemp(suffix=".txt")
+        subprocess.run(["wgrib2", fname, "-d", "1", "-gridout", t], check=True, capture_output=True)
+        a = np.loadtxt(t, delimiter=",")
+        _ll["b"] = (a[:, 2], a[:, 3] % 360); os.remove(t)
+    return _ll["b"]
 
 def read(src, fh, short, level=None, step=None):
     """Return (values, lats, lons) for the first message matching shortName/level/stepRange."""
@@ -40,7 +51,10 @@ def read(src, fh, short, level=None, step=None):
                 if step is not None and ec.codes_get(g, "stepRange") != step: continue
                 v = ec.codes_get_values(g).astype(float)
                 v[v == ec.codes_get(g, "missingValue")] = np.nan
-                la = ec.codes_get_array(g, "latitudes"); lo = ec.codes_get_array(g, "longitudes") % 360
+                try:
+                    la = ec.codes_get_array(g, "latitudes"); lo = ec.codes_get_array(g, "longitudes") % 360
+                except ec.KeyValueNotFoundError:   # UPP rotated B grid (template 32769): ask wgrib2
+                    la, lo = bgrid_latlon(path(src, fh))
                 return v, la, lo
             finally:
                 ec.codes_release(g)

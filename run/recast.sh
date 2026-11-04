@@ -150,6 +150,7 @@ stage_fcst() {
   ln -sf $FIX/nam_global_o3prdlos.f77 fort.28
   ln -sf $FIX/nam_global_o3clim.txt fort.48
   export LANG=en_US
+  [ -n "${FCST_CPUS:-}" ] && export I_MPI_PIN_PROCESSOR_LIST=$FCST_CPUS   # keep clear of concurrent UPP
   /usr/bin/time -v mpirun -n $nt -ppn $nt $EXEC/NEMS.x > nems.out 2> nems.err
   log "NEMS.x exit $?"
 }
@@ -174,6 +175,7 @@ stage_post() { # UPP per history file; GRIB2 outputs BGDAWP/BGRDSF/BGRD3D as exn
       else cp $PARM/nam_cntrl_cmaq_flatfile.txt postxconfig-NT.txt; fi
       printf '%s\n' "$RUNDIR/$h" binarynemsio grib2 "${v:0:4}-${v:4:2}-${v:6:2}_${v:8:2}:00:00" NMM > itag
       local t0=$SECONDS
+      [ -n "${POST_CPUS:-}" ] && export I_MPI_PIN_PROCESSOR_LIST=$POST_CPUS
       mpirun -n $NPOST $EXEC/ncep_post < itag > post_f$fh.out 2>&1
       for k in BGDAWP BGRDSF BGRD3D; do
         [ -s $k.GrbF$fh ] && mv $k.GrbF$fh ../grib2/nam.t${cyc}z.$(echo $k | tr A-Z a-z)${fh}.tm00.grib2

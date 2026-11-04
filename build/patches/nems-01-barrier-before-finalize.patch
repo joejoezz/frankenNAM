@@ -1,0 +1,24 @@
+Reason: forecast tasks ISend the final history/restart data to the quilt tasks and never wait on it; under Intel MPI a rank in MPI_Finalize does not progress those sends, so the write tasks block in MPI_RECV and NEMS.x never exits or writes the last history file (Cray MPICH tolerated it). Barrier on MPI_COMM_WORLD before ESMF_Finalize.
+--- a/sorc/nam_nems_nmmb.fd/src/MAIN_NEMS.F90
++++ b/sorc/nam_nems_nmmb.fd/src/MAIN_NEMS.F90
+@@ -53,6 +53,7 @@
+       IMPLICIT NONE
+ !
+       INCLUDE 'mpif.h'
++      INTEGER :: IERR_FIN
+ !
+ !-----------------------------------------------------------------------
+ !***  Local Variables.
+@@ -630,6 +631,12 @@
+ !***  Shut down the ESMF system.
+ !-----------------------------------------------------------------------
+ !
++!
++!***  nam-recast: the forecast tasks ISend the last history/restart data to the quilt
++!***  (write) tasks and never wait on it. Under Intel MPI a task sitting in MPI_Finalize
++!***  does not progress those rendezvous sends, so the write tasks block in MPI_RECV
++!***  forever. A barrier keeps every task in the progress engine until the writes land.
++      CALL MPI_BARRIER(MPI_COMM_WORLD,IERR_FIN)
+       CALL ESMF_Finalize()
+       if(mype==0)call w3tage('nems     ')
+ !

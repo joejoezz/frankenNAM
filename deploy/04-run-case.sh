@@ -19,7 +19,7 @@ MARKET=(--instance-market-options 'MarketType=spot,SpotOptions={SpotInstanceType
 USERDATA=$(cat <<EOS
 #!/bin/bash
 exec > /var/log/nam-recast-run.log 2>&1
-sudo -u ubuntu -H bash -lc 'CYCLE=$CYCLE INPES=${INPES:-8} JNPES=${JNPES:-11} WRITE_GROUPS=1 WRITE_TASKS=${WRITE_TASKS:-8} NPOST=${NPOST:-24} \
+sudo -u ubuntu -H bash -lc 'CYCLE=$CYCLE \
   /opt/nam/work/run/runner.sh'
 shutdown -h now
 EOS

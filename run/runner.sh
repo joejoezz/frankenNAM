@@ -5,8 +5,20 @@ set -uo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 export CYCLE=${CYCLE:-2026110100}
 export RUNDIR=/opt/nam/runs/$CYCLE S3RUN=s3://nam-recast-617711905691/cases/$CYCLE/recast
-cd "$HERE"
 mkdir -p $RUNDIR/fcst $RUNDIR/grib2
+cd "$HERE"
+# c7a has no SMT: a c7a.48xlarge is 192 physical cores. Use 168 compute + 2x8 write tasks
+# and leave 8 cores for UPP running alongside; on a smaller box fall back to the 96-core layout.
+NC=$(nproc)
+if [ "$NC" -ge 190 ]; then
+  export INPES=${INPES:-12} JNPES=${JNPES:-14} WRITE_GROUPS=${WRITE_GROUPS:-2} WRITE_TASKS=${WRITE_TASKS:-8}
+  export FCST_CPUS=0-183 POST_CPUS=184-191 NPOST=8
+else
+  export INPES=${INPES:-8} JNPES=${JNPES:-11} WRITE_GROUPS=${WRITE_GROUPS:-1} WRITE_TASKS=${WRITE_TASKS:-8}
+  export NPOST=${NPOST:-4}
+fi
+lscpu | grep -E "^CPU\(s\)|Thread|Model name" >> $RUNDIR/runner.log 2>/dev/null || true
+echo "layout ${INPES}x${JNPES} + ${WRITE_GROUPS}x${WRITE_TASKS}, post $NPOST" >> $RUNDIR/runner.log
 echo "runner start $(date -u +%FT%TZ) $(curl -s http://169.254.169.254/latest/meta-data/instance-type 2>/dev/null)" | tee -a $RUNDIR/runner.log
 aws s3 sync --only-show-errors $S3RUN/history/ $RUNDIR/fcst/ --exclude "*" --include "nmmb_rst_*"
 aws s3 sync --only-show-errors $S3RUN/grib2-all/ $RUNDIR/grib2/

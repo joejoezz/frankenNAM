@@ -12,4 +12,4 @@ AMI=$(aws ec2 create-image --instance-id "$IID" --name "$NAME" --no-reboot \
                        "ResourceType=snapshot,Tags=[{Key=project,Value=nam-recast}]" \
   --query ImageId --output text)
 echo "$AMI $NAME" > deploy/.runner-ami
-echo "creating $AMI ..."; aws ec2 wait image-available --image-ids "$AMI"; echo "$AMI available"
+echo "creating $AMI (aws ec2 wait image-available --image-ids $AMI)"; [ "${WAIT:-1}" = 0 ] || { aws ec2 wait image-available --image-ids "$AMI"; echo "$AMI available"; }
