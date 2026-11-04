@@ -273,3 +273,18 @@ budget ≈ $38 of the $50 target. Three agent briefs in sequence, A → B → C.
   bucket/host name, the README, the index page and the honesty line, not in the file names.
 - Cold-air-damming case for the hindcast: to be chosen from events where forecasters publicly
   credited the NAM (search in progress).
+
+### Hindcast cases: CAD search result (4 Nov 2026)
+Web search cannot see X posts and found no Bluesky posts crediting the NAM on a specific wedge
+event. Printed credits found: Capital Weather (Nov 2026) says the NAM gave "the best
+precipitation-type forecast" for the DC **"Snowcrete" storm of 5-6 Jan 2025** (snow-to-sleet
+transition "almost down to the hour") and names Mid-Atlantic cold-air damming as its standout
+strength; NWS Burlington's write-up of the **28-29 Dec 2025 ice storm** says observed temperatures
+ended up close to the NAM3 nest, which "often captures the shallow surface cold air". The
+canonical recent CAD event is the **23-25 Jan 2026 Southern ice storm** (Georgia's first ice-storm
+warning in over a decade, 0.25-1 inch of ice from north Georgia to the western Carolinas).
+AWS archive checked: NAM and GFS files exist for 5-6 Jan 2025 and 23-25 Jan 2026.
+Proposed set (7 cases, +$2.35 over the six): Phase 0 case (2026-11-01 00Z); CAD: 2026-01-23 12Z;
+p-type with a printed NAM credit: 2025-01-05 12Z (Snowcrete); Gulf Coast snow 2025-01-21 00Z;
+PNW bomb cyclone 2024-11-19 12Z; Plains severe + blizzard 2025-03-14 12Z; one lake-effect/arctic
+case from winter 2025-26 (agent picks from the archive and NWS write-ups).
