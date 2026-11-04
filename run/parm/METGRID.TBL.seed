@@ -1,0 +1,9 @@
+========================================
+name=SKINTEMP; from_input=SEED
+        interp_option=four_pt+wt_average_4pt+wt_average_16pt+search
+        masked=both
+        interp_land_mask  = LANDSEA(1)
+        interp_water_mask = LANDSEA(0)
+        missing_value=0.
+        fill_missing=0.
+========================================

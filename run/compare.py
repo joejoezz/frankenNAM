@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 """Recast(s) vs archived NAM vs GFS for one cycle, on a common 0.25 deg grid (20-60N, 130-60W).
 
-usage: compare.py <case dir> <out dir>        (env LEADS=24,48,84)
+usage: compare.py <case dir> <out dir>        (env LEADS=24,48,84; 0,24,48,84 when tm06 products exist)
+  <case dir>/tm06/nam.t00z.awphysFF.tm00.grib2                 FrankenNAM tm06 product (grid 218; optional, used if present)
   <case dir>/recast/grib2/nam.t00z.bgdawpFF.tm00.grib2         x86 / ifort recast (UPP, rotated B grid)
   <case dir>/recast-arm64/grib2/nam.t00z.bgdawpFF.tm00.grib2   arm64 / gfortran recast (optional; used if present)
   <case dir>/nam-archive/nam.t00z.awphysFF.tm00.grib2          archived NAM (grid 218)
   <case dir>/gfs/gfs.t00z.pgrb2.0p25.fFFF
-Writes PNGs (one panel per source: arm | x86 | NAM | GFS) and stats.md / stats.csv to <out dir>:
-RMSE/bias over CONUS land for arm vs x86, arm vs NAM, x86 vs NAM and GFS vs NAM (NAM = reference).
+  <case dir>/seed/nam.t18z.awphys00.tm00.grib2                 soil seed valid at C-6 (optional; soil-trace check)
+Writes PNGs (one panel per source) and stats.md / stats.csv to <out dir>: RMSE/bias over CONUS land
+against the archived NAM. With tm06 products the columns are tm06 | arm anl | NAM | GFS, the table carries
+tm06 vs NAM, arm vs NAM, GFS vs NAM and tm06 vs arm, and soil.md traces the f00 soil state to the seed.
 """
 import sys, os, glob
 import numpy as np
@@ -27,6 +30,8 @@ LAT = np.arange(20, 60.001, 0.25); LON = np.arange(230, 300.001, 0.25)
 GLON, GLAT = np.meshgrid(LON, LAT)
 
 def path(src, fh):
+    if src == "tm06":   return f"{CASE}/tm06/nam.t00z.awphys{fh:02d}.tm00.grib2"
+    if src == "seed":   return glob.glob(f"{CASE}/seed/*.grib2")[0]
     if src == "recast": return f"{CASE}/recast/grib2/nam.t00z.bgdawp{fh:02d}.tm00.grib2"
     if src == "arm":    return f"{CASE}/recast-arm64/grib2/nam.t00z.bgdawp{fh:02d}.tm00.grib2"
     if src == "nam":    return f"{CASE}/nam-archive/nam.t00z.awphys{fh:02d}.tm00.grib2"
@@ -60,14 +65,20 @@ def bgrid_latlon(fname):
             _ll["b"] = (np.rad2deg(phi).ravel(), np.rad2deg(lam).ravel() % 360)
     return _ll["b"]
 
-def read(src, fh, short, level=None, step=None):
-    """Return (values, lats, lons) for the first message matching shortName/level/stepRange."""
+def read(src, fh, short, level=None, step=None, param=None):
+    """Return (values, lats, lons) for the first message matching shortName/level/stepRange
+    (param=(discipline, category, number, bottomLevel m) selects a soil layer by numbers instead)."""
     with open(path(src, fh), "rb") as f:
         while True:
             g = ec.codes_grib_new_from_file(f)
             if g is None: break
             try:
-                if ec.codes_get(g, "shortName") != short: continue
+                if param is not None:
+                    if (ec.codes_get(g, "discipline"), ec.codes_get(g, "parameterCategory"), ec.codes_get(g, "parameterNumber")) != param[:3]: continue
+                    if ec.codes_get(g, "typeOfLevel") != "depthBelowLandLayer": continue
+                    bot = ec.codes_get(g, "scaledValueOfSecondFixedSurface") / 10.0 ** ec.codes_get(g, "scaleFactorOfSecondFixedSurface")
+                    if abs(bot - param[3]) > 1e-3: continue
+                elif ec.codes_get(g, "shortName") != short: continue
                 if level is not None and (ec.codes_get(g, "typeOfLevel"), ec.codes_get(g, "level")) != level: continue
                 if step is not None and ec.codes_get(g, "stepRange") != step: continue
                 v = ec.codes_get_values(g).astype(float)
@@ -112,6 +123,11 @@ def field(src, fh, name):
     if name == "wspd10":
         u = read(src, fh, "10u", ("heightAboveGround", 10)); w = read(src, fh, "10v", ("heightAboveGround", 10))
         return np.hypot(regrid(src, *u), regrid(src, *w))
+    if name == "u10":   v = read(src, fh, "10u", ("heightAboveGround", 10)); return regrid(src, *v)
+    if name == "v10":   v = read(src, fh, "10v", ("heightAboveGround", 10)); return regrid(src, *v)
+    if name == "sm0":   v = read(src, fh, None, param=(2, 0, 192, 0.1)); return regrid(src, *v)   # SOILW 0-10 cm, m3/m3
+    if name == "st0":   v = read(src, fh, None, param=(2, 0, 2, 0.1)); return regrid(src, *v) - 273.15   # TSOIL 0-10 cm
+    if name == "sm2":   v = read(src, fh, None, param=(2, 0, 192, 1.0)); return regrid(src, *v)   # SOILW 40-100 cm
     raise KeyError(name)
 
 def cum(src, t):
@@ -132,11 +148,20 @@ def cum(src, t):
 def precip(src, a, b): return cum(src, b) - cum(src, a)
 
 HAVE_ARM = os.path.isdir(f"{CASE}/recast-arm64/grib2")
-SRCS = ([("arm", "FrankenNAM arm64 (gfortran)")] if HAVE_ARM else []) + \
-       [("recast", "FrankenNAM x86 (ifort)" if HAVE_ARM else "Recast (NMMB cold start from GFS)"), ("nam", "Archived NAM"), ("gfs", "GFS")]
-# (a, b): statistics of a - b. NAM is the reference for the model comparisons; arm vs x86 isolates the port.
-PAIRS = ([("arm", "recast"), ("arm", "nam")] if HAVE_ARM else []) + [("recast", "nam"), ("gfs", "nam")]
-PAIR_LABEL = {"arm": "arm", "recast": "x86" if HAVE_ARM else "recast", "nam": "NAM", "gfs": "GFS"}
+HAVE_TM06 = os.path.isdir(f"{CASE}/tm06")
+HAVE_SEED = bool(glob.glob(f"{CASE}/seed/*.grib2"))
+if HAVE_TM06:
+    # the product configuration against the Phase 0 analysis-start arm64 run, the archive and the GFS
+    SRCS = [("tm06", "FrankenNAM tm06 (GFS C-6 + 6 h spin-up, NAM soil)"), ("arm", "FrankenNAM anl (GFS C analysis start)"),
+            ("nam", "Archived NAM"), ("gfs", "GFS")]
+    PAIRS = [("tm06", "nam"), ("arm", "nam"), ("gfs", "nam"), ("tm06", "arm")]
+    PAIR_LABEL = {"tm06": "tm06", "arm": "anl", "nam": "NAM", "gfs": "GFS"}
+else:
+    SRCS = ([("arm", "FrankenNAM arm64 (gfortran)")] if HAVE_ARM else []) + \
+           [("recast", "FrankenNAM x86 (ifort)" if HAVE_ARM else "Recast (NMMB cold start from GFS)"), ("nam", "Archived NAM"), ("gfs", "GFS")]
+    # (a, b): statistics of a - b. NAM is the reference for the model comparisons; arm vs x86 isolates the port.
+    PAIRS = ([("arm", "recast"), ("arm", "nam")] if HAVE_ARM else []) + [("recast", "nam"), ("gfs", "nam")]
+    PAIR_LABEL = {"arm": "arm", "recast": "x86" if HAVE_ARM else "recast", "nam": "NAM", "gfs": "GFS"}
 PLOTS = {
     "mslp":   dict(cmap="viridis", levels=np.arange(976, 1045, 4), units="hPa"),
     "z500":   dict(cmap="viridis", levels=np.arange(510, 600, 6), units="dam"),
@@ -144,6 +169,8 @@ PLOTS = {
     "wspd10": dict(cmap="YlGnBu", levels=np.arange(0, 22, 2), units="m/s"),
     "rh700":  dict(cmap="BrBG", levels=np.arange(0, 101, 10), units="%"),
     "precip": dict(cmap="GnBu", levels=[0.25, 1, 2.5, 5, 10, 15, 20, 30, 40, 60, 80, 100], units="mm"),
+    "sm0":    dict(cmap="BrBG", levels=np.arange(0.05, 0.46, 0.04), units="m3/m3"),
+    "st0":    dict(cmap="RdYlBu_r", levels=np.arange(-12, 31, 3), units="°C"),
 }
 
 def panel(fields, title, kind, fname):
@@ -172,15 +199,15 @@ def main():
         return np.sqrt(np.mean(d ** 2)), np.mean(d)
 
     rows = []   # (field, lead, {pair: (rmse, bias)})
-    LEADS = [int(x) for x in os.environ.get("LEADS", "24,48,84").split(",")]
+    LEADS = [int(x) for x in os.environ.get("LEADS", "0,24,48,84" if HAVE_TM06 else "24,48,84").split(",")]
     FIGS = os.environ.get("FIGS", "1") == "1"
     for fh in LEADS:
-        for kind in ["mslp", "z500", "t2m", "wspd10", "rh700"]:
+        for kind in ["mslp", "z500", "t2m", "wspd10", "u10", "v10", "rh700"]:
             if fh == 0 and kind == "rh700": continue
             f = {s: field(s, fh, kind) for s, _ in SRCS}
-            if FIGS and fh > 0:
+            if FIGS and fh > 0 and kind not in ("u10", "v10"):
                 panel([(lab, f[s]) for s, lab in SRCS], f"{kind}  f{fh:02d}  valid 2026-11-01 00Z +{fh} h", kind, f"{kind}_f{fh:02d}.png")
-            if kind in ("mslp", "z500", "t2m", "wspd10"):
+            if kind in ("mslp", "z500", "t2m", "wspd10", "u10", "v10"):
                 rows.append((kind, fh, {(a, b): stats(f[a], f[b]) for a, b in PAIRS}))
     if FIGS:
         for b in [x for x in (24, 48, 72) if x <= max(LEADS)]:
@@ -194,7 +221,28 @@ def main():
         f = {s: precip(s, 0, 84) for s, _ in SRCS}
         panel([(lab, f[s]) for s, lab in SRCS], "Total precipitation f00-f84", "precip", "precip_total_f84.png")
 
-    units = dict(mslp="hPa", z500="dam", t2m="K", wspd10="m/s")
+    # soil trace: does the tm06 f00 soil state come from the seed (NAM land state at C-6) or from the GFS?
+    if HAVE_TM06 and 0 in LEADS:
+        soil_srcs = SRCS + ([("seed", "soil seed (NAM C-6)")] if HAVE_SEED else [])
+        with open(f"{OUT}/soil.md", "w") as m:
+            m.write("Soil state at f00 (valid C), RMSE / bias over CONUS land points on the 0.25 deg grid.\n")
+            m.write("Rows are differences a - b; a tm06 that traces to the seed is close to seed/NAM and far from GFS/anl.\n\n")
+            m.write("| Field | tm06 vs seed | tm06 vs NAM | tm06 vs GFS | tm06 vs anl | anl vs GFS | anl vs NAM | NAM vs seed |\n|---|---|---|---|---|---|---|---|\n")
+            for kind, u in (("sm0", "m3/m3"), ("st0", "K"), ("sm2", "m3/m3")):
+                f = {}
+                for s_, _ in soil_srcs:
+                    try: f[s_] = field(s_, 0, kind)
+                    except Exception as e: print("soil", s_, kind, "unavailable:", e)
+                def cell(a, b):
+                    if a in f and b in f:
+                        r, bb = stats(f[a], f[b]); return f"{r:.3f} / {bb:+.3f}"
+                    return "n/a"
+                m.write(f"| {kind} ({u}) | " + " | ".join(cell(a, b) for a, b in [("tm06", "seed"), ("tm06", "nam"), ("tm06", "gfs"), ("tm06", "arm"), ("arm", "gfs"), ("arm", "nam"), ("nam", "seed")]) + " |\n")
+                if FIGS and kind in PLOTS and all(s_ in f for s_, _ in SRCS):
+                    panel([(lab, f[s_]) for s_, lab in SRCS], f"{kind}  f00  valid 2026-11-01 00Z", kind, f"{kind}_f00.png")
+        print(open(f"{OUT}/soil.md").read())
+
+    units = dict(mslp="hPa", z500="dam", t2m="K", wspd10="m/s", u10="m/s", v10="m/s")
     names = [f"{PAIR_LABEL[a]} vs {PAIR_LABEL[b]}" for a, b in PAIRS]
     with open(f"{OUT}/stats.csv", "w") as c, open(f"{OUT}/stats.md", "w") as m:
         c.write("field,lead," + ",".join(f"rmse_{n.replace(' ', '_')},bias_{n.replace(' ', '_')}" for n in names) + "\n")

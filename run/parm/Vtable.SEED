@@ -1,0 +1,24 @@
+GRIB1| Level| From |  To  | metgrid  | metgrid | metgrid                                 |GRIB2|GRIB2|GRIB2|GRIB2|
+Param| Type |Level1|Level2| Name     | Units   | Description                             |Discp|Catgy|Param|Level|
+-----+------+------+------+----------+---------+-----------------------------------------+-----------------------+
+ 144 | 112  |   0  |  10  | SM000010 | kg m-3  | Soil Moist 0-10 cm below grn layer (Up) |  2  |  0  | 192 | 106 |
+ 144 | 112  |  10  |  40  | SM010040 | kg m-3  | Soil Moist 10-40 cm below grn layer     |  2  |  0  | 192 | 106 |
+ 144 | 112  |  40  | 100  | SM040100 | kg m-3  | Soil Moist 40-100 cm below grn layer    |  2  |  0  | 192 | 106 |
+ 144 | 112  | 100  | 200  | SM100200 | kg m-3  | Soil Moist 100-200 cm below gr layer    |  2  |  0  | 192 | 106 |
+  85 | 112  |   0  |  10  | ST000010 | K       | T 0-10 cm below ground layer (Upper)    |  2  |  0  |  2  | 106 |
+  85 | 112  |  10  |  40  | ST010040 | K       | T 10-40 cm below ground layer (Upper)   |  2  |  0  |  2  | 106 |
+  85 | 112  |  40  | 100  | ST040100 | K       | T 40-100 cm below ground layer (Upper)  |  2  |  0  |  2  | 106 |
+  85 | 112  | 100  | 200  | ST100200 | K       | T 100-200 cm below ground layer (Bottom)|  2  |  0  |  2  | 106 |
+  81 |   1  |   0  |      | LANDSEA  | proprtn | Land/Sea flag (1=land,0=sea in NAM)     |  2  |  0  |  0  |   1 |
+  11 |   1  |   0  |      | SKINTEMP | K       | Skin temperature (land only; water blank)|  0  |  0  |  0  |   1 |
+  65 |   1  |   0  |      | SNOW     | kg m-2  | Water equivalent snow depth             |  0  |  1  | 13  |   1 |
+ 223 |   1  |   0  |      | CANWAT   | kg m-2  | Plant Canopy Surface Water              |  2  |  0  | 196 |   1 |
+-----+------+------+------+----------+---------+-----------------------------------------+-----------------------+
+#
+# Soil-seed Vtable for the FrankenNAM tm06 cycle: the Noah land state read from a grid-218
+# NAM-format GRIB2 file valid at the model start (hindcast: the archived nam.tPPz.awphys00;
+# live: FrankenNAM's own previous product valid at that time). Rows are copied from
+# parm/nam_Vtable.NAM so the metgrid names match the GFS source (nam_Vtable.GFS.bocos) and
+# NPS metgrid merges them field by field (see docs/tm06-design.md, "metgrid precedence").
+# Not here on purpose: SEAICE and SST (stay GFS), SOILHGT/PSFC/PMSL and all 3-D fields.
+# SKINTEMP is blanked over water by run/recast.sh (seed_prep) so the GFS SST survives.
