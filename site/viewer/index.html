@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="data-root" content="">
+<title>FrankenNAM maps</title>
+<style>
+:root{--ink:#1a1a1a;--paper:#fafaf8;--muted:#666;--line:#ddd;--accent:#1f3fd6}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--paper);color:var(--ink);display:flex;flex-direction:column;min-height:100dvh;
+font:14px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+header{padding:8px 12px;border-bottom:1px solid var(--line);background:#fff;display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap}
+header h1{font-size:17px;margin:0}
+header a{color:var(--accent);text-decoration:none;font-size:13px}
+.sel{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+select,button{font:inherit;border:1px solid var(--line);background:#fff;border-radius:6px;padding:6px 10px;min-height:36px;cursor:pointer;color:var(--ink)}
+button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+#notice{background:#fff6dc;border-bottom:1px solid #e8d9a8;color:#5a4a10;padding:6px 12px;font-size:13px;display:none}
+#tabs{display:flex;flex-wrap:wrap;gap:0;padding:8px 12px 0}
+#tabs button{border-radius:0;margin-left:-1px;padding:6px 11px;min-height:34px;font-size:13px}
+#tabs button:first-child{border-radius:6px 0 0 6px;margin-left:0}
+#tabs button:last-child{border-radius:0 6px 6px 0}
+#tabs button.on{position:relative;z-index:1}
+main{flex:1;padding:8px 12px;position:relative;min-height:0}
+#stage{position:relative;width:fit-content;max-width:100%;margin:0 auto;background:#fff;border:1px solid var(--line)}
+#stage img{display:block;max-width:100%;max-height:calc(100dvh - 235px);min-height:300px;width:auto;height:auto;margin:0 auto}
+#helpbtn{position:absolute;top:10px;right:10px;z-index:3;width:30px;height:30px;min-height:0;padding:0;border-radius:50%;
+font-weight:600;background:#fffffff0}
+#help{position:absolute;top:46px;right:10px;z-index:3;max-width:min(440px,calc(100% - 20px));background:#fffffff5;border:1px solid var(--line);
+border-radius:8px;padding:10px 14px;box-shadow:0 4px 18px #0002;display:none;font-size:13px}
+#help.on{display:block}
+#help b{display:block;margin-bottom:4px}
+#msg{position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:var(--muted);background:#fff}
+#bar{display:flex;gap:6px;align-items:center;padding:6px 12px 10px;flex-wrap:wrap;max-width:1424px;margin:0 auto;width:100%}
+#scrub{flex:1 1 200px;min-width:120px;accent-color:var(--accent);height:36px;margin:0}
+#count{color:var(--ink);min-width:230px;text-align:center;font-variant-numeric:tabular-nums;font-size:13px}
+footer{padding:6px 12px;color:var(--muted);font-size:11.5px;background:#fff;border-top:1px solid var(--line)}
+@media (max-width:640px){#count{min-width:0;flex:1 1 100%;order:9}}
+</style>
+</head>
+<body>
+<header>
+  <h1>FrankenNAM maps</h1>
+  <div class="sel">
+    <select id="run" title="cycle"></select>
+    <select id="region" title="region"></select>
+  </div>
+  <a id="home" href="../" hidden>home</a>
+</header>
+<div id="notice"></div>
+<div id="tabs" role="tablist"></div>
+<main>
+  <div id="stage">
+    <img id="img" alt="">
+    <button id="helpbtn" title="About this field">?</button>
+    <div id="help"></div>
+    <div id="msg"></div>
+  </div>
+</main>
+<div id="bar">
+  <button id="prev" title="previous hour (left arrow)">◀</button>
+  <button id="play" title="play / pause (space)">▶</button>
+  <button id="next" title="next hour (right arrow)">▶|</button>
+  <input id="scrub" type="range" min="0" max="0" value="0">
+  <span id="count"></span>
+  <select id="speed" title="speed"><option value="700">slow</option><option value="350" selected>normal</option><option value="150">fast</option></select>
+</div>
+<footer id="foot"></footer>
+<script>
+"use strict";
+/* Plain JS image-loop viewer. Every URL is relative to the data root (default: the page's own
+   folder), so the same page works from a local folder (file://), from an S3/R2/CloudFront prefix,
+   or from a sub-path. Index files are loaded as <script> twins (runs.js, index.js) because browsers
+   block fetch() of local JSON under file://. Keys: left/right step, space play, up/down field,
+   [ ] region, Home/End first/last hour, ? help. Naming scheme (same family as ensplots):
+   frames/<model>/<cycle>/<region>/<fff>-<field>.png */
+const $ = s => document.querySelector(s);
+const q = new URLSearchParams(location.search);
+const ROOT = (q.get("data") ?? document.querySelector('meta[name=data-root]').content ?? "").replace(/\/?$/, "/").replace(/^\/$/, "");
+const pad3 = n => String(n).padStart(3, "0");
+const WD = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"], MO = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const stamp = d => `${String(d.getUTCHours()).padStart(2,"0")}z ${WD[d.getUTCDay()]} ${d.getUTCDate()} ${MO[d.getUTCMonth()]}`;
+const initDate = c => new Date(Date.UTC(+c.slice(0,4), +c.slice(4,6)-1, +c.slice(6,8), +c.slice(8,10)));
+
+let runs = null, idx = null, model = null, cycle = null, region = null, field = null, hour = null;
+let playing = false, timer = null, gen = 0;
+const cache = new Map();   // url -> Image, for the loop
+
+function loadScript(src) {
+  return new Promise((ok, bad) => { const s = document.createElement("script"); s.src = src;
+    s.onload = ok; s.onerror = () => bad(new Error("could not load " + src)); document.head.appendChild(s); });
+}
+const url = (h, f = field, r = region) => `${ROOT}frames/${model}/${cycle}/${r}/${pad3(h)}-${f}.png`;
+function note(msg) { const m = $("#msg"); m.textContent = msg || ""; m.style.display = msg ? "flex" : "none"; }
+
+async function boot() {
+  try { await loadScript(ROOT + "runs.js?" + Date.now()); }
+  catch (e) { note("No cycles published yet."); return; }
+  runs = window.__NAM_RUNS;
+  const h = decodeURIComponent(location.hash.slice(1)).split("/");   // model/cycle/region/field/hour
+  const models = Object.keys(runs.runs).filter(m => runs.runs[m].length);
+  if (!models.length) { note("No cycles published yet."); return; }
+  const want = h.length >= 2 && runs.runs[h[0]] && runs.runs[h[0]].includes(h[1]) ? [h[0], h[1]] : [models[0], runs.runs[models[0]][0]];
+  const opts = [];
+  for (const m of models) for (const c of runs.runs[m]) opts.push([`${m}/${c}`, `${runs.labels[m] || m}  ${stamp(initDate(c))}`]);
+  $("#run").innerHTML = opts.map(([v, t]) => `<option value="${v}">${t}</option>`).join("");
+  $("#run").value = want.join("/");
+  await pick(want[0], want[1], h[2], h[3], h[4] !== undefined ? +h[4] : null);
+}
+
+async function pick(m, c, r, f, hr) {
+  model = m; cycle = c;
+  const key = `${m}/${c}`;
+  if (!(window.__NAM_INDEX && window.__NAM_INDEX[key])) await loadScript(`${ROOT}frames/${m}/${c}/index.js?${Date.now()}`);
+  idx = window.__NAM_INDEX[key];
+  const regs = Object.keys(idx.regions);
+  region = regs.includes(r) ? r : (regs.includes(region) ? region : regs[0]);
+  $("#region").innerHTML = regs.map(x => `<option value="${x}">${idx.regions[x].label}</option>`).join("");
+  $("#region").value = region;
+  const fields = Object.keys(idx.fields);
+  field = fields.includes(f) ? f : (fields.includes(field) ? field : fields[0]);
+  $("#tabs").innerHTML = fields.map(x => `<button role="tab" data-f="${x}" title="${idx.fields[x].title}">${idx.fields[x].tab}</button>`).join("");
+  $("#notice").style.display = m === "frankennam" ? "none" : "block";
+  $("#notice").textContent = m === "frankennam" ? "" : "Archived operational NAM, shown as a reference sample of the maps. This is not FrankenNAM output.";
+  $("#foot").textContent = "Maps on the 12 km grid 218, Lambert conformal. Basemap Natural Earth. Not affiliated with NOAA.";
+  document.title = `${idx.label} maps`;
+  setField(field, hr);
+}
+
+function hours() { return idx.fields[field].hours; }
+function setField(f, hr) {
+  field = f; gen++;
+  document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.f === f));
+  const hs = hours();
+  const want = hr !== null && hr !== undefined ? hr : hour;
+  hour = hs.includes(want) ? want : (want !== null && want !== undefined ? hs.reduce((a, b) => Math.abs(b - want) < Math.abs(a - want) ? b : a) : hs[0]);
+  $("#scrub").max = hs.length - 1;
+  $("#help").innerHTML = `<b>${idx.fields[f].title}</b>${idx.fields[f].help}`;
+  show(); preload();
+}
+function show() {
+  const hs = hours(), i = hs.indexOf(hour);
+  $("#scrub").value = i;
+  const u = url(hour), im = $("#img");
+  note("");
+  im.onerror = () => note("Frame not available.");
+  im.src = u;
+  const valid = new Date(initDate(cycle).getTime() + hour * 3600e3);
+  $("#count").textContent = `f${pad3(hour)} · valid ${stamp(valid)}`;
+  history.replaceState(null, "", `#${model}/${cycle}/${region}/${field}/${hour}`);
+}
+function preload() {
+  const g = gen, hs = hours();
+  let i = Math.max(0, hs.indexOf(hour)), n = 0;
+  const next = () => {   // gentle fan-out: a few at a time, current field first
+    if (g !== gen || n >= hs.length) return;
+    const h = hs[(i + n++) % hs.length], u = url(h);
+    if (cache.has(u)) return next();
+    const im = new Image(); im.onload = im.onerror = next; im.src = u; cache.set(u, im);
+  };
+  for (let k = 0; k < 4; k++) next();
+}
+function step(d) {
+  const hs = hours(), i = hs.indexOf(hour);
+  hour = hs[(i + d + hs.length) % hs.length]; show();
+}
+function play(on) {
+  playing = on; $("#play").textContent = on ? "❚❚" : "▶"; clearTimeout(timer);
+  if (!on) return;
+  const tick = () => { step(1); const hs = hours(); timer = setTimeout(tick, +$("#speed").value * (hour === hs[hs.length - 1] ? 2.5 : 1)); };
+  timer = setTimeout(tick, +$("#speed").value);
+}
+function cycleField(d) {
+  const f = Object.keys(idx.fields), i = f.indexOf(field);
+  setField(f[(i + d + f.length) % f.length]);
+}
+function cycleRegion(d) {
+  const r = Object.keys(idx.regions), i = r.indexOf(region);
+  region = r[(i + d + r.length) % r.length]; $("#region").value = region; gen++; show(); preload();
+}
+
+$("#tabs").addEventListener("click", e => { const b = e.target.closest("button"); if (b) setField(b.dataset.f); });
+$("#run").addEventListener("change", e => { const [m, c] = e.target.value.split("/"); pick(m, c, region, field, hour); });
+$("#region").addEventListener("change", e => { region = e.target.value; gen++; show(); preload(); });
+$("#prev").onclick = () => { play(false); step(-1); };
+$("#next").onclick = () => { play(false); step(1); };
+$("#play").onclick = () => play(!playing);
+$("#scrub").oninput = e => { play(false); hour = hours()[+e.target.value]; show(); };
+$("#speed").onchange = () => playing && play(true);
+$("#helpbtn").onclick = () => $("#help").classList.toggle("on");
+document.addEventListener("keydown", e => {
+  if (e.target.matches("select,input[type=text]") || e.metaKey || e.ctrlKey || e.altKey || !idx) return;
+  const k = e.key;
+  if (k === "ArrowRight") { play(false); step(1); }
+  else if (k === "ArrowLeft") { play(false); step(-1); }
+  else if (k === " ") play(!playing);
+  else if (k === "ArrowDown") cycleField(1);
+  else if (k === "ArrowUp") cycleField(-1);
+  else if (k === "]") cycleRegion(1);
+  else if (k === "[") cycleRegion(-1);
+  else if (k === "Home") { hour = hours()[0]; show(); }
+  else if (k === "End") { const h = hours(); hour = h[h.length - 1]; show(); }
+  else if (k === "?") $("#help").classList.toggle("on");
+  else return;
+  e.preventDefault();
+});
+if (/\/maps\/(index\.html)?$/.test(location.pathname)) $("#home").hidden = false;   // served at /maps/ under the site
+if (q.get("help")) $("#help").classList.add("on");
+boot();
+</script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+numpy
+matplotlib
+eccodes
+pyproj
+scipy
+pillow
