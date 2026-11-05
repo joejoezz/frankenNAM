@@ -176,3 +176,7 @@ No `ungribp` exists in this NPS tree; the scripts only use `nam_ungrib` and `nam
 
 `s3://nam-recast-617711905691/build/2026-11-04/exec/` holds the executables and `MANIFEST`
 (name, size, sha256, `ldd`, upstream commit, build-script commit); `.../logs/` holds every build log.
+
+## x86 build box retired (5 Nov 2026)
+
+The Phase 0 x86 box (i-0ab3bbee9ba7068e7) was terminated with its 300 GB disk to save $24/month; arm64 is the default runner. The x86 fallback is kept as artifacts: `s3://nam-recast-617711905691/build/2026-11-04/` (binaries, logs, MANIFEST) and `runner/bundle-20261104.tar` (11.6 GB). To rebuild: `deploy/01-build-box.sh`, then `build/build_all.sh` (about 18 min clean).
