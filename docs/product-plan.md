@@ -53,6 +53,13 @@ subscriber count against the pledge, and the **startup cost of the resurrection*
 Graviton port ≈ $9.4, Phase 1 target < $50, plus the engineering time, stated honestly). Updated
 from the AWS cost allocation tag `project=nam-recast` and the Stripe subscriber count.
 
+## Name
+FrankenNAM stays for now (Joe, 5 Nov 2026). Logged alternative: **OpenNAM** (simple, searchable;
+honest only if the repo is public at launch so "open" means open code + open verification + open
+costs, with paid grids covering hosting). Also considered: NAMcast, NAM Continuity, NAM12.
+All were unregistered in .com/.org on 5 Nov 2026 (rough whois). A rename touches the repo name,
+products README, site copy and memory, nothing shipped yet; half an hour when decided.
+
 ## Not yet decided
 - Whether the maps stay fully free forever (recommended: yes, they are the funnel and the
   community service) and whether BUFKIT files sit in the free or paid tier.
