@@ -323,3 +323,27 @@ kernels for the product before an independent verification exists.
    for GFS-start evidence, scores, live use and PyPI release; until then do not depend on it.
 6. **Do not contact them now.** If Joe wants, a public pointer to where the NAM `fix/` tables can
    be recovered (Wayback) would help them and costs nothing; it is not required.
+
+## Addendum, 5 Nov 2026 03:48Z: they are serving free GRIB2
+`https://woof-nam.recastsystems.com/` lists runs with downloadable files. Facts read from the index,
+`status.json`, a run directory and their `README.txt` (which is marked "NOT PUBLIC" draft with
+placeholder dates):
+- Free; proposed licence CC BY 4.0 "WOOF-NAM by Recast"; "not an official NOAA/NWS forecast", no warranty.
+- "A one-week public run" (dates are placeholders); files deleted after 7 days.
+- Four cycles a day, f00-f84 **hourly**, grid 218, awphys-style inventory (some fields "not yet
+  included"), `.idx` per file, `cycle.json` with SHA-256, PNG maps every 3 h.
+- File names `woof-nam.tHHz.awphysFF.tm00.grib2`: deliberately **not** drop-in for NOAA tooling.
+- Files are ~175 MB each (NOAA's are ~58 MB): packing "undecided, complex or lossless"; a cycle is
+  15.6 GB, so a user pulling four cycles a day moves ~62 GB/day.
+- Start: same-cycle GFS 0.25° analysis, GFS boundaries, no DA, no spin-up, no soil seeding.
+- Clock: run starts ~C+3:30 when the GFS lands, all 84 h ~C+4:20 (observed 00Z 5 Nov: first file
+  C+3:39, 20 h done by C+3:48, i.e. ~27 s per forecast hour on the GPU). The 18Z 4 Nov run
+  completed at C+9:04 (late start). Next run advertised for 10:20Z.
+- No verification, no statement of hardware or who pays.
+
+What it means: a free hourly GRIB2 feed exists today from a float32 rewrite of unknown fidelity,
+framed as a one-week demo, with a different file prefix and 3x the bytes. FrankenNAM's
+differentiators stand: the NAM's own code with measured fidelity to the archive, NOAA-identical
+names, the tm06 clock (f24 before cycle time, f84 ≈ C+2:57 vs their C+4:20), seeded/cycled soil,
+operations with verification and alerts. Decision (Joe, 5 Nov): stay the course; re-check in two
+to three weeks whether the feed persists past the demo week and whether they publish skill.
