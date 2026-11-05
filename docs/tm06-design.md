@@ -270,6 +270,14 @@ right. The later leads come from the acceptance run below.
   come through as 9.999e20 (complex-packing missing values, not a bitmap with zeros as I had
   assumed), and a `missing_value=0.` table entry did not catch them. Fixed with
   `missing_value=9.999e+20`; the IC extremes are now checked and printed by `recast.sh nemsinterp`.
+- **Acceptance run, 02:55 UTC:** the concurrent post loop died at product hour 06 (the first
+  12 h bucket sum): the earlier 3 h bucket was written with `-no_header -bin` but read back with a
+  plain `-import_bin`, which expects Fortran record headers ("import_bin: header record size
+  wrong"). f00/f03 need no sum, so the box test never reached it. One-token fix (`-no_header` on
+  the import). Worse than the bug: the failure stayed silent for three hours while the model ran
+  on; runner.sh now uploads post.log/products.log/timeline.txt at once and writes a
+  `POST_FAILED` marker next to DONE/FAILED so a watcher sees it. The post was restarted alongside
+  the model at 06:0x UTC from the node (the coordinator had kept the node from shutting down).
 - wgrib2 `-match` with alternations needs care: `:APCP:surface:12-24` does not match
   `:APCP:surface:12-24 hour acc fcst:` with a trailing `:` in the pattern.
 

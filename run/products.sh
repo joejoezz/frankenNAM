@@ -75,7 +75,7 @@ else
     rm -f sum2.g2
     for r in 1 2 3; do
       $WG $prev -d $r -no_header -bin prev$r.bin > /dev/null
-      $WG sum.g2 -d $r -rpn "sto_1" -import_bin prev$r.bin -rpn "rcl_1:+" -set_grib_type c3 -append -grib_out sum2.g2 > /dev/null
+      $WG sum.g2 -d $r -rpn "sto_1" -no_header -import_bin prev$r.bin -rpn "rcl_1:+" -set_grib_type c3 -append -grib_out sum2.g2 > /dev/null   # -no_header on both sides: the bin file has no Fortran record headers
     done
     mv sum2.g2 sum.g2
   done

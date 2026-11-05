@@ -59,13 +59,19 @@ if [ $NRC = 0 ]; then
   # Executables fixed while a run is in progress can be dropped into runner/exec-<arch>/ in S3;
   # they are picked up before UPP runs (the forecast binary is never replaced under a running job).
   refresh_exec() { aws s3 sync --only-show-errors --exclude "NEMS*" s3://nam-recast-617711905691/runner/exec-$(uname -m)/ /opt/nam/work/exec/ 2>/dev/null || true; }
+  post_failed() { # a dead post loop must not go silent while the model runs on for hours: logs + marker at once
+    for f in post.log products.log timeline.txt; do [ -s $RUNDIR/$f ] && aws s3 cp --only-show-errors $RUNDIR/$f $S3RUN/logs/$f; done
+    echo "post rc=$1 $(date -u +%FT%TZ)" | aws s3 cp --only-show-errors - $S3RUN/POST_FAILED
+  }
   if [ "${POST_AFTER:-0}" = 1 ]; then
     wait $FPID; FRC=$?
     refresh_exec
     ./recast.sh post > $RUNDIR/post.log 2>&1; PRC=$?
+    [ $PRC = 0 ] || post_failed $PRC
   else
     sleep 120; refresh_exec
     WAIT=1 ./recast.sh post > $RUNDIR/post.log 2>&1; PRC=$?
+    [ $PRC = 0 ] || post_failed $PRC
     wait $FPID; FRC=$?
   fi
   echo "fcst rc=$FRC post rc=$PRC $(date -u +%FT%TZ)" | tee -a $RUNDIR/runner.log
