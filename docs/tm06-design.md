@@ -168,7 +168,18 @@ a runner cannot launch its successor while it is itself alive: RunInstances is r
 on-demand instance (~$0.004/h, same role and tags) that waits until no `nam-recast-runner` is
 running, launches the queued runner (retrying zones and Spot capacity), uploads its log and
 terminates. Once the pending raise to 64 vCPU lands the direct launch succeeds and the relay is
-never used. The relay is on-demand (2 of the 32 on-demand vCPU), so the arm build box (32 vCPU
+never used. Node choice: the launcher tries an ordered type list, `m8g.8xlarge, m7g.8xlarge`
+(128 GB, UPP alongside the model) then `c8g.8xlarge` with `POST_AFTER=1` (64 GB), each across
+all four zones, so a queue cannot stall on one type (m8g Spot capacity ran out in two zones on
+5 Nov 2026 and the first chain-a ran on m7g).
+
+**Spot interruption leaves the chain dead (open, Phase 2):** the queue line is popped before the
+job runs and the chain fires only from a finished runner, so a reclaimed runner (chain-a,
+m8g in us-west-2d, reclaimed 14 min in on 5 Nov 2026) ends the chain with nothing relaunched and
+the job lost from the queue. Phase 2 fix: leave the job line in the queue (mark it "running
+<instance>") until DONE is written, and have the relay, or the EventBridge/Lambda scheduler of
+the dress rehearsal, re-launch any job whose runner is gone without DONE; with restarts back on
+(128 GB nodes allow them) the relaunch resumes from the last restart instead of starting over. The relay is on-demand (2 of the 32 on-demand vCPU), so the arm build box (32 vCPU
 on-demand) must be stopped while a chain can fire; it is, during runs. Zones are tried in the order 2d, 2a, 2c, 2b (2d had the cheapest c8g Spot,
 $0.466/h, on 4 Nov 2026). Chain test result in section 6.
 
