@@ -15,6 +15,22 @@ cp -RL "$STAGE/link" "$STAGE/www"
 if [ "${LAUNCH:-0}" = 1 ]; then printf 'User-agent: *\nAllow: /\n' > "$STAGE/www/robots.txt"
 else printf 'User-agent: *\nDisallow: /\n' > "$STAGE/www/robots.txt"; fi
 find "$STAGE/www" -name .DS_Store -delete
+# Images cache for a day in browsers, so a changed chart must get a new URL: tag every img/ and assets/ reference
+# in the pages with a short hash of the file (img/x.png -> img/x.png?v=1a2b3c4d).
+python3 - "$STAGE/www" <<'PY'
+import hashlib, os, re, sys
+root = sys.argv[1]
+def tag(m):
+    f = os.path.join(root, m.group(2))
+    if not os.path.isfile(f): return m.group(0)
+    return f'{m.group(1)}{m.group(2)}?v={hashlib.md5(open(f, "rb").read()).hexdigest()[:8]}{m.group(3)}'
+for d, _, fs in os.walk(root):
+    for n in fs:
+        if not n.endswith(".html") or "frames" in d: continue
+        p = os.path.join(d, n); t = open(p).read()
+        u = re.sub(r'((?:src|href)=")/?((?:img|assets)/[^"?#]+)(")', tag, t)
+        if u != t: open(p, "w").write(u)
+PY
 echo "== $(du -sh "$STAGE/www" | cut -f1) to s3://$BUCKET"
 aws s3 sync "$STAGE/www" "s3://$BUCKET" --delete --only-show-errors --exclude "*" \
   --include "*.png" --include "*.jpg" --include "*.svg" --include "*.ico" --cache-control "public, max-age=86400"
