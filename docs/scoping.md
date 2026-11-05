@@ -32,7 +32,7 @@ Community release: DTC's NEMS-NMMB v1.0 (2016) is unsupported and its download p
 | Item | Value |
 |---|---|
 | Parent grid | 954 × 835 × 60 levels, rotated lat-lon B-grid, centre 54N 106W, 12 km (North America, much bigger than CONUS) |
-| Time step | 25⅓ s (`dt_int 25, dt_num 0, dt_den 3`) |
+| Time step | 25 s (`dt_int 25, dt_num 0, dt_den 3`; the fractional part is 0/3; an earlier draft misread this as 25 s) |
 | Physics | Ferrier-Aligo hires microphysics, BMJ convection, MYJ PBL + surface layer, Noah LSM, RRTM SW/LW |
 | Forecast | 84 h, 4 cycles/day; nests (3 km CONUS/AK, Hawaii, PR, fire wx) to 60 h |
 | Ops decomposition, parent | 256 compute + 12 write tasks (×2 threads = ~512 cores) for 0-60 h alongside nests; 500+12 tasks for 60-84 h, ≤30 min wall on 4 WCOSS2 nodes (AMD Milan, 128 cores/node) |
