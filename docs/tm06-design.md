@@ -181,7 +181,16 @@ the job lost from the queue. Phase 2 fix: leave the job line in the queue (mark 
 the dress rehearsal, re-launch any job whose runner is gone without DONE; with restarts back on
 (128 GB nodes allow them) the relaunch resumes from the last restart instead of starting over. The relay is on-demand (2 of the 32 on-demand vCPU), so the arm build box (32 vCPU
 on-demand) must be stopped while a chain can fire; it is, during runs. Zones are tried in the order 2d, 2a, 2c, 2b (2d had the cheapest c8g Spot,
-$0.466/h, on 4 Nov 2026). Chain test result in section 6.
+$0.466/h, on 4 Nov 2026).
+
+**Chain test (5 Nov 2026):** queue = chain-a (6 h), chain-b (6 h), acceptance (90 h). The first
+chain-a (m8g, 2d) was Spot-reclaimed 14 min in (see the open item above) and was relaunched by
+hand on m7g in 2a (no m8g capacity in two zones at that moment). It ran stage → NPS → 6 h →
+UPP f06 → product f00 → DONE at 01:39:25 (1 min 33 s after the model's end), popped chain-b
+from the queue and launched it **directly** as m8g.8xlarge in 2d at 01:40:01 while chain-a was
+still alive: the Spot vCPU raise to 64 (L-34B43A08) had been approved in the meantime, so the
+relay path was never exercised and stays untested; it remains the fallback should the quota
+shrink again. chain-b then popped the acceptance run (section 6).
 
 ## 5. Stage clock (measured) and projected live clock
 
