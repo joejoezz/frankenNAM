@@ -17,7 +17,8 @@
 #        RESTMIN=720 RST00=true WRTLAST=true (restarts; RESTMIN=100800 RST00=false WRTLAST=false = none;
 #        RESTMIN*60 must be a multiple of the 25 s timestep)  SYNC_HISTORY=1
 #        NEMS_EXE=/opt/nam/work/exec/NEMS.x (NEMS_debug.x for the trap build)
-#        PRODUCTS=1 (tm06: grid-218 awphys files after each UPP file, run/products.sh)
+#        PRODUCTS=1 (grid-218 awphys files after each UPP file, run/products.sh; tm06 relabelled onto the C
+#        clock, anl as is)
 #        S3PROD=s3://nam-recast-617711905691/products (where products.sh uploads; empty = no upload)
 #        NPS_CLEAN=1 deletes each NPS stage's inputs once the next stage has consumed them (83 GB for 90 h)
 #        IC_ONLY=1 makes metgrid/nemsinterp do the initial condition only (re-seeding tests)
@@ -33,7 +34,9 @@ MODE=${MODE:-tm06}
 case $MODE in
   tm06) START=$(ndate -6 $CYCLE); FHMAX=${FHMAX:-90}; PCPBUCKET=${PCPBUCKET:-3}; FH0=6
         GFSDIR=${GFSDIR:-/opt/nam/cases/$CYCLE/gfs-tm06}; SEEDDIR=${SEEDDIR:-/opt/nam/cases/$CYCLE/seed} ;;
-  anl)  START=$CYCLE; FHMAX=${FHMAX:-84}; PCPBUCKET=${PCPBUCKET:-12}; FH0=0
+  # anl: 3 h precipitation buckets too (Phase 0 had 12 h) so products.sh builds the same grid-218 awphys
+  # files with no clock shift (FH0=0); the bucket length only changes when the accumulators reset
+  anl)  START=$CYCLE; FHMAX=${FHMAX:-84}; PCPBUCKET=${PCPBUCKET:-3}; FH0=0
         GFSDIR=${GFSDIR:-/opt/nam/cases/$CYCLE/gfs}; SEEDDIR=${SEEDDIR:-}; SEED=${SEED:-none} ;;
   *) echo "MODE must be tm06 or anl"; exit 1 ;;
 esac
@@ -301,7 +304,7 @@ stage_post() { # UPP per history file; GRIB2 outputs BGDAWP/BGRDSF/BGRD3D as exn
   for fh in ${POST_FHRS:-$(post_fhrs)}; do
     local h=fcst/nmmb_hst_01_nio_00${fh}h_00m_00.00s
     if [ -s grib2/nam.t${pcyc}z.bgdawp${fh}.tm00.grib2 ]; then
-      [ "$MODE" = tm06 ] && [ "${PRODUCTS:-1}" = 1 ] && $HERE/products.sh $fh >> products.log 2>&1
+      [ "${PRODUCTS:-1}" = 1 ] && $HERE/products.sh $fh >> products.log 2>&1
       continue
     fi
     while [ ! -s fcst/fcstdone.01.00${fh}h_00m_00.00s ]; do
@@ -327,7 +330,7 @@ stage_post() { # UPP per history file; GRIB2 outputs BGDAWP/BGRDSF/BGRD3D as exn
       echo "post f$fh $((SECONDS - t0)) s" | tee -a ../post_times.txt ) || true   # the check below reports; set -e would end the function silently here
     [ -s grib2/nam.t${pcyc}z.bgdawp${fh}.tm00.grib2 ] || { echo "UPP f$fh produced no BGDAWP"; tail -30 post/post_f$fh.out; return 1; }
     tl "post f$fh done"
-    if [ "$MODE" = tm06 ] && [ "${PRODUCTS:-1}" = 1 ]; then
+    if [ "${PRODUCTS:-1}" = 1 ]; then   # both modes (anl: no clock shift, FH0=0)
       $HERE/products.sh $fh >> products.log 2>&1 || { echo "products f$fh failed"; tail -20 products.log; return 1; }
     fi
   done

@@ -3,13 +3,15 @@
 # (CHAIN=1) pop the next job from the S3 queue and launch its runner. Resumes from the newest restart
 # in S3 after a Spot interruption unless NO_RESTART=1. Env: CYCLE, MODE (tm06 | anl), S3SUB (tm06 |
 # recast-arm64 | recast), NO_RESTART, SYNC_HISTORY, S3PROD, CHAIN, QUEUE, SKIP_NPS=1 (anl runs whose
-# IC/bocos came with the bundle), POST_AFTER=1 (UPP after the forecast instead of alongside), plus any
+# IC/bocos came with the bundle), NOOP=1 (queue test: DONE at once, then chain), POST_AFTER=1 (UPP after the forecast instead of alongside), plus any
 # recast.sh override (FHMAX, FILTER, ...).
 set -uo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 export CYCLE=${CYCLE:-2026110100} MODE=${MODE:-tm06}
 export RUNDIR=/opt/nam/runs/$CYCLE S3RUN=s3://nam-recast-617711905691/cases/$CYCLE/${S3SUB:-tm06}
-export S3PROD=${S3PROD-s3://nam-recast-617711905691/products}
+# products: tm06 default = the top-level products/ prefix (live layout); MODE=anl default = $S3RUN/products so a
+# reference arm can never land in the product tree. Hindcast queue lines set S3PROD explicitly.
+if [ "$MODE" = anl ]; then export S3PROD=${S3PROD-$S3RUN/products}; else export S3PROD=${S3PROD-s3://nam-recast-617711905691/products}; fi
 # NO_RESTART=1: no restart files at all (RESTMIN past the run, no f00 restart) so the run fits a
 # 64 GB node (Phase 0: restarts pushed the peak from 48 to 77 GB); a Spot reclaim then means a rerun.
 # RESTMIN must be a multiple of the 25 s timestep (minutes*60 mod 25 = 0, i.e. of 5 min) or NEMS
@@ -45,11 +47,15 @@ tl "runner start $ITYPE $IAZ"
 MEMPID=$!
 
 NRC=0
+if [ "${NOOP:-0}" = 1 ]; then   # queue/chain test job: no NPS, no model, straight to DONE + chaining
+  export SKIP_NPS=1; tl "NOOP job"
+fi
 if [ "${SKIP_NPS:-0}" != 1 ]; then
   NPS_CLEAN=${NPS_CLEAN:-1} ./recast.sh stage nps > $RUNDIR/nps.log 2>&1; NRC=$?
   echo "nps rc=$NRC $(date -u +%FT%TZ)" | tee -a $RUNDIR/runner.log
 fi
 FRC=1; PRC=1
+[ "${NOOP:-0}" = 1 ] && { FRC=0; PRC=0; NRC=noop; }
 if [ $NRC = 0 ]; then
   [ "${NO_RESTART:-0}" = 1 ] || aws s3 sync --only-show-errors $S3RUN/history/ $RUNDIR/fcst/ --exclude "*" --include "nmmb_rst_*"
   aws s3 sync --only-show-errors $S3RUN/grib2-all/ $RUNDIR/grib2/
@@ -81,7 +87,7 @@ tl "runner done fcst=$FRC post=$PRC nps=$NRC"
 ./recast.sh sync >> $RUNDIR/sync.log 2>&1
 aws s3 cp --only-show-errors $RUNDIR/runner.log $S3RUN/logs/runner.log
 for f in nps.log fcst.log post.log sync.log mem.log timeline.txt products.log; do [ -s $RUNDIR/$f ] && aws s3 cp --only-show-errors $RUNDIR/$f $S3RUN/logs/$f; done
-if [ $NRC = 0 ] && [ $FRC = 0 ] && [ $PRC = 0 ]; then echo done | aws s3 cp - $S3RUN/DONE; else echo "nps=$NRC fcst=$FRC post=$PRC" | aws s3 cp - $S3RUN/FAILED; fi
+if { [ $NRC = 0 ] || [ $NRC = noop ]; } && [ $FRC = 0 ] && [ $PRC = 0 ]; then echo done | aws s3 cp - $S3RUN/DONE; else echo "nps=$NRC fcst=$FRC post=$PRC" | aws s3 cp - $S3RUN/FAILED; fi
 # self-chaining: the next queue line gets its own runner (launch.sh hands over to a relay when the
 # Spot vCPU quota cannot hold two runners at once)
 if [ "${CHAIN:-0}" = 1 ]; then

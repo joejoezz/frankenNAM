@@ -4,13 +4,15 @@
 # runner.sh CHAIN=1): both build the same user-data here.
 #
 # usage: launch.sh <CYCLE> [MODE] [ARCH] [KEY=VAL ...]     e.g. launch.sh 2026110100 tm06 arm64 FHMAX=6 S3SUB=chain1
-#        launch.sh --next                                  pop the first line "CYCLE MODE ARCH [KEY=VAL ...]"
-#                                                          of $QUEUE (s3://.../queue/hindcast.txt) and launch it
+#        launch.sh --next                                  claim the first unclaimed line "CYCLE MODE ARCH [KEY=VAL ...]"
+#                                                          of $QUEUE (s3://.../queue/hindcast.txt; conditional put of
+#                                                          <queue>.claims/NN, safe for concurrent consumers) and launch it
+#                                                          (DRYRUN=1: claim and print only)
 #        KEY=VAL tokens go into the runner's environment (FHMAX, S3SUB, S3PROD, POST_AFTER, ...); TYPE=, SUBNETS=,
 #        ONDEMAND=, BUNDLE=, DISK_GB= are taken by the launcher itself (so a queue line can pick the node)
 #        launch.sh --relay <CYCLE> [MODE] [ARCH] [KEY=VAL ...]
 #                     launch a t4g.nano on-demand relay that waits until no nam-recast-runner is alive, then
-#                     launches the runner. Used automatically when RunInstances is refused by the Spot vCPU
+#                     launches the runner (MAX_RUNNERS=2: waits until fewer are alive). Used automatically when RunInstances is refused by the Spot vCPU
 #                     quota (32 vCPU = exactly one c8g.8xlarge): a runner cannot start its successor while
 #                     it is itself still running, so a 2-vCPU on-demand relay (~$0.004/h) does it.
 # env:  ARCH=arm64 (default) | x86_64; TYPES (arm64 instance types tried in order, default
@@ -27,26 +29,47 @@ QUEUE=${QUEUE:-s3://$BUCKET/queue/hindcast.txt}
 SUBNETS=${SUBNETS:-subnet-026015637f38eb5ec,subnet-0a8ec3e6a00a142ff,subnet-0fe773f97842a3dc1,subnet-04ad3ff8f44724141}
 RELAY=0
 
-pop_queue() { # prints the first non-comment line of the queue and rewrites the queue without it
-  local q line rest
-  q=$(aws s3 cp "$QUEUE" - 2>/dev/null || true)
-  line=$(printf '%s\n' "$q" | grep -v '^#' | grep -v '^[[:space:]]*$' | head -1 || true)
-  [ -n "$line" ] || return 1
-  rest=$(printf '%s\n' "$q" | awk -v l="$line" 'BEGIN{d=0} {if(!d && $0==l){d=1; next} print}')
-  printf '%s\n' "$rest" | aws s3 cp --only-show-errors - "$QUEUE"
-  echo "$line"
+# The queue file is never rewritten. A job line is claimed by a conditional put (S3 If-None-Match: *) of
+# <queue>.claims/NN (NN = line number), so two or more runners popping at the same moment cannot take the
+# same line; a claimed line stays claimed (claimed-but-not-done until its DONE marker exists; a lost job
+# is relaunched by hand with the line's tokens). The launched instance id goes to <queue>.claims/NN.iid.
+CLAIMS=${QUEUE%.txt}.claims
+claim_next() { # prints "NN line" of the first unclaimed job line and claims it; returns 1 when none is left
+  local q n line out rc qb qk tries tmp
+  q=$(aws s3 cp "$QUEUE" - 2>/dev/null) || return 1
+  qb=${CLAIMS#s3://}; qk=${qb#*/}; qb=${qb%%/*}
+  n=0
+  while IFS= read -r line; do
+    n=$((n + 1))
+    case $line in ''|'#'*) continue ;; esac
+    [[ $line =~ ^[[:space:]]*$ ]] && continue
+    for tries in 1 2 3; do
+      tmp=$(mktemp); printf '%s %s %s\n' "$(hostname)" "$(date -u +%FT%TZ)" "$line" > "$tmp"
+      out=$(aws s3api put-object --bucket "$qb" --key "$qk/$(printf %02d $n)" --if-none-match '*' --body "$tmp" 2>&1) && rc=0 || rc=1
+      rm -f "$tmp"
+      [ $rc = 0 ] && { echo "$(printf %02d $n) $line"; return 0; }
+      case $out in *PreconditionFailed*) break ;; esac          # someone else holds this line: try the next one
+      echo "claim of line $n: ${out:0:160} (retry $tries)" >&2; sleep $((tries * 3))   # 409 ConditionalRequestConflict etc.
+    done
+  done <<< "$q"
+  return 1
 }
 
 case ${1:-} in
-  --next) line=$(pop_queue) || { echo "queue $QUEUE is empty: nothing to launch"; exit 0; }
-          echo "queue -> $line"; set -- $line ;;
+  --next) got=$(claim_next) || { echo "queue $QUEUE: no unclaimed job left, nothing to launch"; exit 0; }
+          CLAIMNO=${got%% *}; line=${got#* }
+          echo "queue line $CLAIMNO claimed -> $line"
+          [ "${DRYRUN:-0}" = 1 ] && exit 0
+          set -- $line ;;
   --relay) RELAY=1; shift ;;
 esac
 [ $# -ge 1 ] || { sed -n 2,20p "$0"; exit 1; }
 CYCLE=$1; MODE=${2:-tm06}; ARCH=${3:-${ARCH:-arm64}}; shift $(( $# >= 3 ? 3 : $# ))
 EXTRA=""                                     # KEY=VAL tokens passed into the runner's environment ...
 for tok in "$@"; do                          # ... except the launcher's own knobs, which a queue line may carry too
-  case $tok in TYPE=*|TYPES=*|SUBNETS=*|ONDEMAND=*|BUNDLE=*|DISK_GB=*) export "$tok" ;; *) EXTRA="$EXTRA $tok" ;; esac
+  case $tok in TYPE=*|TYPES=*|SUBNETS=*|ONDEMAND=*|BUNDLE=*|DISK_GB=*) export "$tok" ;;
+    S3SUB=*) export "$tok"; EXTRA="$EXTRA $tok" ;;   # both: the runner's output prefix and the launcher's log prefix
+    *) EXTRA="$EXTRA $tok" ;; esac
 done
 EXTRA=${EXTRA# }
 
@@ -131,12 +154,12 @@ export DEBIAN_FRONTEND=noninteractive AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
 apt-get update -q && apt-get install -y -q unzip curl
 curl -fsSL https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip -o /tmp/awscli.zip && unzip -q /tmp/awscli.zip -d /tmp && /tmp/aws/install
 aws s3 cp --only-show-errors s3://$BUCKET/runner/run/launch.sh /usr/local/bin/launch.sh && chmod +x /usr/local/bin/launch.sh
-for i in \$(seq 1 720); do   # up to 6 h
+for i in \$(seq 1 720); do   # up to 6 h, until fewer than MAX_RUNNERS (${MAX_RUNNERS:-2}) runners are alive
   n=\$(aws ec2 describe-instances --filters Name=tag:Name,Values=$NAME-runner Name=instance-state-name,Values=pending,running,shutting-down,stopping --query 'length(Reservations[].Instances[])' --output text)
-  [ "\$n" = 0 ] && break; sleep 30
+  [ "\$n" -lt ${MAX_RUNNERS:-2} ] && break; sleep 30
 done
 for i in 1 2 3 4 5 6; do   # Spot capacity may need a few tries
-  CHAIN=${CHAIN:-1} ARCH=$ARCH TYPES=$TYPES SUBNETS=$SUBNETS NO_RESTART=${NO_RESTART:-1} SYNC_HISTORY=${SYNC_HISTORY:-0} S3SUB=$S3SUB QUEUE=$QUEUE NORELAY=1 /usr/local/bin/launch.sh $CYCLE $MODE $ARCH $EXTRA && break
+  CHAIN=${CHAIN:-1} ARCH=$ARCH TYPES=$TYPES SUBNETS=$SUBNETS NO_RESTART=${NO_RESTART:-1} SYNC_HISTORY=${SYNC_HISTORY:-0} S3SUB=$S3SUB QUEUE=$QUEUE RELAY_CLAIMNO=${CLAIMNO:-} NORELAY=1 /usr/local/bin/launch.sh $CYCLE $MODE $ARCH $EXTRA && break
   sleep 120
 done
 aws s3 cp --only-show-errors /var/log/nam-recast-relay.log s3://$BUCKET/cases/$CYCLE/$S3SUB/logs/relay.log
@@ -152,12 +175,14 @@ if IID=$(launch_runner); then
   :
 elif [ $? = 2 ] && [ "${NORELAY:-0}" != 1 ]; then
   echo "Spot vCPU quota refused the runner while another one is alive: handing over to a relay"
-  exec "$0" --relay "$CYCLE" "$MODE" "$ARCH" $EXTRA
+  CLAIMNO=${CLAIMNO:-} exec "$0" --relay "$CYCLE" "$MODE" "$ARCH" $EXTRA
 else
   echo "launch failed"; exit 1
 fi
 aws ec2 wait instance-running --instance-ids "$IID"
 IP=$(aws ec2 describe-instances --instance-ids "$IID" --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
-AZ=$(aws ec2 describe-instances --instance-ids "$IID" --query 'Reservations[0].Instances[0].Placement.AvailabilityZone' --output text)
+read -r AZ TYPE < <(aws ec2 describe-instances --instance-ids "$IID" --query 'Reservations[0].Instances[0].[Placement.AvailabilityZone,InstanceType]' --output text)
 echo "$IID $IP $(date -u +%FT%TZ) $AZ $CYCLE $MODE $ARCH" | tee -a ${LAUNCH_LOG:-/dev/null}
+CLAIMNO=${CLAIMNO:-${RELAY_CLAIMNO:-}}
+[ -n "$CLAIMNO" ] && echo "$IID $TYPE $AZ $(date -u +%FT%TZ)" | aws s3 cp --only-show-errors - "$CLAIMS/$CLAIMNO.iid" || true
 echo "$IID $IP $(date -u +%FT%TZ)"

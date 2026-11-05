@@ -1,6 +1,6 @@
 #!/bin/bash
 # Grid-218 products identical in form to the operational NAM awphys files, from one UPP BGDAWP
-# file of the tm06 run. Mirrors ush/nam_prdgen5.sh (field lists parm/wgrib2.txtlists/nam_awphys*.txt,
+# file of the tm06 run (or of the anl reference run, FH0=0: no shift). Mirrors ush/nam_prdgen5.sh (field lists parm/wgrib2.txtlists/nam_awphys*.txt,
 # bilinear/neighbor/budget choices, -new_grid_winds grid, submsg U/V pairs, c3 packing) and
 # nam_makeprecip (3 h buckets), then rewrites the clock: reference time C, forecast hour h-6.
 #
@@ -35,12 +35,14 @@ BUDGET="APCP|NCPCP|ACPCP|SNOD|WEASD"   # LSPA is not in awphys
 
 # 1. field selection as nam_prdgen5.sh: the instantaneous versions of TCDC/fluxes (nam_awphys_inst.txt,
 #    'hour fcst' lines) and the main list (nam_awphys.txt), which also carries the bucketed APCP/ACPCP/WEASD
-$WG $in -s | grep -F -f $LISTS/nam_awphys_inst.txt | grep 'hour fcst' | $WG -i $in -grib inst.g2 > /dev/null
+$WG $in -s | grep -F -f $LISTS/nam_awphys_inst.txt | grep 'hour fcst' | $WG -i $in -grib inst.g2 > /dev/null || true
+touch inst.g2   # MODE=anl f00 (analysis control file): no 'hour fcst' records
 $WG $in -s | grep -F -f $LISTS/nam_awphys.txt | $WG -i $in -grib main.g2 > /dev/null
 
 # 2. interpolate to grid 218 (IPOLATES: bilinear, neighbor for categorical/soil fields, budget for accumulations)
-$WG inst.g2 -set_bitmap 1 -set_grib_type c3 -new_grid_winds grid -new_grid_vectors "$VEC" \
+[ -s inst.g2 ] && $WG inst.g2 -set_bitmap 1 -set_grib_type c3 -new_grid_winds grid -new_grid_vectors "$VEC" \
     -new_grid_interpolation bilinear -new_grid $GRID218 inst218.g2 > /dev/null
+touch inst218.g2
 $WG main.g2 -new_grid_vectors "$VEC" -submsg_uv main.uv > /dev/null
 $WG main.uv -set_bitmap 1 -set_grib_type c3 -new_grid_winds grid -new_grid_vectors "$VEC" \
     -new_grid_interpolation bilinear \
@@ -60,6 +62,7 @@ $WG all218.g2 -not ":(APCP|ACPCP|WEASD):surface:[0-9]+-[0-9]+ hour acc fcst:" -g
 if [ $((10#$ph)) -eq 0 ]; then
   # product f00: the archive carries zero-length accumulations (0-0 day acc) with zeros
   $WG all218.g2 -match ":(APCP|ACPCP|WEASD):surface:[0-9]+-[0-9]+ hour acc fcst:" -rpn 0 -set_ftime2 "0-0 day acc fcst" -set_date $CYCLE -set_grib_type c3 -grib_out acc.g2 > /dev/null
+  touch acc.g2   # MODE=anl f00 (analysis control): UPP writes no accumulations
 else
   # the 3 h bucket of this file (APCP, ACPCP, WEASD in that order), product-clock labelled, kept aside
   $WG all218.g2 -match ":(APCP|ACPCP|WEASD):surface:[0-9]+-[0-9]+ hour acc fcst:" \
@@ -93,7 +96,8 @@ if [ $((10#$ph)) -eq 0 ]; then
 fi
 shift_ftime() { # shift_ftime "<ftime string>" -> the same string FH0 hours earlier
   local a b rest
-  if [[ $1 =~ ^([0-9]+)\ hour\ fcst$ ]]; then
+  if [ "$1" = anl ]; then echo anl   # MODE=anl f00 (FH0=0)
+  elif [[ $1 =~ ^([0-9]+)\ hour\ fcst$ ]]; then
     a=$(( ${BASH_REMATCH[1]} - FH0 )); [ $a -eq 0 ] && echo anl || echo "$a hour fcst"
   elif [[ $1 =~ ^([0-9]+)-([0-9]+)\ hour\ (.*)$ ]]; then
     a=$(( ${BASH_REMATCH[1]} - FH0 )); b=$(( ${BASH_REMATCH[2]} - FH0 )); rest=${BASH_REMATCH[3]}
