@@ -12,12 +12,26 @@ configuration and measures it properly. Decisions already taken: name FrankenNAM
 **Goal:** a validated FrankenNAM configuration, with a scorecard and a demonstrated delivery
 clock, ready to be put on a daily schedule in Phase 2.
 
-**Gate to Phase 2 (all three):**
-1. On the hindcast set, the tm06 FrankenNAM beats the GFS against **observations** at 12-84 h on
-   2 m T, 10 m wind and 6 h/24 h precipitation over CONUS, and tracks the archived NAM at least
-   as closely as in Phase 0.
-2. One real-time dress-rehearsal cycle delivers f84 within 3 h of cycle time.
-3. Products (GRIB2 on the familiar grid 218 + Zarr) open in standard tools and verify as sane.
+**Gate to Phase 2 (rewritten 4 Nov 2026 after the baseline scorecard; Joe agreed):**
+The operational NAM did not beat the same-cycle GFS against observations on the seven cases
+(`docs/baseline-scorecard.md`), so "beat the GFS" was the wrong bar. FrankenNAM is a resurrection;
+the gate is **fidelity**, reported honestly with the GFS alongside for context:
+1. **Statistical fidelity:** on the hindcast set, FrankenNAM (tm06) against observations is within
+   noise of the archived NAM: pooled 12-84 h CONUS 2 m T / Td / 10 m wind RMSE within 0.1 K /
+   0.1 K / 0.1 m/s and 24 h precipitation ETS within 0.03 at 2.5/10/25 mm; biases of the same sign
+   and size (the NAM's near-zero T/Td bias where the GFS runs warm and dry). Also: not worse than the
+   6 h older GFS it starts from by more than those margins.
+2. **Feature fidelity:** on each case FrankenNAM reproduces the archived NAM's key features that
+   forecasters used it for: the CAD wedge's position and persistence, the snow/sleet transition
+   timing in Snowcrete, the Gulf snow band, the PNW orographic maximum, the lake-effect bands, the
+   Plains dryline/convective mode, in side-by-side panels with the NAM and the GFS.
+3. One real-time dress-rehearsal cycle delivers f84 within ~3 h 10 min of cycle time on one
+   c8g.8xlarge (the old NAM's 2 h 42 min is the target with more cores), and products open in
+   standard tools under the NAM's own file names.
+The scorecard page says all of this plainly: FrankenNAM is the NAM's physics with a GFS start, it
+inherits the NAM's strengths (bias, soundings, mesoscale structure) and its weaknesses
+(precipitation placement vs the GFS), and it is offered as an independent second opinion, not as a
+GFS-beater.
 
 ## Workstreams
 
