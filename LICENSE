@@ -1,7 +1,7 @@
 [DECISION NEEDED: Joe] Draft licence file. Recommendation: Apache-2.0 for the code written in this
 repository (scripts, patches' original contributions, site/, verify/). Alternatives: MIT (shorter,
 no patent grant) or leave unlicensed until launch. Confirm the choice, put the copyright holder
-(Joe personally or the LLC) in NOTICE, and delete this paragraph. Third-party and public-domain
+(Joe Boomgard-Zagrodnik, set in NOTICE), and delete this paragraph. Third-party and public-domain
 components are NOT relicensed by this file; see NOTICE.
 -------------------------------------------------------------------------------------------------
 

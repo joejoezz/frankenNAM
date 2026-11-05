@@ -1,8 +1,7 @@
 FrankenNAM / nam-recast
-Copyright [DECISION NEEDED: Joe: copyright holder, "Joe Boomgard-Zagrodnik" or the LLC name] 2026
+Copyright 2026 Joe Boomgard-Zagrodnik
 
-[DECISION NEEDED: Joe] DRAFT. Licence choice for our own code (recommended: Apache-2.0, see LICENSE) and the
-holder named above are not decided. This NOTICE is the provenance record; keep it accurate, and have each
+[DECISION NEEDED: Joe] DRAFT. Licence choice for our own code (recommended: Apache-2.0, see LICENSE) is not decided (the copyright holder is Joe Boomgard-Zagrodnik). This NOTICE is the provenance record; keep it accurate, and have each
 third-party component's current licence text checked before the repository is made public (see "To verify").
 
 This repository holds the scripts, build recipes, patches, documentation and web pages that build and run the
