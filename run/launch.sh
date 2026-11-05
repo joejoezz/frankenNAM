@@ -13,8 +13,10 @@
 #                     launches the runner. Used automatically when RunInstances is refused by the Spot vCPU
 #                     quota (32 vCPU = exactly one c8g.8xlarge): a runner cannot start its successor while
 #                     it is itself still running, so a 2-vCPU on-demand relay (~$0.004/h) does it.
-# env:  ARCH=arm64 (default) | x86_64; TYPE (c8g.8xlarge | c7a.48xlarge); SUBNETS (zones tried in order,
-#       default 2d,2a,2c,2b: 2d had the cheapest c8g Spot on 4 Nov 2026); NO_RESTART=1 SYNC_HISTORY=0
+# env:  ARCH=arm64 (default) | x86_64; TYPES (arm64 instance types tried in order, default
+#       m8g.8xlarge,m7g.8xlarge,c8g.8xlarge: 128 GB nodes first for UPP alongside the model, the 64 GB
+#       c8g last with POST_AFTER=1 added for the runner; TYPE= puts one type at the head of the list);
+#       SUBNETS (zones tried in order for each type, default 2d,2a,2c,2b); NO_RESTART=1 SYNC_HISTORY=0
 #       S3SUB (default tm06 | recast-arm64 for MODE=anl); CHAIN=1 (default: the runner pops $QUEUE when done);
 #       ONDEMAND=1 for an on-demand runner; BUNDLE to override the newest arm64 bundle.
 set -euo pipefail
@@ -44,18 +46,19 @@ esac
 CYCLE=$1; MODE=${2:-tm06}; ARCH=${3:-${ARCH:-arm64}}; shift $(( $# >= 3 ? 3 : $# ))
 EXTRA=""                                     # KEY=VAL tokens passed into the runner's environment ...
 for tok in "$@"; do                          # ... except the launcher's own knobs, which a queue line may carry too
-  case $tok in TYPE=*|SUBNETS=*|ONDEMAND=*|BUNDLE=*|DISK_GB=*) export "$tok" ;; *) EXTRA="$EXTRA $tok" ;; esac
+  case $tok in TYPE=*|TYPES=*|SUBNETS=*|ONDEMAND=*|BUNDLE=*|DISK_GB=*) export "$tok" ;; *) EXTRA="$EXTRA $tok" ;; esac
 done
 EXTRA=${EXTRA# }
 
 if [ "$ARCH" = arm64 ]; then
-  TYPE=${TYPE:-c8g.8xlarge}
+  TYPES=${TYPE:+$TYPE,}${TYPES:-m8g.8xlarge,m7g.8xlarge,c8g.8xlarge}
+  TYPE=${TYPES%%,*}
   BUNDLE=${BUNDLE:-$(aws s3 ls s3://$BUCKET/runner/ | awk '/bundle-.*-arm64\.tar$/{print $4}' | sort | tail -1)}
   AMIPARAM=arm64; AWSCLI=aarch64
   [ "$MODE" = anl ] && S3SUB=${S3SUB:-recast-arm64} || S3SUB=${S3SUB:-tm06}
   RUNENV="MODE=$MODE S3SUB=$S3SUB NO_RESTART=${NO_RESTART:-1} SYNC_HISTORY=${SYNC_HISTORY:-0} CHAIN=${CHAIN:-1} QUEUE=$QUEUE $EXTRA"
 else
-  TYPE=${TYPE:-c7a.48xlarge}   # Spot vCPU quota is 32: use TYPE=r7a.8xlarge (needs >64 GB)
+  TYPES=${TYPE:-c7a.48xlarge}; TYPE=$TYPES   # Spot vCPU quota is 32: use TYPE=r7a.8xlarge (needs >64 GB)
   BUNDLE=${BUNDLE:-bundle-20261104.tar}
   AMIPARAM=amd64; AWSCLI=x86_64; S3SUB=${S3SUB:-recast}
   RUNENV="MODE=$MODE S3SUB=$S3SUB CHAIN=${CHAIN:-1} QUEUE=$QUEUE $EXTRA"
@@ -65,7 +68,7 @@ AMI=$(aws ssm get-parameter --name /aws/service/canonical/ubuntu/server/24.04/st
 SG=$(aws ec2 describe-security-groups --filters Name=group-name,Values=$NAME-ssh --query 'SecurityGroups[0].GroupId' --output text)
 MARKET=(--instance-market-options 'MarketType=spot,SpotOptions={SpotInstanceType=one-time,InstanceInterruptionBehavior=terminate}')
 [ "${ONDEMAND:-0}" = 1 ] && MARKET=()
-echo "== $CYCLE $MODE $ARCH $TYPE $BUNDLE -> s3://$BUCKET/cases/$CYCLE/$S3SUB  env: $RUNENV"
+echo "== $CYCLE $MODE $ARCH types $TYPES zones $SUBNETS $BUNDLE -> s3://$BUCKET/cases/$CYCLE/$S3SUB  env: $RUNENV"
 
 USERDATA=$(cat <<EOS
 #!/bin/bash
@@ -84,7 +87,7 @@ if [ "$ARCH" != arm64 ]; then
   printf '%s\n' /opt/intel/oneapi/compiler/2024.2/lib /opt/intel/oneapi/mpi/2021.13/lib /opt/intel/oneapi/mpi/2021.13/opt/mpi/libfabric/lib > /etc/ld.so.conf.d/nam-intel-oneapi.conf
   ldconfig
 fi
-sudo -u ubuntu -H bash -lc 'CYCLE=$CYCLE $RUNENV /opt/nam/work/run/runner.sh'
+sudo -u ubuntu -H bash -lc 'CYCLE=$CYCLE $RUNENV __NODEENV__ /opt/nam/work/run/runner.sh'
 aws s3 cp --only-show-errors /var/log/nam-recast-run.log s3://$BUCKET/cases/$CYCLE/$S3SUB/logs/userdata.log
 shutdown -h now
 EOS
@@ -101,15 +104,19 @@ run_instances() { # run_instances <type> <subnet> <userdata> <name tag> [market 
     --user-data "$ud" --query 'Instances[0].InstanceId' --output text
 }
 
-launch_runner() { # try the zones in order; echo the instance id; return 2 on a quota refusal
-  local sn err iid
-  for sn in ${SUBNETS//,/ }; do
-    if iid=$(run_instances "$TYPE" "$sn" "$USERDATA" $NAME-runner "${MARKET[@]}" 2>/tmp/launch.err); then
-      echo "$iid"; return 0
-    fi
-    err=$(cat /tmp/launch.err)
-    echo "  $sn: ${err:0:160}" >&2
-    case $err in *MaxSpotInstanceCountExceeded*|*InstanceLimitExceeded*|*VcpuLimitExceeded*) return 2 ;; esac
+launch_runner() { # try the types in order and the zones in order for each; echo the instance id; return 2 on a quota refusal
+  local ty sn err iid nodeenv ud
+  for ty in ${TYPES//,/ }; do
+    nodeenv=""; case $ty in c?g.*) nodeenv="POST_AFTER=1" ;; esac   # 64 GB c-class: UPP after the forecast
+    ud=${USERDATA//__NODEENV__/$nodeenv}
+    for sn in ${SUBNETS//,/ }; do
+      if iid=$(run_instances "$ty" "$sn" "$ud" $NAME-runner "${MARKET[@]}" 2>/tmp/launch.err); then
+        TYPE=$ty; echo "$iid"; return 0
+      fi
+      err=$(cat /tmp/launch.err)
+      echo "  $ty $sn: ${err:0:160}" >&2
+      case $err in *MaxSpotInstanceCountExceeded*|*InstanceLimitExceeded*|*VcpuLimitExceeded*) return 2 ;; esac
+    done
   done
   return 1
 }
@@ -129,7 +136,7 @@ for i in \$(seq 1 720); do   # up to 6 h
   [ "\$n" = 0 ] && break; sleep 30
 done
 for i in 1 2 3 4 5 6; do   # Spot capacity may need a few tries
-  CHAIN=${CHAIN:-1} ARCH=$ARCH TYPE=$TYPE NO_RESTART=${NO_RESTART:-1} SYNC_HISTORY=${SYNC_HISTORY:-0} S3SUB=$S3SUB QUEUE=$QUEUE NORELAY=1 /usr/local/bin/launch.sh $CYCLE $MODE $ARCH $EXTRA && break
+  CHAIN=${CHAIN:-1} ARCH=$ARCH TYPES=$TYPES SUBNETS=$SUBNETS NO_RESTART=${NO_RESTART:-1} SYNC_HISTORY=${SYNC_HISTORY:-0} S3SUB=$S3SUB QUEUE=$QUEUE NORELAY=1 /usr/local/bin/launch.sh $CYCLE $MODE $ARCH $EXTRA && break
   sleep 120
 done
 aws s3 cp --only-show-errors /var/log/nam-recast-relay.log s3://$BUCKET/cases/$CYCLE/$S3SUB/logs/relay.log
