@@ -200,8 +200,16 @@ stage (server-side copy of 31 GFS files + seed, download) 226 s; ungrib 31 files
 500 MB/s); metgrid IC 11 s + bocos 135 s; nemsinterp 157 s. NPS total ≈ 16 min on the box, about
 12 min on a runner volume.
 
-Runner clock and the projection for a live 12Z cycle (GFS 06Z f090 on AWS by ~09:57Z = C−2:03,
-f000 by ~C−2:15): filled in from the acceptance run, section 6.
+Runner clock (acceptance run, m8g.8xlarge Spot): launch 02:07:10, runner start 02:08:05, NPS done
+02:12:27 (stage + 90 h NPS in 4 min 22 s on the runner's 500 MB/s volume), model 02:12:28 → 07:06:37
+= 4 h 54 min (init + TDFI ~4 min, then **193 s per forecast hour** with UPP running alongside on
+cores 28-31, about 1 % slower than the 190.7 s with the node to itself), last product (f84) at
+07:08:02 = **85 s after the model ended**.
+
+Projected live 12Z cycle on one Graviton4 8xlarge (GFS 06Z f090 on AWS by ~09:57Z = C−2:03):
+runner launch C−2:03, model start ≈ C−1:58, product f00 ≈ C−1:30, **f24 ≈ C−0:10**,
+f48 ≈ C+1:10, **f84 ≈ C+3:05** (old NAM: C+2:42). The 23 min gap closes with a 48-core node
+(c8g/m8g.12xlarge, now allowed by the 64 vCPU Spot quota) if NMMB scales; to be measured.
 
 ## 6. Acceptance run (tm06, C = 2026-11-01 00Z, START = 2026-10-31 18Z, seed = archived NAM 18Z)
 
@@ -211,8 +219,19 @@ Graviton validation averaged 200), node peak 43.2 GB; f00/f03 products 446/452 r
 archive, PRMSL f00 988.1-1032.8 hPa, no undefined points, 58.1 / 59.3 MB against the archive's
 57.1 / 59.7 MB.
 
-(acceptance runner: to be filled: runner id/zone/price, timeline, model pace with concurrent
-UPP, products completion after the model end, PRMSL sanity per file, cost)
+Acceptance runner: i-0316958134e49afca, m8g.8xlarge Spot, us-west-2d, ~$0.52/h, launched by the
+chain (chain-b popped the queue). Timeline in `cases/2026110100/tm06/logs/timeline.txt`.
+- NPS rc 0, forecast rc 0. The concurrent post died at product hour 06 (02:55 UTC, section 8),
+  was restarted alongside the model at 05:46 UTC from the node, caught up at 41-65 s per UPP file
+  plus 12-20 s per product file, and finished 85 s after the model ended. The marker was rewritten
+  from FAILED (post=1) to DONE after the products were verified.
+- Overlap cost: measured over integration hours 0-12 and ~63-90 (when the post was running):
+  no visible change in the 3 h history cadence; whole-run average 193 vs 190.7 s per hour.
+- **29 products + 29 .idx** in `products/nam.20261101/`, 58-64 MB each, inventories 446 (f00),
+  452 (f03 and 3 h bucket starts), 454 records, as the archive. PRMSL min/max per file within
+  979.6-1040.9 hPa, no undefined points.
+- History (100 GB) stayed on the node; an insurance copy to S3 taken during the post failure
+  was deleted after verification.
 
 ## 7. Comparison: fidelity to the archived NAM (tm06 | anl | GFS)
 
@@ -253,7 +272,42 @@ have; Z500 and the 10 m wind are closer to the archived NAM than either the anl 
 GFS. The U/V component RMSEs are the size of the speed RMSE, so the grid-218 wind rotation is
 right. The later leads come from the acceptance run below.
 
-(f24/f48/f84 and 24 h precipitation: to be filled from the acceptance run)
+### f24 / f48 / f84 and 24 h precipitation (acceptance run), RMSE / bias against the archived NAM
+CONUS land, 0.25 deg; full table with U/V in `docs/figs/tm06/stats.md`.
+
+| Field | Lead | tm06 vs NAM | anl vs NAM | GFS vs NAM |
+|---|---|---|---|---|
+| MSLP (hPa) | f24 | 0.97 / +0.17 | **0.91** / -0.02 | 1.72 / -0.89 |
+| Z500 (dam) | f24 | **0.53** / -0.16 | 0.70 / -0.21 | 1.47 / -0.76 |
+| T2m (K) | f24 | **1.44** / +0.12 | 1.52 / +0.31 | 1.88 / -0.11 |
+| 10 m speed (m/s) | f24 | 0.93 / +0.02 | **0.91** / +0.03 | 1.77 / +0.31 |
+| MSLP (hPa) | f48 | **1.05** / +0.41 | 1.43 / +0.47 | 1.73 / -0.51 |
+| Z500 (dam) | f48 | **0.87** / -0.15 | 1.17 / +0.08 | 1.62 / -0.12 |
+| T2m (K) | f48 | **1.26** / +0.02 | 1.41 / +0.34 | 1.99 / +0.15 |
+| 10 m speed (m/s) | f48 | **0.80** / +0.02 | 0.99 / +0.09 | 1.80 / +0.50 |
+| MSLP (hPa) | f84 | **3.45** / +1.15 | 3.87 / -0.06 | 3.60 / -1.72 |
+| Z500 (dam) | f84 | 3.82 / -0.18 | 3.64 / -0.46 | **3.29** / +0.01 |
+| T2m (K) | f84 | **2.42** / -0.41 | 2.64 / +0.10 | 3.52 / +1.50 |
+| 10 m speed (m/s) | f84 | **1.16** / -0.07 | 1.34 / +0.01 | 1.35 / -0.29 |
+| 24 h precip 0-24 (mm) | f24 | 6.68 / -0.35 | **6.41** / -0.62 | 6.61 / -0.59 |
+| 24 h precip 24-48 (mm) | f48 | **4.90** / -0.23 | 5.16 / -0.48 | 6.77 / +0.09 |
+| 24 h precip 60-84 (mm) | f84 | **9.12** / -0.55 | 9.57 / +0.20 | 9.72 / -0.25 |
+
+Read plainly, on this one case:
+- **The tm06 product is the most faithful of the three to the archived NAM from f24 on.** Counting
+  MSLP, Z500, T2m, 10 m speed, U10 and V10 at f24/f48/f84, tm06 is closer to the NAM than the
+  analysis start in 15 of 18 comparisons and in 2 of the 3 precipitation windows. At f48 it wins
+  every field, with RMSE 20-25 % below the analysis start.
+- **The f00 warm bias washes out.** +0.88 K at f00 (00Z, evening transition), +0.12 K at f24,
+  +0.02 K at f48, -0.41 K at f84. It does not persist.
+- The NAM-like spin-up and the NAM soil are a plausible reason the tm06 run tracks the NAM better
+  than a same-cycle GFS start despite 6 h less information: by f24 the model's own boundary layer
+  and land state matter more than the lag. One case cannot separate the two; the hindcast's two
+  analysis-start reference cases will.
+- GFS column for context only: the GFS is furthest from the NAM at f24-f48 by a wide margin, and
+  closest at f84 only for Z500, where all three have diverged by boundary forcing.
+- The f48 9-panel (`docs/figs/tm06/nine_panel_f48.png`) shows the Plains surface low with the
+  NAM's elongated shape and position, closer than the Phase 0 analysis-start run.
 
 ## 8. What broke
 
@@ -283,4 +337,17 @@ right. The later leads come from the acceptance run below.
 
 ## 9. Cost
 
-(to be filled)
+| Item | Cost |
+|---|---|
+| Arm build box, 2.05 h on-demand (development, 9 h box test) | $2.62 |
+| Arm build box, ~0.4 h on-demand (comparison) | $0.50 |
+| EBS throughput raise | $0.05 |
+| Cross-region staging (incl. one wrong-year copy, deleted) | $0.35 |
+| Reclaimed m8g chain-a (14 min) | $0.15 |
+| chain-a m7g (0.65 h) + chain-b m8g (~0.5 h) | $0.60 |
+| Acceptance m8g, ~5.1 h | $2.65 |
+| S3 insurance copy of history (in-region, deleted same day) | < $0.05 |
+| **Total for brief A** | **≈ $7.0 of the $10** |
+
+Per production run at the measured pace: 90 h integration + NPS + post ≈ 5.0 h on an
+m8g.8xlarge Spot at ~$0.52/h = **≈ $2.60 per cycle**, ≈ $160/month for 00Z + 12Z.
