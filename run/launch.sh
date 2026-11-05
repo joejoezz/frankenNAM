@@ -14,7 +14,7 @@
 #                     quota (32 vCPU = exactly one c8g.8xlarge): a runner cannot start its successor while
 #                     it is itself still running, so a 2-vCPU on-demand relay (~$0.004/h) does it.
 # env:  ARCH=arm64 (default) | x86_64; TYPES (arm64 instance types tried in order, default
-#       m8g.8xlarge,m7g.8xlarge,c8g.8xlarge: 128 GB nodes first for UPP alongside the model, the 64 GB
+#       m8g.8xlarge,c8g.8xlarge,m7g.8xlarge: Graviton4 first (m7g is 39 % slower per forecast hour), the 64 GB
 #       c8g last with POST_AFTER=1 added for the runner; TYPE= puts one type at the head of the list);
 #       SUBNETS (zones tried in order for each type, default 2d,2a,2c,2b); NO_RESTART=1 SYNC_HISTORY=0
 #       S3SUB (default tm06 | recast-arm64 for MODE=anl); CHAIN=1 (default: the runner pops $QUEUE when done);
@@ -51,7 +51,7 @@ done
 EXTRA=${EXTRA# }
 
 if [ "$ARCH" = arm64 ]; then
-  TYPES=${TYPE:+$TYPE,}${TYPES:-m8g.8xlarge,m7g.8xlarge,c8g.8xlarge}
+  TYPES=${TYPE:+$TYPE,}${TYPES:-m8g.8xlarge,c8g.8xlarge,m7g.8xlarge}
   TYPE=${TYPES%%,*}
   BUNDLE=${BUNDLE:-$(aws s3 ls s3://$BUCKET/runner/ | awk '/bundle-.*-arm64\.tar$/{print $4}' | sort | tail -1)}
   AMIPARAM=arm64; AWSCLI=aarch64
