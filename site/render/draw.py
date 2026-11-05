@@ -27,9 +27,14 @@ M_SIDE, M_TOP, M_BOT = 12, 56, 78     # px
 
 PRODUCTS = {
     "nam": ("NAM 12 km", "Archived operational NAM (reference sample, not FrankenNAM). NOAA/NCEP via AWS Open Data."),
-    "frankennam": ("FrankenNAM 12 km", "Initialized from the 06Z GFS analysis with a 6 h NAM spin-up. No observations after 06Z. "
+    "frankennam": ("FrankenNAM 12 km", "Initialized from the {s}Z GFS analysis with a 6 h NAM spin-up. No observations after {s}Z. "
                                        "A community recast of the retired NAM; not affiliated with NOAA."),
 }
+
+
+def foot_text(product, init):
+    """Footer line for a product; FrankenNAM's names the GFS analysis it starts from (cycle - 6 h)."""
+    return PRODUCTS[product][1].replace("{s}", f"{(init.hour - 6) % 24:02d}")
 WD = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 MO = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
@@ -155,7 +160,8 @@ def draw_frame(layers, *, grid, ext, base, product, title, init, fhr, period_not
             ax.plot([x], [y], "o", ms=2.2, color="#333", zorder=7)
             ax.text(x + 0.006 * xr, y, name, fontsize=7.5, color="#222", va="center", zorder=7, path_effects=_halo())
     # title block
-    pname, foot = PRODUCTS[product]
+    pname = PRODUCTS[product][0]
+    foot = foot_text(product, init)
     valid = init + timedelta(hours=fhr)
     fig.text(M_SIDE / WIDTH_PX, 1 - 16 / h, title, fontsize=13.5, fontweight="bold", va="center")
     sub = f"{pname} · init {stamp(init)} · f{fhr:03d} · valid {stamp(valid)}"

@@ -26,6 +26,19 @@ button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 main{flex:1;padding:8px 12px;position:relative;min-height:0}
 #stage{position:relative;width:fit-content;max-width:100%;margin:0 auto;background:#fff;border:1px solid var(--line)}
 #stage img{display:block;max-width:100%;max-height:calc(100dvh - 235px);min-height:300px;width:auto;height:auto;margin:0 auto}
+#panes{display:block}
+.pane{position:relative}
+.pane .cap{display:none;text-align:center;font-size:12.5px;font-weight:600;padding:3px 8px;background:#f3f3ef;border-top:1px solid var(--line)}
+#stage.cmp{width:100%}
+#stage.cmp.side #panes{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--line)}
+#stage.cmp.side #img,#stage.cmp.side #img2{max-height:calc(100dvh - 235px);min-height:0}
+#stage.cmp .cap{display:block}
+#stage.cmp.flip #pane2{display:none}
+#stage.cmp.flip.second #pane1{display:none}
+#stage.cmp.flip.second #pane2{display:block}
+#cmode{display:none}
+body.cmp #cmode{display:inline-block}
+@media (max-width:760px){#stage.cmp.side #panes{grid-template-columns:1fr}}
 #helpbtn{position:absolute;top:10px;right:10px;z-index:3;width:30px;height:30px;min-height:0;padding:0;border-radius:50%;
 font-weight:600;background:#fffffff0}
 #help{position:absolute;top:46px;right:10px;z-index:3;max-width:min(440px,calc(100% - 20px));background:#fffffff5;border:1px solid var(--line);
@@ -46,6 +59,8 @@ footer{padding:6px 12px;color:var(--muted);font-size:11.5px;background:#fff;bord
   <div class="sel">
     <select id="run" title="cycle"></select>
     <select id="region" title="region"></select>
+    <select id="cmpsel" title="compare with another model for the same cycle"></select>
+    <button id="cmode" title="side by side, or flip between the two (x)">side by side</button>
   </div>
   <a id="home" href="../" hidden>home</a>
 </header>
@@ -53,7 +68,10 @@ footer{padding:6px 12px;color:var(--muted);font-size:11.5px;background:#fff;bord
 <div id="tabs" role="tablist"></div>
 <main>
   <div id="stage">
-    <img id="img" alt="">
+    <div id="panes">
+      <div class="pane" id="pane1"><img id="img" alt=""><span class="cap" id="cap1"></span></div>
+      <div class="pane" id="pane2"><img id="img2" alt=""><span class="cap" id="cap2"></span></div>
+    </div>
     <button id="helpbtn" title="About this field">?</button>
     <div id="help"></div>
     <div id="msg"></div>
@@ -84,7 +102,7 @@ const WD = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"], MO = ["Jan","Feb","Mar",
 const stamp = d => `${String(d.getUTCHours()).padStart(2,"0")}z ${WD[d.getUTCDay()]} ${d.getUTCDate()} ${MO[d.getUTCMonth()]}`;
 const initDate = c => new Date(Date.UTC(+c.slice(0,4), +c.slice(4,6)-1, +c.slice(6,8), +c.slice(8,10)));
 
-let runs = null, idx = null, model = null, cycle = null, region = null, field = null, hour = null;
+let runs = null, idx = null, idx2 = null, cmp = null, cmode = "side", second = false, model = null, cycle = null, region = null, field = null, hour = null;
 let playing = false, timer = null, gen = 0;
 const cache = new Map();   // url -> Image, for the loop
 
@@ -92,7 +110,7 @@ function loadScript(src) {
   return new Promise((ok, bad) => { const s = document.createElement("script"); s.src = src;
     s.onload = ok; s.onerror = () => bad(new Error("could not load " + src)); document.head.appendChild(s); });
 }
-const url = (h, f = field, r = region) => `${ROOT}frames/${model}/${cycle}/${r}/${pad3(h)}-${f}.png`;
+const url = (h, f = field, r = region, m = model) => `${ROOT}frames/${m}/${cycle}/${r}/${pad3(h)}-${f}.png`;
 function note(msg) { const m = $("#msg"); m.textContent = msg || ""; m.style.display = msg ? "flex" : "none"; }
 
 async function boot() {
@@ -107,14 +125,19 @@ async function boot() {
   for (const m of models) for (const c of runs.runs[m]) opts.push([`${m}/${c}`, `${runs.labels[m] || m}  ${stamp(initDate(c))}`]);
   $("#run").innerHTML = opts.map(([v, t]) => `<option value="${v}">${t}</option>`).join("");
   $("#run").value = want.join("/");
-  await pick(want[0], want[1], h[2], h[3], h[4] !== undefined ? +h[4] : null);
+  await pick(want[0], want[1], h[2], h[3], h[4] !== undefined && h[4] !== "" ? +h[4] : null, h[5] || null);
 }
 
-async function pick(m, c, r, f, hr) {
+async function pick(m, c, r, f, hr, cm) {
   model = m; cycle = c;
   const key = `${m}/${c}`;
   if (!(window.__NAM_INDEX && window.__NAM_INDEX[key])) await loadScript(`${ROOT}frames/${m}/${c}/index.js?${Date.now()}`);
   idx = window.__NAM_INDEX[key];
+  // models that have this cycle can be compared with it
+  const others = Object.keys(runs.runs).filter(x => x !== m && runs.runs[x].includes(c));
+  $("#cmpsel").innerHTML = '<option value="">compare: off</option>' + others.map(x => `<option value="${x}">vs ${runs.labels[x] || x}</option>`).join("");
+  $("#cmpsel").style.display = others.length ? "" : "none";
+  await setCmp(others.includes(cm) ? cm : (others.includes(cmp) ? cmp : null), false);
   const regs = Object.keys(idx.regions);
   region = regs.includes(r) ? r : (regs.includes(region) ? region : regs[0]);
   $("#region").innerHTML = regs.map(x => `<option value="${x}">${idx.regions[x].label}</option>`).join("");
@@ -122,13 +145,42 @@ async function pick(m, c, r, f, hr) {
   const fields = Object.keys(idx.fields);
   field = fields.includes(f) ? f : (fields.includes(field) ? field : fields[0]);
   $("#tabs").innerHTML = fields.map(x => `<button role="tab" data-f="${x}" title="${idx.fields[x].title}">${idx.fields[x].tab}</button>`).join("");
-  $("#notice").style.display = m === "frankennam" ? "none" : "block";
-  $("#notice").textContent = m === "frankennam" ? "" : "Archived operational NAM, shown as a reference sample of the maps. This is not FrankenNAM output.";
-  $("#foot").textContent = "Maps on the 12 km grid 218, Lambert conformal. Basemap Natural Earth.";
+  notice();
+  $("#foot").textContent = "Maps on the 12 km grid 218, Lambert conformal. Basemap Natural Earth. Keys: c compare, x flip, arrows step, space play.";
   document.title = `${idx.label} maps`;
   setField(field, hr);
 }
 
+function notice() {
+  const ms = [model].concat(cmp ? [cmp] : []);
+  const arch = ms.includes("nam");
+  $("#notice").style.display = arch ? "block" : "none";
+  $("#notice").textContent = !arch ? "" : ms.includes("frankennam")
+    ? "The panel labelled NAM is the archived operational NAM, shown as a reference. FrankenNAM is the recast."
+    : "Archived operational NAM, shown as a reference sample of the maps. This is not FrankenNAM output.";
+}
+async function setCmp(m, redraw = true) {
+  cmp = m || null; idx2 = null;
+  if (cmp) {
+    const key = `${cmp}/${cycle}`;
+    if (!(window.__NAM_INDEX && window.__NAM_INDEX[key])) await loadScript(`${ROOT}frames/${cmp}/${cycle}/index.js?${Date.now()}`);
+    idx2 = window.__NAM_INDEX[key];
+  }
+  $("#cmpsel").value = cmp || "";
+  document.body.classList.toggle("cmp", !!cmp);
+  applyMode(); notice();
+  if (redraw) { gen++; show(); preload(); }
+}
+function applyMode() {
+  const st = $("#stage");
+  st.classList.toggle("cmp", !!cmp);
+  st.classList.toggle("side", !!cmp && cmode === "side");
+  st.classList.toggle("flip", !!cmp && cmode === "flip");
+  st.classList.toggle("second", !!cmp && cmode === "flip" && second);
+  $("#cmode").textContent = cmode === "side" ? "side by side" : "flip: " + (second ? (idx2 && idx2.label) : idx.label);
+  $("#cap1").textContent = idx ? idx.label : "";
+  $("#cap2").textContent = idx2 ? idx2.label : "";
+}
 function hours() { return idx.fields[field].hours; }
 function setField(f, hr) {
   field = f; gen++;
@@ -147,9 +199,10 @@ function show() {
   note("");
   im.onerror = () => note("Frame not available.");
   im.src = u;
+  if (cmp) { const i2 = $("#img2"); i2.onerror = () => { i2.removeAttribute("src"); i2.alt = "no frame"; }; i2.alt = ""; i2.src = url(hour, field, region, cmp); }
   const valid = new Date(initDate(cycle).getTime() + hour * 3600e3);
   $("#count").textContent = `f${pad3(hour)} · valid ${stamp(valid)}`;
-  history.replaceState(null, "", `#${model}/${cycle}/${region}/${field}/${hour}`);
+  history.replaceState(null, "", `#${model}/${cycle}/${region}/${field}/${hour}${cmp ? "/" + cmp : ""}`);
 }
 function preload() {
   const g = gen, hs = hours();
@@ -157,6 +210,7 @@ function preload() {
   const next = () => {   // gentle fan-out: a few at a time, current field first
     if (g !== gen || n >= hs.length) return;
     const h = hs[(i + n++) % hs.length], u = url(h);
+    if (cmp) { const u2 = url(h, field, region, cmp); if (!cache.has(u2)) { const i2 = new Image(); i2.src = u2; cache.set(u2, i2); } }
     if (cache.has(u)) return next();
     const im = new Image(); im.onload = im.onerror = next; im.src = u; cache.set(u, im);
   };
@@ -183,6 +237,8 @@ function cycleRegion(d) {
 
 $("#tabs").addEventListener("click", e => { const b = e.target.closest("button"); if (b) setField(b.dataset.f); });
 $("#run").addEventListener("change", e => { const [m, c] = e.target.value.split("/"); pick(m, c, region, field, hour); });
+$("#cmpsel").addEventListener("change", e => setCmp(e.target.value));
+$("#cmode").onclick = () => { if (cmode === "side") { cmode = "flip"; } else if (!second) { second = true; } else { cmode = "side"; second = false; } applyMode(); };
 $("#region").addEventListener("change", e => { region = e.target.value; gen++; show(); preload(); });
 $("#prev").onclick = () => { play(false); step(-1); };
 $("#next").onclick = () => { play(false); step(1); };
@@ -203,6 +259,8 @@ document.addEventListener("keydown", e => {
   else if (k === "Home") { hour = hours()[0]; show(); }
   else if (k === "End") { const h = hours(); hour = h[h.length - 1]; show(); }
   else if (k === "?") $("#help").classList.toggle("on");
+  else if (k === "c") { const o = [...$("#cmpsel").options].map(x => x.value); if (o.length > 1) setCmp(cmp ? "" : o[1]); }
+  else if (k === "x" && cmp) { if (cmode === "side") cmode = "flip"; else second = !second; applyMode(); }
   else return;
   e.preventDefault();
 });

@@ -138,7 +138,7 @@ def write_index(cycle, src, out, fields, regions, hours, model, product):
         fdoc[f] = {"title": title, "tab": tab, "help": help_,
                    "hours": [h for h in hours if not (f in NEEDS_ACC and h == 0)]}
     rdoc = {r: {"label": REGIONS[r][0]} for r in regions}
-    idx = {"model": model, "product": product, "label": draw.PRODUCTS[product][0], "foot": draw.PRODUCTS[product][1],
+    idx = {"model": model, "product": product, "label": draw.PRODUCTS[product][0], "foot": draw.foot_text(product, datetime.strptime(cycle, "%Y%m%d%H")),
            "cycle": cycle, "hours": hours, "fields": fdoc, "regions": rdoc,
            "path": "frames/{model}/{cycle}/{region}/{fhr}-{field}.png",
            "generated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ")}
