@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>About FrankenNAM</title>
-<meta name="description" content="Design, the tm06 cycle, delivery clock, cost and the comparison with the operational NAM.">
+<meta name="description" content="Design, the FrankenNAM analysis, delivery clock, cost and the comparison with the operational NAM.">
 <link rel="stylesheet" href="style.css">
 <script src="config.js"></script>
 </head>
@@ -22,8 +22,8 @@
 <li><b>Free maps, paid files.</b> The maps are free. The GRIB2 files are on the <a href="data.html">Get Operational Data</a> page, and the costs are on the <a href="costs.html">costs page</a>.</li>
 </ul>
 
-<h2>The tm06 cycle</h2>
-<p>A product cycle C (00Z or 12Z) is a 90&nbsp;h integration that starts at C&minus;6&nbsp;h. The initial condition is the GFS analysis for that time, the lateral boundaries are the GFS forecasts that follow, and the first 6&nbsp;h are a NAM spin-up. Integration hour 6 is forecast hour 0 of the product, and hour 90 is f84. The soil (moisture, temperature, snow water) is seeded from the NAM's own land state rather than the GFS's, because the GFS is about 0.05&nbsp;m<sup>3</sup>/m<sup>3</sup> wetter than the NAM over CONUS. There is no data assimilation.</p>
+<h2>The FrankenNAM analysis</h2>
+<p>A product cycle C (00Z or 12Z) is a 90&nbsp;h integration that starts at C&minus;6&nbsp;h. The initial condition is the GFS analysis for that time, the lateral boundaries are the GFS forecasts that follow, and the first 6&nbsp;h are a NAM spin-up. Integration hour 6 is forecast hour 0 of the product, and hour 90 is f84. That f00 is what FrankenNAM calls its <b>analysis</b>, in the same way the operational NAM&rsquo;s 6&nbsp;h catch-up ended in its analysis; it comes from the model alone, not from observations. Because the run starts 6&nbsp;h early, the first day of forecast can be ready before the cycle time itself. The soil (moisture, temperature, snow water) is seeded from the NAM's own land state rather than the GFS's, because the GFS is about 0.05&nbsp;m<sup>3</sup>/m<sup>3</sup> wetter than the NAM over CONUS. There is no data assimilation.</p>
 <div class="honest"><p><b>The honesty line, on every product.</b> Initialized from the (C&minus;6)Z GFS analysis with a 6&nbsp;h NAM spin-up. No observations after (C&minus;6)Z. Not the operational NAM.</p></div>
 <details class="q"><summary>? what is seeded and what is not</summary><div>Seeded from the NAM land state at C&minus;6: four soil moisture and temperature layers, skin temperature (over land only), snow water equivalent. Not seeded: canopy water (the model starts it at zero, as the operational cold start did), snow depth (derived from the water equivalent), sea ice and sea-surface temperature (GFS). The seam at the edge of grid 218 is a hard edge: NAM soil inside, GFS soil outside.</div></details>
 
@@ -61,7 +61,7 @@
 <h2>How it came back</h2>
 <p>NCEP announced in September 2026 that the NAM source would be removed on retirement and available only on request. When NCEP's own copy came down, the NAM developers' public GitHub repositories (the model source and the Rocoto workflow) supplied what was needed. The static files the model reads at run time (terrain, land-use and soil tables, CO<sub>2</sub>) were recovered from Wayback Machine captures of earlier NAM v4.2 releases. In a first run on AWS, the full domain was integrated for 84&nbsp;h from a historical cycle; its fields tracked the archived NAM closely enough to build a product on. Then the spin-up design, the land seeding and the NAM-identical file layout followed.</p>
 <p>What could not come back is the NAM's data assimilation: its analysis needs an 80-member ensemble that was never public. That is the honest difference, stated on every product.</p>
-<p class="small">Sources: the project's scoping and build notes, and the tm06 design notes, in the <a data-cfg-href="GITHUB_URL" href="#">repository</a>. Related work: other community recasts of the NAM exist; FrankenNAM does not speak for them.</p>
+<p class="small">Sources: the project's scoping and build notes, and the design notes for the analysis, in the <a data-cfg-href="GITHUB_URL" href="#">repository</a>. Related work: other community recasts of the NAM exist; FrankenNAM does not speak for them.</p>
 
 </main>
 <footer class="bot"><p><b>Initialized from the (C&minus;6)Z GFS analysis with a 6&nbsp;h NAM spin-up. No observations after (C&minus;6)Z.</b></p><p>A community project. Not affiliated with or endorsed by NOAA or the National Weather Service. Operated by Joe Boomgard-Zagrodnik.</p><p><a href="costs.html">What it costs</a> &middot; <a href="terms.html">Terms</a> &middot; <a href="scorecard.html">Baseline scorecard</a> &middot; <a data-cfg-href="GITHUB_URL" href="#">GitHub</a> <span class="ph">[PLACEHOLDER: repository URL]</span> &middot; <a href="https://theconvergencezone.com/contact/">Contact</a></p></footer>

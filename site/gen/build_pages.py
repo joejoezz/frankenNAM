@@ -19,7 +19,7 @@ BODY = lambda n: open(os.path.join(HERE, "body", n + ".html")).read()  # noqa: E
 SPEC = [
     ("index", "FrankenNAM: an open source project to keep the NAM model alive", "", BODY("index"),
      "Why FrankenNAM exists, and the latest maps."),
-    ("about", "About FrankenNAM", "about.html", BODY("about"), "Design, the tm06 cycle, delivery clock, cost and the comparison with the operational NAM."),
+    ("about", "About FrankenNAM", "about.html", BODY("about"), "Design, the FrankenNAM analysis, delivery clock, cost and the comparison with the operational NAM."),
     ("validation", "Validation", "validation.html", validation.body(), "Fidelity to the archived NAM, the baseline scorecard, side-by-side plots and hindcast highlights."),
     ("data", "Get Operational Data", "data.html", BODY("data"), "NOAA-identical grid-218 files, swap-in examples and subscription."),
     ("terms", "Terms", "terms.html", BODY("terms"), "Plain-language terms for the paid grids."),

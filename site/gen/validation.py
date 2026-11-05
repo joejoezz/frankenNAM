@@ -12,12 +12,14 @@ REPO = os.path.dirname(os.path.dirname(HERE))
 FIELDS = [("mslp", "MSLP (hPa)"), ("z500", "Z500 (dam)"), ("t2m", "2 m temperature (K)"), ("wspd10", "10 m wind speed (m/s)")]
 LEADS = [0, 24, 48, 84]
 PRECIP = [("precip24h_0-24", "24 h precip, 0-24 h (mm)"), ("precip24h_24-48", "24 h precip, 24-48 h (mm)"), ("precip24h_60-84", "24 h precip, 60-84 h (mm)")]
-PANELS = [
-    ("panel-f48-mslp-precip.png", "f48: MSLP and 6 h precipitation", "Low-pressure centre, its track and the precipitation shield."),
-    ("panel-f24-t2m.png", "f24: 2 m temperature", "Same scale; the cold pools and the warm sector."),
-    ("panel-f36-ptype.png", "f36: precipitation type", "Rain, snow, sleet and freezing rain flags, as the NAM's own fields give them."),
-    ("panel-f72-snow.png", "f72: snowfall, Kuchera ratio", "Snowfall computed from the model's liquid-equivalent snow and the Kuchera ratio."),
+LOOP_CYCLE, LOOP_REGION = "2026110100", "conus"
+LOOPS = [  # field key in the rendered frames, first hour shown, title
+    ("mslp_precip6", 48, "MSLP and 6 h precipitation"),
+    ("t2m", 24, "2 m temperature"),
+    ("ptype", 36, "Precipitation type"),
+    ("snowku", 72, "Snowfall, Kuchera ratio"),
 ]
+NO_F00 = {"precip6", "precip_total", "snow10", "snowku"}  # accumulations start at f03
 
 
 def q(label, text):
@@ -26,7 +28,7 @@ def q(label, text):
 
 def fidelity_table() -> str:
     rows = {(r["field"], int(r["lead"])): r for r in csv.DictReader(open(os.path.join(REPO, "docs/figs/tm06/stats.csv")))}
-    out = ['<div class="tblwrap"><table><tr><th>Field</th><th>Lead</th><th class="n">FrankenNAM tm06</th><th class="n">Analysis start</th><th class="n">GFS</th></tr>']
+    out = ['<div class="tblwrap"><table><tr><th>Field</th><th>Lead</th><th class="n">FrankenNAM</th><th class="n">Cold start</th><th class="n">GFS</th></tr>']
     def row(name, key, lead):
         r = rows[(key, lead)]
         v = [(float(r[f"rmse_{m}_vs_NAM"]), float(r[f"bias_{m}_vs_NAM"])) for m in ("tm06", "anl", "GFS")]
@@ -58,6 +60,18 @@ def figure(src, cap, alt):
     return f'<figure class="full"><img src="{src}" alt="{alt}" loading="lazy"><figcaption>{cap}</figcaption></figure>'
 
 
+def looper(field, start, title) -> str:
+    hours = [h for h in range(0, 85, 3) if not (h == 0 and field in NO_F00)]
+    base = f"maps/frames/{{m}}/{LOOP_CYCLE}/{LOOP_REGION}/"
+    img = lambda m, lab: (f'<div class="lp-pane"><div class="lp-lab">{lab}</div>'
+                          f'<img data-m="{m}" src="{base.format(m=m)}{start:03d}-{field}.png" alt="{lab}, {title}, f{start:02d}" loading="lazy"></div>')
+    return (f'<figure class="looper" data-base="{base}" data-field="{field}" data-hours="{",".join(map(str, hours))}" data-start="{start}">'
+            f'<figcaption><b>{title}</b> <span class="lp-hr">f{start:02d}</span></figcaption>'
+            f'<div class="lp-panes">{img("frankennam", "FrankenNAM")}{img("nam", "Archived NAM")}</div>'
+            f'<div class="lp-ctl"><button type="button" class="lp-play" aria-label="Play">&#9654;</button>'
+            f'<input type="range" class="lp-slider" min="0" max="{len(hours) - 1}" value="{hours.index(start)}" aria-label="Forecast hour"></div></figure>')
+
+
 def hindcast() -> str:
     d = json.load(open(os.path.join(HERE, "hindcast.json")))
     cards = []
@@ -81,26 +95,26 @@ def body() -> str:
 <p>The question here is <b>fidelity to the NAM</b>: does FrankenNAM look and behave like the model forecasters relied on? It is not a claim that FrankenNAM beats any other model. Every number below says which case it comes from; one case is one case.</p>
 
 <h2>Fidelity to the archived NAM</h2>
-<p>RMSE / bias of each run against the archived NAM, over CONUS land on a 0.25&deg; grid, for the 2026-11-01 00Z cycle. &ldquo;FrankenNAM tm06&rdquo; is the product configuration (the GFS analysis 6&nbsp;h earlier, then 6&nbsp;h of NAM spin-up). &ldquo;Analysis start&rdquo; starts from the same-cycle GFS analysis. Lowest RMSE in each row is shaded.</p>
+<p>RMSE / bias of each run against the archived NAM, over CONUS land on a 0.25&deg; grid, for the 2026-11-01 00Z cycle. &ldquo;FrankenNAM&rdquo; is the product. Its f00 is the FrankenNAM <b>analysis</b>: the GFS analysis from 6&nbsp;h earlier carried forward by 6&nbsp;h of NAM spin-up (the &ldquo;tm06&rdquo; start). No observations are assimilated. &ldquo;Cold start&rdquo; is a test run started straight from the same-cycle GFS analysis. Lowest RMSE in each row is shaded.</p>
 {fidelity_table()}
-{q("how to read this", "Each row compares one run with the archived NAM at the same forecast hour; a smaller RMSE means closer to the NAM, and a bias near zero means no systematic offset. The GFS column is context: it is a different model and was never meant to match the NAM. f00 shows the cost of the 6&nbsp;h lag (a small warm bias in 2 m temperature that is gone by f24). Wind components and the full table are in the repository (<code>docs/figs/tm06/stats.md</code>). One case.")}
+{q("how to read this", "Each row compares one run with the archived NAM at the same forecast hour; a smaller RMSE means closer to the NAM, and a bias near zero means no systematic offset. The GFS column is context: it is a different model and was never meant to match the NAM. f00, the analysis, shows the cost of the 6&nbsp;h lag (a small warm bias in 2 m temperature that is gone by f24). Wind components and the full table are in the repository (<code>docs/figs/tm06/stats.md</code>). One case.")}
 
-{figure("img/rmse-vs-lead.png", "RMSE against the archived NAM by lead. 2026-11-01 00Z.", "RMSE against the archived NAM by lead for FrankenNAM, the analysis start and the GFS")}
-{q("what this shows", "Lower is closer to the archived NAM. From f24 on the tm06 line sits at or below the analysis start in most panels, and the GFS is furthest away at f24 and f48. By f84 all three have drifted apart, and for Z500 the GFS is closest. One case: the six hindcast cases below are the larger test.")}
+{figure("img/rmse-vs-lead.png", "RMSE against the archived NAM by lead. 2026-11-01 00Z.", "RMSE against the archived NAM by lead for FrankenNAM, the cold start and the GFS")}
+{q("what this shows", "Lower is closer to the archived NAM. From f24 on the FrankenNAM line sits at or below the cold start in most panels, and the GFS is furthest away at f24 and f48. By f84 all three have drifted apart, and for Z500 the GFS is closest. One case: the six hindcast cases below are the larger test.")}
 
 <h2>Land state: the soil trace</h2>
 {figure("img/soil-f00.png", "Soil at f00, RMSE over CONUS land. 2026-11-01 00Z.", "Soil moisture and temperature at f00: FrankenNAM is close to the NAM and far from the GFS")}
-{q("what this shows", "The soil is seeded from the NAM's land state, so at f00 FrankenNAM's soil moisture is 0.012&nbsp;m<sup>3</sup>/m<sup>3</sup> from the archived NAM; the analysis start, which takes the GFS soil, is 0.072 away. The GFS is about 0.05&nbsp;m<sup>3</sup>/m<sup>3</sup> wetter than the NAM over CONUS. Soil temperature has moved 6&nbsp;h of diurnal cycle from the seed and sits 0.9&nbsp;K from the NAM.")}
+{q("what this shows", "The soil is seeded from the NAM's land state, so at f00 FrankenNAM's soil moisture is 0.012&nbsp;m<sup>3</sup>/m<sup>3</sup> from the archived NAM; the cold start, which takes the GFS soil, is 0.072 away. The GFS is about 0.05&nbsp;m<sup>3</sup>/m<sup>3</sup> wetter than the NAM over CONUS. Soil temperature has moved 6&nbsp;h of diurnal cycle from the seed and sits 0.9&nbsp;K from the NAM.")}
 
 <h2>What the NAM itself scored</h2>
 <p>For scale: the operational NAM against observations (ASOS/AWOS stations, MRMS 24&nbsp;h precipitation), with the GFS beside it, over seven cases chosen for weather. The NAM and the same-cycle GFS are tied on temperature and wind, and the GFS has the higher precipitation score. The fidelity target for FrankenNAM is the NAM's column, not the GFS's.</p>
 {baseline_table()}
-{q("how this was made", "Seven cases, 12-84 h, about 390,000 station-hours per variable; model minus observation, bilinear interpolation, temperatures corrected to station elevation. Cases are picked for weather, not a random sample, and no significance tests are made. The 6&nbsp;h older GFS is the information a tm06 FrankenNAM starts from. Full tables: <a href='scorecard.html'>baseline scorecard</a>.")}
+{q("how this was made", "Seven cases, 12-84 h, about 390,000 station-hours per variable; model minus observation, bilinear interpolation, temperatures corrected to station elevation. Cases are picked for weather, not a random sample, and no significance tests are made. The 6&nbsp;h older GFS is the information the FrankenNAM analysis starts from. Full tables: <a href='scorecard.html'>baseline scorecard</a>.")}
 <p><a href="scorecard.html">Full baseline scorecard</a></p>
 
 <h2>Side by side with the archived NAM</h2>
-<p>FrankenNAM (left) and the archived NAM (right): same field, forecast hour and colour scale. Cycle 2026-11-01 00Z.</p>
-{"".join(figure("img/" + f, c, t) + q("what this shows", e) for f, t, e in [(p[0], p[1], p[2]) for p in PANELS] for c in [t])}
+<p>FrankenNAM (left) and the archived NAM (right): same field, forecast hour and colour scale. Cycle 2026-11-01 00Z. Drag the slider or press play to step through f00 to f84.</p>
+{"".join(looper(*x) for x in LOOPS)}
 
 <h2>Hindcast highlights</h2>
 <p>Six cases forecasters know, run as hindcasts with FrankenNAM, the archived NAM and the GFS. Each card will carry a double-panel image and a few lines; the table below it pools the cases.</p>
