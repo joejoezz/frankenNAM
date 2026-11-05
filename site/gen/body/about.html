@@ -26,25 +26,26 @@
 <h2>Cost per run</h2>
 <p>About $2.60 per cycle: roughly 5.0&nbsp;h on one m8g.8xlarge Spot instance at about $0.52 an hour (measured on the acceptance run), or about $160 a month for two cycles a day. The whole site, with storage and file hosting, is on the <a href="costs.html">costs page</a>.</p>
 
-<h2>FrankenNAM and the operational NAM</h2>
+<h2>FrankenNAM, the operational NAM and WOOF-NAM</h2>
+<p class="small">WOOF-NAM is another project bringing the NAM back, from a different direction: it rewrites the model for GPUs, where FrankenNAM runs the NAM&rsquo;s own code. The WOOF-NAM column is as of 5&nbsp;November 2026, from its <a href="https://github.com/recastsystems/woof-nam">public repository</a> and demo feed.</p>
 <div class="tblwrap"><table>
-<tr><th></th><th class="fn">FrankenNAM</th><th>Operational NAM (retired 3 Nov 2026)</th></tr>
-<tr><th>Code</th><td class="fn">NMMB/NEMS, NPS, UPP from the operational NAM v4.2 source, built for Graviton (arm64); no GSI</td><td>The same, plus GSI and the NDAS cycling scripts, on WCOSS2</td></tr>
-<tr><th>Grid, levels, time step</th><td class="fn">954&times;835 rotated lat-lon B grid, 12&nbsp;km, 60 levels, 25&nbsp;s</td><td>The same</td></tr>
-<tr><th>Physics</th><td class="fn">Ferrier-Aligo, BMJ, MYJ, Noah, RRTM</td><td>The same</td></tr>
-<tr><th>Initial conditions</th><td class="fn">GFS analysis at C&minus;6&nbsp;h, then 6&nbsp;h of NAM spin-up (TDFI at the start)</td><td>NDAS: a 6&nbsp;h catch-up cycle of analyses and short forecasts</td></tr>
-<tr><th>Data assimilation</th><td class="fn">None. No observations after C&minus;6&nbsp;h</td><td>GSI hybrid 3DEnVar every hour of the catch-up; radar, satellite, aircraft, surface and other observations</td></tr>
-<tr><th>Land state</th><td class="fn">Seeded from the NAM's land state (the previous cycle's own output when live); canopy water zero</td><td>Cycled continuously</td></tr>
-<tr><th>Lateral boundaries</th><td class="fn">GFS forecasts, f006 to f090 of the C&minus;6 cycle</td><td>GFS</td></tr>
-<tr><th>Nests</th><td class="fn">None: the 12&nbsp;km parent only</td><td>3&nbsp;km CONUS and Alaska, Hawaii, Puerto Rico and fire-weather nests, to 60&nbsp;h</td></tr>
-<tr><th>Cycles per day</th><td class="fn">2 (00Z, 12Z)</td><td>4 (00Z, 06Z, 12Z, 18Z)</td></tr>
-<tr><th>Products, file names</th><td class="fn"><code>awphys</code> on grid 218 (614&times;428, 12.19&nbsp;km), f00&ndash;f84 every 3&nbsp;h, with the operational names: <code>nam.tCCz.awphysFF.tm00.grib2</code></td><td>The same names; more products and hours (hourly output, other grids, BUFR soundings)</td></tr>
-<tr><th>Delivery time of f84</th><td class="fn">C+3:05 projected on one node</td><td>C+2:42</td></tr>
-<tr><th>Who runs it</th><td class="fn">Joe Boomgard-Zagrodnik, a community project on rented cloud computers</td><td>NOAA/NCEP Central Operations</td></tr>
+<tr><th></th><th class="fn">FrankenNAM</th><th>Operational NAM (retired 3 Nov 2026)</th><th>WOOF-NAM</th></tr>
+<tr><th>Code</th><td class="fn">NMMB/NEMS, NPS, UPP from the operational NAM v4.2 source, built for Graviton (arm64); no GSI</td><td>The same, plus GSI and the NDAS cycling scripts, on WCOSS2</td><td>A new GPU (CUDA) version of the NMMB dynamics and NAM physics, written from the same NAM source; single precision, not bit-for-bit</td></tr>
+<tr><th>Grid, levels, time step</th><td class="fn">954&times;835 rotated lat-lon B grid, 12&nbsp;km, 60 levels, 25&nbsp;s</td><td>The same</td><td>The same</td></tr>
+<tr><th>Physics</th><td class="fn">Ferrier-Aligo, BMJ, MYJ, Noah, RRTM</td><td>The same</td><td>The same schemes, rewritten; WRF land-surface tables stand in for the NAM&rsquo;s</td></tr>
+<tr><th>Initial conditions</th><td class="fn">GFS analysis at C&minus;6&nbsp;h, then 6&nbsp;h of NAM spin-up (TDFI at the start)</td><td>NDAS: a 6&nbsp;h catch-up cycle of analyses and short forecasts</td><td>GFS analysis at C, no spin-up (the archived NAM analysis or ECMWF open data are also options in the tool)</td></tr>
+<tr><th>Data assimilation</th><td class="fn">None. No observations after C&minus;6&nbsp;h</td><td>GSI hybrid 3DEnVar every hour of the catch-up; radar, satellite, aircraft, surface and other observations</td><td>None</td></tr>
+<tr><th>Land state</th><td class="fn">Seeded from the NAM's land state (the previous cycle's own output when live); canopy water zero</td><td>Cycled continuously</td><td>Taken from the starting analysis (the GFS&rsquo;s soil for a live run)</td></tr>
+<tr><th>Lateral boundaries</th><td class="fn">GFS forecasts, f006 to f090 of the C&minus;6 cycle</td><td>GFS</td><td>GFS forecasts from the cycle 6&nbsp;h older</td></tr>
+<tr><th>Nests</th><td class="fn">None: the 12&nbsp;km parent only</td><td>3&nbsp;km CONUS and Alaska, Hawaii, Puerto Rico and fire-weather nests, to 60&nbsp;h</td><td>None: the 12&nbsp;km parent only</td></tr>
+<tr><th>Cycles per day</th><td class="fn">2 (00Z, 12Z)</td><td>4 (00Z, 06Z, 12Z, 18Z)</td><td>4 in its public demo feed</td></tr>
+<tr><th>Products, file names</th><td class="fn"><code>awphys</code> on grid 218 (614&times;428, 12.19&nbsp;km), f00&ndash;f84 every 3&nbsp;h, with the operational names: <code>nam.tCCz.awphysFF.tm00.grib2</code></td><td>The same names; more products and hours (hourly output, other grids, BUFR soundings)</td><td>Grid 218 GRIB2, f00&ndash;f84 hourly, named <code>woof-nam.tCCz.awphysFF.tm00.grib2</code>; free in a demo feed with 7-day retention; the run-it-yourself tool writes NetCDF</td></tr>
+<tr><th>Delivery time of f84</th><td class="fn">C+3:05 projected on one node</td><td>C+2:42</td><td>About C+4:20 observed in the demo feed, on a GPU</td></tr>
+<tr><th>Who runs it</th><td class="fn">Joe Boomgard-Zagrodnik, a community project on rented cloud computers</td><td>NOAA/NCEP Central Operations</td><td>Recast Systems, a cloud-seeding company; open source (Apache-2.0), also runs on your own NVIDIA GPU</td></tr>
 </table></div>
 <details class="q"><summary>? why the first hours differ</summary><div>The operational analysis blends the previous forecast with observations; FrankenNAM starts from the GFS analysis and lets the NAM physics spin up for 6&nbsp;h. At f00 that costs a little fidelity to the NAM (see <a href="validation.html">Validation</a>); by f24 the model's own boundary layer and land state matter more than the start. One case does not settle that; the hindcast cases on the Validation page are the test.</div></details>
 
 <h2>How it came back</h2>
 <p>NCEP announced in September 2026 that the NAM source would be removed on retirement and available only on request. When NCEP's own copy came down, the NAM developers' public GitHub repositories (the model source and the Rocoto workflow) supplied what was needed. The static files the model reads at run time (terrain, land-use and soil tables, CO<sub>2</sub>) were recovered from Wayback Machine captures of earlier NAM v4.2 releases. In a first run on AWS, the full domain was integrated for 84&nbsp;h from a historical cycle; its fields tracked the archived NAM closely enough to build a product on. Then the spin-up design, the land seeding and the NAM-identical file layout followed.</p>
 <p>What could not come back is the NAM's data assimilation: its analysis needs an 80-member ensemble that was never public. That is the honest difference, stated on every product.</p>
-<p class="small">Sources: the project's scoping and build notes, and the design notes for the analysis, in the <a data-cfg-href="GITHUB_URL" href="#">repository</a>. Related work: other community recasts of the NAM exist; FrankenNAM does not speak for them.</p>
+<p class="small">Sources: the project's scoping and build notes, and the design notes for the analysis, in the <a data-cfg-href="GITHUB_URL" href="#">repository</a>. FrankenNAM does not speak for WOOF-NAM or any other NAM recast.</p>
