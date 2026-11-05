@@ -76,7 +76,7 @@ ulimit -s unlimited || true
 mpi_cmd() {
   local n=$1 bind=$2 cpus=${3:-}
   if [ "$MPI" = intel ]; then echo "mpirun -n $n -ppn $n"
-  elif [ -n "$cpus" ]; then echo "mpirun -n $n --cpu-set $cpus --bind-to core --map-by core"
+  elif [ -n "$cpus" ]; then echo "mpirun -n $n --cpu-set $cpus --bind-to core"   # no --map-by: OpenMPI 4.1 rejects it with a cpu set
   elif [ "$bind" = core ]; then echo "mpirun -n $n --bind-to core --map-by core"
   else echo "mpirun -n $n --bind-to none"; fi
 }
@@ -324,7 +324,7 @@ stage_post() { # UPP per history file; GRIB2 outputs BGDAWP/BGRDSF/BGRD3D as exn
       for k in BGDAWP BGRDSF BGRD3D; do
         [ -s $k.GrbF$fh ] && mv $k.GrbF$fh ../grib2/nam.t${pcyc}z.$(echo $k | tr A-Z a-z)${fh}.tm00.grib2
       done
-      echo "post f$fh $((SECONDS - t0)) s" | tee -a ../post_times.txt )
+      echo "post f$fh $((SECONDS - t0)) s" | tee -a ../post_times.txt ) || true   # the check below reports; set -e would end the function silently here
     [ -s grib2/nam.t${pcyc}z.bgdawp${fh}.tm00.grib2 ] || { echo "UPP f$fh produced no BGDAWP"; tail -30 post/post_f$fh.out; return 1; }
     tl "post f$fh done"
     if [ "$MODE" = tm06 ] && [ "${PRODUCTS:-1}" = 1 ]; then

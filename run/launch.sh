@@ -6,6 +6,8 @@
 # usage: launch.sh <CYCLE> [MODE] [ARCH] [KEY=VAL ...]     e.g. launch.sh 2026110100 tm06 arm64 FHMAX=6 S3SUB=chain1
 #        launch.sh --next                                  pop the first line "CYCLE MODE ARCH [KEY=VAL ...]"
 #                                                          of $QUEUE (s3://.../queue/hindcast.txt) and launch it
+#        KEY=VAL tokens go into the runner's environment (FHMAX, S3SUB, S3PROD, POST_AFTER, ...); TYPE=, SUBNETS=,
+#        ONDEMAND=, BUNDLE=, DISK_GB= are taken by the launcher itself (so a queue line can pick the node)
 #        launch.sh --relay <CYCLE> [MODE] [ARCH] [KEY=VAL ...]
 #                     launch a t4g.nano on-demand relay that waits until no nam-recast-runner is alive, then
 #                     launches the runner. Used automatically when RunInstances is refused by the Spot vCPU
@@ -40,7 +42,11 @@ case ${1:-} in
 esac
 [ $# -ge 1 ] || { sed -n 2,20p "$0"; exit 1; }
 CYCLE=$1; MODE=${2:-tm06}; ARCH=${3:-${ARCH:-arm64}}; shift $(( $# >= 3 ? 3 : $# ))
-EXTRA="$*"                                   # KEY=VAL tokens passed into the runner's environment
+EXTRA=""                                     # KEY=VAL tokens passed into the runner's environment ...
+for tok in "$@"; do                          # ... except the launcher's own knobs, which a queue line may carry too
+  case $tok in TYPE=*|SUBNETS=*|ONDEMAND=*|BUNDLE=*|DISK_GB=*) export "$tok" ;; *) EXTRA="$EXTRA $tok" ;; esac
+done
+EXTRA=${EXTRA# }
 
 if [ "$ARCH" = arm64 ]; then
   TYPE=${TYPE:-c8g.8xlarge}
