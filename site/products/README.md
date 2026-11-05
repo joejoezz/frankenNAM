@@ -112,4 +112,4 @@ last 7 days. [DECISION NEEDED: Joe: confirm the retention before launch.]
 
 ## Contact
 
-[PLACEHOLDER: contact address and the LLC name.] Terms: `terms.html` on the site.
+Operator: Joe Boomgard-Zagrodnik (sole proprietorship); contact via theconvergencezone.com/contact/. Terms: `terms.html` on the site.

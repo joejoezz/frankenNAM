@@ -194,6 +194,27 @@ else), then the Lambda and queue, then the alarm, then R2, the Worker and Stripe
    seven regions here are a proposal. Are they the right set?
 3. **Maps free forever** (recommended in the plan, still listed as undecided), and whether BUFKIT files are
    free or paid: the subscribe page has a placeholder for it.
-4. **Refund policy, fair-use limit, log retention, LLC name and contact:** placeholders in `terms.html`.
+4. **Refund policy, fair-use limit, log retention and mailing address:** placeholders in `terms.html`.
 5. **Pan/zoom.** The viewer is an image loop. A MapLibre viewer with GPU-colored fills, like ensplots, would
    need the fields as value grids (`.bin`) instead of PNGs. It is a larger piece of work; say if you want it.
+
+
+## The public-site mockup (brief 3, 5 Nov 2026)
+
+Pages: Home (Why? and the single-panel "Latest fNAM" viewer in an iframe, `?single=1&embed=1&sample=1`), About FrankenNAM,
+Validation, Get Operational Data (swap-in examples, Subscribe), Contact (external), plus Costs, Terms and the baseline Scorecard
+reachable from the footer. Operator: Joe Boomgard-Zagrodnik (sole proprietorship).
+
+```
+~/data/nam-recast-site/venv/bin/python site/gen/figs.py      # validation figures + side-by-side panels (needs the rendered frames)
+sh site/gen/assemble.sh                                      # builds pages, assembles ~/data/nam-recast-site/mockup, prints the path
+open ~/data/nam-recast-site/mockup/index.html
+python site/gen/screenshots.py                               # Playwright venv; writes site/samples/mockup-*-{desktop,phone}.png
+```
+
+Edit `gen/body/*.html`, `gen/validation.py`, `pages/config.js` (STRIPE_PAYMENT_LINK, GITHUB_URL, pledge counter), not the generated
+pages. Viewer flags: `?single=1` (no compare, FrankenNAM runs only), `?embed=1` (no header), `?sample=1` (sample banner).
+
+Hindcast highlights drop-in (after the hindcast agent has written `docs/figs/hindcast/` and the scorecard):
+`python site/gen/hindcast_dropin.py --figs docs/figs/hindcast --table results.csv --text text.json` then
+`python site/gen/build_pages.py`. Cases, keys and placeholders live in `gen/hindcast.json`.

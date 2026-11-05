@@ -1,0 +1,22 @@
+{
+  "note": "Drop-in data for the Hindcast highlights section of validation.html. Edit by hand or with hindcast_dropin.py, then run build_pages.py. image: path under site/pages (null = placeholder box). text: 2-3 short lines (empty = placeholder). results.rows: [metric, fnam, nam, gfs, gfs06, within-gate]; null cells print as pending.",
+  "cases": [
+    {"id": "2026012312", "title": "CAD ice storm", "when": "23 Jan 2026, Georgia and the Carolinas", "keys": ["20260123", "2026012312", "cad"], "image": null, "text": []},
+    {"id": "2025010512", "title": "Snowcrete", "when": "5 Jan 2025, Washington DC, snow to sleet", "keys": ["20250105", "2025010512", "snowcrete"], "image": null, "text": []},
+    {"id": "2025012100", "title": "Gulf Coast snow", "when": "21 Jan 2025", "keys": ["20250121", "2025012100", "gulf"], "image": null, "text": []},
+    {"id": "2024111912", "title": "PNW bomb cyclone", "when": "19 Nov 2024, with an atmospheric river", "keys": ["20241119", "2024111912", "pnw"], "image": null, "text": []},
+    {"id": "2025031412", "title": "Plains severe and blizzard", "when": "14 Mar 2025", "keys": ["20250314", "2025031412", "plains"], "image": null, "text": []},
+    {"id": "2025122912", "title": "Lake-effect snow", "when": "29 Dec 2025, Great Lakes", "keys": ["20251229", "2025122912", "lake"], "image": null, "text": []}
+  ],
+  "results": {
+    "columns": ["Measure, 12-84 h, CONUS", "FrankenNAM", "NAM (archived)", "GFS (same cycle)", "GFS (6 h older)", "Within the fidelity margin"],
+    "rows": [
+      ["2 m temperature RMSE (K)", null, null, null, null, null],
+      ["2 m dew point RMSE (K)", null, null, null, null, null],
+      ["10 m wind speed RMSE (m/s)", null, null, null, null, null],
+      ["24 h precipitation ETS, 2.5 mm", null, null, null, null, null],
+      ["24 h precipitation ETS, 10 mm", null, null, null, null, null],
+      ["24 h precipitation ETS, 25 mm", null, null, null, null, null]
+    ]
+  }
+}

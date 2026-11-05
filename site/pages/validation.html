@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Validation</title>
+<meta name="description" content="Fidelity to the archived NAM, the baseline scorecard, side-by-side plots and hindcast highlights.">
+<link rel="stylesheet" href="style.css">
+<script src="config.js"></script>
+</head>
+<body>
+<header class="top"><div class="bar"><a class="logo" href="index.html"><img src="assets/nam-logo.png" alt="NAM: the North American Mesoscale Forecast System" width="96" height="64"></a><div class="id"><a class="brand" href="index.html">FrankenNAM</a><span class="tag">an open source project to keep the NAM model alive</span><span class="na">A community project. Not affiliated with or endorsed by NOAA or the National Weather Service.</span></div></div><nav><a href="about.html">About FrankenNAM</a><a href="validation.html" aria-current="page">Validation</a><a href="data.html">Get Operational Data</a><a href="https://theconvergencezone.com/contact/">Contact</a></nav></header>
+<main>
+
+<h1>Validation</h1>
+<p class="lede">How closely FrankenNAM follows the archived operational NAM, with the GFS alongside for context.</p>
+<p>The question here is <b>fidelity to the NAM</b>: does FrankenNAM look and behave like the model forecasters relied on? It is not a claim that FrankenNAM beats any other model. Every number below says which case it comes from; one case is one case.</p>
+
+<h2>Fidelity to the archived NAM</h2>
+<p>RMSE / bias of each run against the archived NAM, over CONUS land on a 0.25&deg; grid, for the 2026-11-01 00Z cycle. &ldquo;FrankenNAM tm06&rdquo; is the product configuration (the GFS analysis 6&nbsp;h earlier, then 6&nbsp;h of NAM spin-up). &ldquo;Analysis start&rdquo; starts from the same-cycle GFS analysis. Lowest RMSE in each row is shaded.</p>
+<div class="tblwrap"><table><tr><th>Field</th><th>Lead</th><th class="n">FrankenNAM tm06</th><th class="n">Analysis start</th><th class="n">GFS</th></tr>
+<tr><td>MSLP (hPa)</td><td>f00</td><td class="n">0.99 / -0.67</td><td class="n win">0.82 / -0.53</td><td class="n">0.86 / -0.56</td></tr>
+<tr><td>MSLP (hPa)</td><td>f24</td><td class="n">0.97 / +0.17</td><td class="n win">0.92 / -0.02</td><td class="n">1.72 / -0.89</td></tr>
+<tr><td>MSLP (hPa)</td><td>f48</td><td class="n win">1.05 / +0.41</td><td class="n">1.44 / +0.47</td><td class="n">1.73 / -0.51</td></tr>
+<tr><td>MSLP (hPa)</td><td>f84</td><td class="n win">3.45 / +1.15</td><td class="n">3.87 / -0.06</td><td class="n">3.60 / -1.72</td></tr>
+<tr><td>Z500 (dam)</td><td>f00</td><td class="n win">0.49 / -0.36</td><td class="n">0.67 / -0.58</td><td class="n">0.52 / -0.38</td></tr>
+<tr><td>Z500 (dam)</td><td>f24</td><td class="n win">0.53 / -0.17</td><td class="n">0.70 / -0.21</td><td class="n">1.47 / -0.76</td></tr>
+<tr><td>Z500 (dam)</td><td>f48</td><td class="n win">0.87 / -0.14</td><td class="n">1.17 / +0.07</td><td class="n">1.62 / -0.12</td></tr>
+<tr><td>Z500 (dam)</td><td>f84</td><td class="n">3.82 / -0.18</td><td class="n">3.64 / -0.46</td><td class="n win">3.29 / +0.01</td></tr>
+<tr><td>2 m temperature (K)</td><td>f00</td><td class="n">1.50 / +0.88</td><td class="n win">1.15 / -0.14</td><td class="n">1.36 / -0.31</td></tr>
+<tr><td>2 m temperature (K)</td><td>f24</td><td class="n win">1.44 / +0.12</td><td class="n">1.52 / +0.31</td><td class="n">1.88 / -0.11</td></tr>
+<tr><td>2 m temperature (K)</td><td>f48</td><td class="n win">1.26 / +0.02</td><td class="n">1.41 / +0.34</td><td class="n">1.99 / +0.15</td></tr>
+<tr><td>2 m temperature (K)</td><td>f84</td><td class="n win">2.42 / -0.41</td><td class="n">2.64 / +0.10</td><td class="n">3.52 / +1.50</td></tr>
+<tr><td>10 m wind speed (m/s)</td><td>f00</td><td class="n win">0.96 / +0.55</td><td class="n">1.09 / +0.45</td><td class="n">1.22 / +0.58</td></tr>
+<tr><td>10 m wind speed (m/s)</td><td>f24</td><td class="n">0.93 / +0.02</td><td class="n win">0.91 / +0.03</td><td class="n">1.77 / +0.31</td></tr>
+<tr><td>10 m wind speed (m/s)</td><td>f48</td><td class="n win">0.80 / +0.02</td><td class="n">0.99 / +0.09</td><td class="n">1.80 / +0.50</td></tr>
+<tr><td>10 m wind speed (m/s)</td><td>f84</td><td class="n win">1.16 / -0.07</td><td class="n">1.34 / +0.01</td><td class="n">1.35 / -0.29</td></tr>
+<tr><td>24 h precip, 0-24 h (mm)</td><td>f24</td><td class="n">6.68 / -0.35</td><td class="n win">6.41 / -0.62</td><td class="n">6.61 / -0.59</td></tr>
+<tr><td>24 h precip, 24-48 h (mm)</td><td>f48</td><td class="n win">4.90 / -0.23</td><td class="n">5.16 / -0.47</td><td class="n">6.77 / +0.09</td></tr>
+<tr><td>24 h precip, 60-84 h (mm)</td><td>f84</td><td class="n win">9.12 / -0.55</td><td class="n">9.57 / +0.20</td><td class="n">9.72 / -0.25</td></tr>
+</table></div>
+<details class="q"><summary>? how to read this</summary><div>Each row compares one run with the archived NAM at the same forecast hour; a smaller RMSE means closer to the NAM, and a bias near zero means no systematic offset. The GFS column is context: it is a different model and was never meant to match the NAM. f00 shows the cost of the 6&nbsp;h lag (a small warm bias in 2 m temperature that is gone by f24). Wind components and the full table are in the repository (<code>docs/figs/tm06/stats.md</code>). One case.</div></details>
+
+<figure class="full"><img src="img/rmse-vs-lead.png" alt="RMSE against the archived NAM by lead for FrankenNAM, the analysis start and the GFS" loading="lazy"><figcaption>RMSE against the archived NAM by lead. 2026-11-01 00Z.</figcaption></figure>
+<details class="q"><summary>? what this shows</summary><div>Lower is closer to the archived NAM. From f24 on the tm06 line sits at or below the analysis start in most panels, and the GFS is furthest away at f24 and f48. By f84 all three have drifted apart, and for Z500 the GFS is closest. One case: the six hindcast cases below are the larger test.</div></details>
+
+<h2>Land state: the soil trace</h2>
+<figure class="full"><img src="img/soil-f00.png" alt="Soil moisture and temperature at f00: FrankenNAM is close to the NAM and far from the GFS" loading="lazy"><figcaption>Soil at f00, RMSE over CONUS land. 2026-11-01 00Z.</figcaption></figure>
+<details class="q"><summary>? what this shows</summary><div>The soil is seeded from the NAM's land state, so at f00 FrankenNAM's soil moisture is 0.012&nbsp;m<sup>3</sup>/m<sup>3</sup> from the archived NAM; the analysis start, which takes the GFS soil, is 0.072 away. The GFS is about 0.05&nbsp;m<sup>3</sup>/m<sup>3</sup> wetter than the NAM over CONUS. Soil temperature has moved 6&nbsp;h of diurnal cycle from the seed and sits 0.9&nbsp;K from the NAM.</div></details>
+
+<h2>What the NAM itself scored</h2>
+<p>For scale: the operational NAM against observations (ASOS/AWOS stations, MRMS 24&nbsp;h precipitation), with the GFS beside it, over seven cases chosen for weather. The NAM and the same-cycle GFS are tied on temperature and wind, and the GFS has the higher precipitation score. The fidelity target for FrankenNAM is the NAM's column, not the GFS's.</p>
+<div class="tblwrap"><table><tr><th>Against observations, 12-84 h, CONUS</th><th class="n">NAM (archived)</th><th class="n">GFS (same cycle)</th><th class="n">GFS (6 h older)</th></tr>
+<tr><td>2 m temperature RMSE (K)</td><td class="n">2.72</td><td class="n">2.72</td><td class="n">2.77</td></tr>
+<tr><td>2 m dew point RMSE (K)</td><td class="n">3.06</td><td class="n">3.07</td><td class="n">3.12</td></tr>
+<tr><td>10 m wind speed RMSE (m/s)</td><td class="n">2.13</td><td class="n">2.12</td><td class="n">2.13</td></tr>
+<tr><td>24 h precipitation ETS, 2.5 mm</td><td class="n">0.536</td><td class="n">0.567</td><td class="n">0.553</td></tr>
+<tr><td>24 h precipitation ETS, 10 mm</td><td class="n">0.496</td><td class="n">0.545</td><td class="n">0.525</td></tr>
+<tr><td>24 h precipitation ETS, 25 mm</td><td class="n">0.353</td><td class="n">0.391</td><td class="n">0.374</td></tr>
+</table></div>
+<details class="q"><summary>? how this was made</summary><div>Seven cases, 12-84 h, about 390,000 station-hours per variable; model minus observation, bilinear interpolation, temperatures corrected to station elevation. Cases are picked for weather, not a random sample, and no significance tests are made. The 6&nbsp;h older GFS is the information a tm06 FrankenNAM starts from. Full tables: <a href='scorecard.html'>baseline scorecard</a>.</div></details>
+<p><a href="scorecard.html">Full baseline scorecard</a></p>
+
+<h2>Side by side with the archived NAM</h2>
+<p>FrankenNAM (left) and the archived NAM (right): same field, forecast hour and colour scale. Cycle 2026-11-01 00Z.</p>
+<figure class="full"><img src="img/panel-f48-mslp-precip.png" alt="f48: MSLP and 6 h precipitation" loading="lazy"><figcaption>f48: MSLP and 6 h precipitation</figcaption></figure><details class="q"><summary>? what this shows</summary><div>Low-pressure centre, its track and the precipitation shield.</div></details><figure class="full"><img src="img/panel-f24-t2m.png" alt="f24: 2 m temperature" loading="lazy"><figcaption>f24: 2 m temperature</figcaption></figure><details class="q"><summary>? what this shows</summary><div>Same scale; the cold pools and the warm sector.</div></details><figure class="full"><img src="img/panel-f36-ptype.png" alt="f36: precipitation type" loading="lazy"><figcaption>f36: precipitation type</figcaption></figure><details class="q"><summary>? what this shows</summary><div>Rain, snow, sleet and freezing rain flags, as the NAM's own fields give them.</div></details><figure class="full"><img src="img/panel-f72-snow.png" alt="f72: snowfall, Kuchera ratio" loading="lazy"><figcaption>f72: snowfall, Kuchera ratio</figcaption></figure><details class="q"><summary>? what this shows</summary><div>Snowfall computed from the model's liquid-equivalent snow and the Kuchera ratio.</div></details>
+
+<h2>Hindcast highlights</h2>
+<p>Six cases forecasters know, run as hindcasts with FrankenNAM, the archived NAM and the GFS. Each card will carry a double-panel image and a few lines; the table below it pools the cases.</p>
+<div class="cards"><div class="card"><h3>CAD ice storm</h3><p class="when">23 Jan 2026, Georgia and the Carolinas</p><div class="slot">[PLACEHOLDER: double-panel image, FrankenNAM | archived NAM, same field, time and scale]</div><ul><li><span class=ph>[PLACEHOLDER: what the case is, in one line]</span></li><li><span class=ph>[PLACEHOLDER: what the NAM did that forecasters used it for, and what FrankenNAM did]</span></li></ul></div><div class="card"><h3>Snowcrete</h3><p class="when">5 Jan 2025, Washington DC, snow to sleet</p><div class="slot">[PLACEHOLDER: double-panel image, FrankenNAM | archived NAM, same field, time and scale]</div><ul><li><span class=ph>[PLACEHOLDER: what the case is, in one line]</span></li><li><span class=ph>[PLACEHOLDER: what the NAM did that forecasters used it for, and what FrankenNAM did]</span></li></ul></div><div class="card"><h3>Gulf Coast snow</h3><p class="when">21 Jan 2025</p><div class="slot">[PLACEHOLDER: double-panel image, FrankenNAM | archived NAM, same field, time and scale]</div><ul><li><span class=ph>[PLACEHOLDER: what the case is, in one line]</span></li><li><span class=ph>[PLACEHOLDER: what the NAM did that forecasters used it for, and what FrankenNAM did]</span></li></ul></div><div class="card"><h3>PNW bomb cyclone</h3><p class="when">19 Nov 2024, with an atmospheric river</p><div class="slot">[PLACEHOLDER: double-panel image, FrankenNAM | archived NAM, same field, time and scale]</div><ul><li><span class=ph>[PLACEHOLDER: what the case is, in one line]</span></li><li><span class=ph>[PLACEHOLDER: what the NAM did that forecasters used it for, and what FrankenNAM did]</span></li></ul></div><div class="card"><h3>Plains severe and blizzard</h3><p class="when">14 Mar 2025</p><div class="slot">[PLACEHOLDER: double-panel image, FrankenNAM | archived NAM, same field, time and scale]</div><ul><li><span class=ph>[PLACEHOLDER: what the case is, in one line]</span></li><li><span class=ph>[PLACEHOLDER: what the NAM did that forecasters used it for, and what FrankenNAM did]</span></li></ul></div><div class="card"><h3>Lake-effect snow</h3><p class="when">29 Dec 2025, Great Lakes</p><div class="slot">[PLACEHOLDER: double-panel image, FrankenNAM | archived NAM, same field, time and scale]</div><ul><li><span class=ph>[PLACEHOLDER: what the case is, in one line]</span></li><li><span class=ph>[PLACEHOLDER: what the NAM did that forecasters used it for, and what FrankenNAM did]</span></li></ul></div></div>
+<h3>Results across the six cases</h3>
+<div class="tblwrap"><table><tr><th>Measure, 12-84 h, CONUS</th><th class=n>FrankenNAM</th><th class=n>NAM (archived)</th><th class=n>GFS (same cycle)</th><th class=n>GFS (6 h older)</th><th class=n>Within the fidelity margin</th></tr>
+<tr><td>2 m temperature RMSE (K)</td><td class="n"><span class=ph>pending</span></td><td class="n"><span class=ph>pending</span></td><td class="n"><span class=ph>pending</span></td><td class="n"><span class=ph>pending</span></td><td class="n"><span class=ph>pending</span></td></tr>
+<tr><td>2 m dew point RMSE (K)</td><td class="n"><span class=ph>pending</span></td><td class="n"><span class=ph>pending</span></td><td class="n"><span class=ph>pending</span></td><td class="n"><span class=ph>pending</span></td><td class="n"><span class=ph>pending</span></td></tr>
+<tr><td>10 m wind speed RMSE (m/s)</td><td class="n"><span class=ph>pending</span></td><td class="n"><span class=ph>pending</span></td><td class="n"><span class=ph>pending</span></td><td class="n"><span class=ph>pending</span></td><td class="n"><span class=ph>pending</span></td></tr>
+<tr><td>24 h precipitation ETS, 2.5 mm</td><td class="n"><span class=ph>pending</span></td><td class="n"><span class=ph>pending</span></td><td class="n"><span class=ph>pending</span></td><td class="n"><span class=ph>pending</span></td><td class="n"><span class=ph>pending</span></td></tr>
+<tr><td>24 h precipitation ETS, 10 mm</td><td class="n"><span class=ph>pending</span></td><td class="n"><span class=ph>pending</span></td><td class="n"><span class=ph>pending</span></td><td class="n"><span class=ph>pending</span></td><td class="n"><span class=ph>pending</span></td></tr>
+<tr><td>24 h precipitation ETS, 25 mm</td><td class="n"><span class=ph>pending</span></td><td class="n"><span class=ph>pending</span></td><td class="n"><span class=ph>pending</span></td><td class="n"><span class=ph>pending</span></td><td class="n"><span class=ph>pending</span></td></tr>
+</table></div>
+
+</main>
+<footer class="bot"><p><b>Initialized from the (C&minus;6)Z GFS analysis with a 6&nbsp;h NAM spin-up. No observations after (C&minus;6)Z.</b></p><p>A community project. Not affiliated with or endorsed by NOAA or the National Weather Service. Operated by Joe Boomgard-Zagrodnik.</p><p><a href="costs.html">What it costs</a> &middot; <a href="terms.html">Terms</a> &middot; <a href="scorecard.html">Baseline scorecard</a> &middot; <a data-cfg-href="GITHUB_URL" href="#">GitHub</a> <span class="ph">[PLACEHOLDER: repository URL]</span> &middot; <a href="https://theconvergencezone.com/contact/">Contact</a></p></footer>
+<script src="site.js"></script>
+</body>
+</html>
