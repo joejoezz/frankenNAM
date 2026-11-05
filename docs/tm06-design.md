@@ -144,7 +144,13 @@ Time per file: 29 s wall (2 m 39 s CPU with OpenMP) on the build box for 454 rec
 `run/runner.sh`: stage → NPS → forecast, with UPP + products running **alongside the forecast
 on the write ranks' cores 28-31** (4 UPP ranks, `OMPI_MCA_mpi_yield_when_idle=1` for the model so
 the write ranks, idle between history writes, give those cores up) instead of after the forecast
-as in Phase 0 (`POST_AFTER=1` restores that). Measured effect in section 6. Timeline of every
+as in Phase 0 (`POST_AFTER=1` restores that). Measured on the box with the model idle: UPP
+40 s per file on 4 ranks, products 12-15 s per file, and **UPP + products need 21.6 GB** on top
+of the model's 43.2 GB, so the overlap does not fit a 64 GB c8g.8xlarge; the acceptance chain
+runs on **m8g.8xlarge (128 GB, Spot $0.52/h in us-west-2d against c8g's $0.47)**, which also
+leaves room for restart files later. On a c8g, set `POST_AFTER=1` (UPP with 16 ranks after the
+forecast: 29 x 27 s + 29 x 12 s ≈ 19 min to the last product). The model's pace with UPP
+alongside is measured in the acceptance run (section 6). Timeline of every
 stage in `timeline.txt` (uploaded with the logs).
 
 `run/launch.sh` builds the user-data for a runner (the same from the laptop via
@@ -179,13 +185,55 @@ f000 by ~C−2:15): filled in from the acceptance run, section 6.
 
 ## 6. Acceptance run (tm06, C = 2026-11-01 00Z, START = 2026-10-31 18Z, seed = archived NAM 18Z)
 
-(to be filled: runner id/zone/price, timeline, model pace with concurrent UPP, products
-completion after the model end, PRMSL sanity per file, cost)
+Box test first (9 h, same configuration, build box c8g.8xlarge): init + TDFI 4 min 14 s, then
+569 / 571 / 572 s per 3 h = **190.7 s per forecast hour** with nothing else on the node (the 84 h
+Graviton validation averaged 200), node peak 43.2 GB; f00/f03 products 446/452 records as the
+archive, PRMSL f00 988.1-1032.8 hPa, no undefined points, 58.1 / 59.3 MB against the archive's
+57.1 / 59.7 MB.
 
-## 7. Comparison: tm06 | anl (Phase 0 arm64) | archived NAM | GFS
+(acceptance runner: to be filled: runner id/zone/price, timeline, model pace with concurrent
+UPP, products completion after the model end, PRMSL sanity per file, cost)
 
-(to be filled from `run/compare.py`: f00/f24/f48/f84 for MSLP, Z500, T2m, 10 m speed and
-components, 24 h precipitation; the soil trace table)
+## 7. Comparison: fidelity to the archived NAM (tm06 | anl | GFS)
+
+The Phase 1 gate (rewritten 4 Nov 2026 after the baseline scorecard) is fidelity to the
+archived NAM, with the GFS alongside for context, not "beat the GFS". The table therefore
+leads with tm06 vs the archived NAM; the anl column (the Phase 0 analysis start from the same-
+cycle GFS, Graviton run) and the GFS column are context: anl shows what the 6 h information lag
+costs and the spin-up gains, GFS shows the independent model the NAM was never meant to beat.
+
+### Soil trace at f00 (the seeding acceptance), from the 9 h box test
+RMSE / bias over CONUS land, 0.25 deg grid (`soil.md`):
+
+| Field | tm06 vs seed | tm06 vs NAM (C) | tm06 vs GFS (C) | tm06 vs anl | anl vs GFS | anl vs NAM | NAM vs seed |
+|---|---|---|---|---|---|---|---|
+| SOILW 0-10 cm (m3/m3) | 0.011 / -0.003 | 0.012 / -0.002 | 0.087 / +0.050 | 0.070 / +0.045 | 0.048 / +0.005 | 0.072 / -0.047 | 0.009 / -0.001 |
+| TSOIL 0-10 cm (K) | 3.18 / +2.33 | 0.90 / +0.11 | 2.11 / +0.68 | 1.77 / +0.78 | 1.12 / -0.10 | 1.75 / -0.67 | 3.05 / +2.22 |
+| SOILW 40-100 cm (m3/m3) | 0.010 / +0.000 | 0.010 / +0.000 | 0.091 / +0.051 | 0.075 / +0.046 | 0.048 / +0.005 | 0.076 / -0.045 | 0.001 / +0.000 |
+
+The f00 soil moisture of the product is the NAM's (0.011 m3/m3 from the seed and 0.012 from
+the archived NAM at C, against 0.087 from the GFS and 0.070 from the GFS-soil anl run; the GFS
+is 0.05 m3/m3 wetter than the NAM over CONUS). The 0-10 cm soil temperature has moved 6 h of
+diurnal cycle away from the seed (3.2 K, the same 3.1 K the archived NAM itself moved) and sits
+0.9 K from the archived NAM at C, half the anl run's 1.75 K. The seeding works as designed.
+
+### f00 from the 9 h box test (same run as the acceptance, hours 0-6)
+| Field | tm06 vs NAM | anl vs NAM | GFS vs NAM | tm06 vs anl |
+|---|---|---|---|---|
+| MSLP (hPa) | 0.99 / -0.67 | 0.82 / -0.53 | 0.86 / -0.56 | 0.55 / -0.13 |
+| Z500 (dam) | 0.49 / -0.36 | 0.67 / -0.58 | 0.52 / -0.38 | 0.38 / +0.22 |
+| T2m (K) | 1.49 / +0.88 | 1.15 / -0.14 | 1.36 / -0.31 | 1.42 / +1.02 |
+| 10 m speed (m/s) | 0.96 / +0.55 | 1.10 / +0.45 | 1.22 / +0.58 | 0.88 / +0.10 |
+| U10 (m/s) | 1.00 / -0.22 | 1.05 / -0.10 | 1.23 / -0.16 | 0.86 / -0.12 |
+| V10 (m/s) | 0.92 / +0.23 | 1.00 / +0.11 | 1.21 / +0.21 | 0.89 / +0.12 |
+
+Read plainly: at f00 the 6 h lag costs 0.17 hPa of MSLP fidelity against the analysis start
+and the spin-up adds a +0.9 K 2 m warm bias at 00Z over CONUS that the analysis start does not
+have; Z500 and the 10 m wind are closer to the archived NAM than either the anl start or the
+GFS. The U/V component RMSEs are the size of the speed RMSE, so the grid-218 wind rotation is
+right. The later leads come from the acceptance run below.
+
+(f24/f48/f84 and 24 h precipitation: to be filled from the acceptance run)
 
 ## 8. What broke
 
