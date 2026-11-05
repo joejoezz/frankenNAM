@@ -6,6 +6,7 @@ A *model* is a name plus a path template and an init offset (hours relative to t
     gfs    GFS of the same cycle C         s3://noaa-gfs-bdp-pds/gfs.{ymd}/{hh}/atmos/gfs.t{hh}z.pgrb2.0p25.f{fh:03d}
     gfs06  GFS of cycle C-6 (the information a tm06 FrankenNAM has), init C-6, fh = lead + 6
     fnam   FrankenNAM product (awphys names, produced later)   s3://nam-recast-.../cases/{case}/products/nam.{ymd}/...
+    fnam-anl  FrankenNAM analysis-start reference arm (GFS cycle C f000, same products)   .../cases/{case}/recast-anl/products/...
 A template may also be a local path. Placeholders: {ymd} {hh} (of the init time), {fh} (model forecast hour),
 {case}. Custom models: --model name=TEMPLATE[@offset_hours].
 """
@@ -23,7 +24,8 @@ ec.codes_grib_multi_support_on()   # the archive packs U/V 10 m as sub-messages 
 NAM_T = "s3://noaa-nam-pds/nam.{ymd}/nam.t{hh}z.awphys{fh:02d}.tm00.grib2"
 GFS_T = "s3://noaa-gfs-bdp-pds/gfs.{ymd}/{hh}/atmos/gfs.t{hh}z.pgrb2.0p25.f{fh:03d}"
 FNAM_T = f"s3://{OURS}/cases/{{case}}/products/nam.{{ymd}}/nam.t{{hh}}z.awphys{{fh:02d}}.tm00.grib2"
-MODELS = {"nam": (NAM_T, 0), "gfs": (GFS_T, 0), "gfs06": (GFS_T, -6), "fnam": (FNAM_T, 0)}
+FNAM_ANL_T = f"s3://{OURS}/cases/{{case}}/recast-anl/products/nam.{{ymd}}/nam.t{{hh}}z.awphys{{fh:02d}}.tm00.grib2"
+MODELS = {"nam": (NAM_T, 0), "gfs": (GFS_T, 0), "gfs06": (GFS_T, -6), "fnam": (FNAM_T, 0), "fnam-anl": (FNAM_ANL_T, 0)}
 
 # (variable, level text) as in the .idx; p-type flags only the instantaneous ones (not "ave")
 WANT = [("TMP", "2 m above ground"), ("DPT", "2 m above ground"), ("UGRD", "10 m above ground"),

@@ -96,7 +96,7 @@ if [ $((10#$ph)) -eq 0 ]; then
 fi
 shift_ftime() { # shift_ftime "<ftime string>" -> the same string FH0 hours earlier
   local a b rest
-  if [ "$1" = anl ]; then echo anl   # MODE=anl f00 (FH0=0)
+  if [ "$FH0" = 0 ]; then echo "$1"   # MODE=anl: no shift (its f00 also carries "anl" and "0-0 day acc" times)
   elif [[ $1 =~ ^([0-9]+)\ hour\ fcst$ ]]; then
     a=$(( ${BASH_REMATCH[1]} - FH0 )); [ $a -eq 0 ] && echo anl || echo "$a hour fcst"
   elif [[ $1 =~ ^([0-9]+)-([0-9]+)\ hour\ (.*)$ ]]; then

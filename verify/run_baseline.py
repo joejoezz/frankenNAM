@@ -19,8 +19,8 @@ from .common import CASES, PTYPE_CASES, PTYPE_BOX, SNOTEL_CASES, LEADS
 from .gribio import Model
 
 ROOT = Path(__file__).resolve().parents[1]
-LABEL = {"nam": "NAM (archived)", "gfs": "GFS (same cycle)", "gfs06": "GFS (6 h older cycle)", "fnam": "FrankenNAM"}
-COLOR = {"nam": "#0072B2", "gfs": "#D55E00", "gfs06": "#CC79A7", "fnam": "#009E73"}
+LABEL = {"nam": "NAM (archived)", "gfs": "GFS (same cycle)", "gfs06": "GFS (6 h older cycle)", "fnam": "FrankenNAM", "fnam-anl": "FrankenNAM anl start"}
+COLOR = {"nam": "#0072B2", "gfs": "#D55E00", "gfs06": "#CC79A7", "fnam": "#009E73", "fnam-anl": "#56B4E9"}
 UNIT = {"t2m": "K", "td2m": "K", "wspd": "m/s"}
 NAME = {"t2m": "2 m temperature", "td2m": "2 m dew point", "wspd": "10 m wind speed"}
 BANDS = {"3-24 h": (3, 24), "27-48 h": (27, 48), "51-84 h": (51, 84), "12-84 h": (12, 84)}
