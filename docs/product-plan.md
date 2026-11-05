@@ -45,7 +45,8 @@ keep it running; it is not the point.
 - File names and prefixes identical to the operational NAM (decided earlier).
 - Break-even ≈ 12-15 subscribers at $14.99 against ~$200/month of compute + transfer; at the
   20-subscriber pledge with 15 founders at $9.99, revenue ≈ $225/month, roughly costs.
-- Subscriptions run through the LLC.
+- Operator: **Joe Boomgard-Zagrodnik, sole proprietorship (California)**, decided 5 Nov 2026; Stripe,
+  terms, LICENSE/NOTICE copyright and the contact all name Joe personally (no LLC for now).
 
 ## Transparency: publish what it costs
 The site carries a running cost page: compute per cycle and per month, transfer, storage, the
