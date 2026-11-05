@@ -36,9 +36,11 @@ else   # 32-core node (the account's 32-vCPU quota): all 32 cores run the model 
 fi
 lscpu | grep -E "^CPU\(s\)|Thread|Model name" >> $RUNDIR/runner.log 2>/dev/null || true
 echo "layout ${INPES}x${JNPES} + ${WRITE_GROUPS}x${WRITE_TASKS}, post $NPOST${POST_CPUS:+ on $POST_CPUS}" >> $RUNDIR/runner.log
-ITYPE=$(curl -s http://169.254.169.254/latest/meta-data/instance-type 2>/dev/null)
-echo "runner start $(date -u +%FT%TZ) $ITYPE $MODE $CYCLE" | tee -a $RUNDIR/runner.log
-tl "runner start $ITYPE $(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone 2>/dev/null)"
+imds() { curl -s -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" http://169.254.169.254/latest/meta-data/$1 2>/dev/null; }   # IMDSv2 (the 24.04 AMIs require the token)
+IMDS_TOKEN=$(curl -s -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 300" http://169.254.169.254/latest/api/token 2>/dev/null)
+ITYPE=$(imds instance-type); IAZ=$(imds placement/availability-zone)
+echo "runner start $(date -u +%FT%TZ) $ITYPE $IAZ $MODE $CYCLE" | tee -a $RUNDIR/runner.log
+tl "runner start $ITYPE $IAZ"
 ( while true; do echo "$(date -u +%T) $(free -m | awk '/Mem:/{print "used_mb="$3, "avail_mb="$7}')" >> $RUNDIR/mem.log; sleep 60; done ) &
 MEMPID=$!
 
