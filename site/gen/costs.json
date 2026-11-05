@@ -1,0 +1,30 @@
+{
+  "as_of": "2026-11-05",
+  "note": "Planning figures. Every row says whether it is a measurement or an estimate; costs_from_aws.py replaces the compute, transfer and storage rows with Cost Explorer numbers once cycles run.",
+  "pledge": {"target": 20, "founding_cap": 15, "paying": 0, "founding": 0,
+             "price": 14.99, "founding_price": 9.99, "source": "estimate"},
+  "stripe": {"percent": 2.9, "fixed_usd": 0.30, "note": "Assumed standard US card rate; confirm against the Stripe account before launch."},
+  "monthly": [
+    {"item": "Compute: forecast", "per_cycle": 2.60, "per_month": 156.0, "kind": "estimate",
+     "basis": "One m8g.8xlarge Spot instance for about 5.0 h per cycle at about $0.52 an hour (measured on the tm06 acceptance run), 60 cycles a month"},
+    {"item": "Compute: post-processing and maps", "per_cycle": 0.05, "per_month": 3.0, "kind": "estimate",
+     "basis": "Lambda renders measured on a laptop (about 3 s of work per forecast hour); roughly $0.03-0.05 per cycle for all regions"},
+    {"item": "Transfer", "per_cycle": null, "per_month": 13.0, "kind": "estimate",
+     "basis": "About 2-3 GB per cycle copied from AWS to the grid host at $0.09 per GB; downloads from the grid host carry no egress fee"},
+    {"item": "Storage", "per_cycle": null, "per_month": 3.0, "kind": "estimate",
+     "basis": "About 150 GB for a 30-day archive on the grid host at $0.015 per GB-month, plus pennies for the 7-day map frames"},
+    {"item": "Workers, key checks", "per_cycle": null, "per_month": 5.0, "kind": "estimate",
+     "basis": "Cloudflare Workers paid plan"}
+  ],
+  "startup": [
+    {"stage": "Phase 0: build the model on AWS and run one historical cycle", "usd": 10.6, "status": "spent", "kind": "measured"},
+    {"stage": "Port to Graviton (cheaper chips)", "usd": 9.4, "status": "spent", "kind": "measured"},
+    {"stage": "tm06 product configuration (brief A)", "usd": 7.0, "status": "spent", "kind": "measured"},
+    {"stage": "Staging the hindcast inputs", "usd": 2.9, "status": "spent", "kind": "measured"},
+    {"stage": "Phase 1 hindcast cases and rehearsal", "usd": null, "status": "in progress", "kind": "target",
+     "note": "Phase 1 as a whole is planned at under $50"}
+  ],
+  "startup_scope": "Cloud compute and transfer for the build and early cases. Storage for the build and the early cases is not included.",
+  "engineering_time": "Engineering time is not billed and is not in any figure on this page. It is the larger cost.",
+  "engineering_time_decision": "Joe to state the real engineering time in words before launch"
+}
