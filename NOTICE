@@ -1,0 +1,113 @@
+FrankenNAM / nam-recast
+Copyright [DECISION NEEDED: Joe: copyright holder, "Joe Boomgard-Zagrodnik" or the LLC name] 2026
+
+[DECISION NEEDED: Joe] DRAFT. Licence choice for our own code (recommended: Apache-2.0, see LICENSE) and the
+holder named above are not decided. This NOTICE is the provenance record; keep it accurate, and have each
+third-party component's current licence text checked before the repository is made public (see "To verify").
+
+This repository holds the scripts, build recipes, patches, documentation and web pages that build and run the
+12 km NAM (NMMB core, NAM v4.2) on cloud computers and publish its output as FrankenNAM. It is not affiliated
+with or endorsed by NOAA, NCEP or EMC. FrankenNAM products are not produced by NOAA, and nothing here may be
+read as stating or implying NOAA endorsement.
+
+==========================================================================
+Origins
+==========================================================================
+
+| Origin                                   | Where it appears                                    | Terms                                   |
+|------------------------------------------|-----------------------------------------------------|-----------------------------------------|
+| Code and docs written for this project   | run/, deploy/, verify/, site/, docs/, build/*.sh    | Our licence (see LICENSE)               |
+| Patches to third-party source            | build/patches/                                      | The licence of the file each patch      |
+|                                          |                                                     | modifies (we do not relicense it)       |
+| NOAA/NCEP NAM source                     | not in this repo; fetched at build time             | US Government work, public domain       |
+| NOAA/NCEP parm files and tables          | not in this repo; used at run time                  | US Government work, public domain       |
+| WPS (ungrib, metgrid) tables             | run/parm/Vtable.SEED, run/parm/METGRID.TBL.seed     | WRF/WPS public-domain statement         |
+| AER RRTMG radiation (inside NAM source)  | not in this repo; compiled from the NAM tree        | BSD-3-Clause (AER)                      |
+| NCEPLIBS and related libraries           | not in this repo; built from release sources        | see below                               |
+| ESMF 7.1.0r                              | not in this repo; built from release source         | ESMF licence (see below)                |
+| UPP (unified post processor)             | not in this repo; built from the NAM/UPP tree       | see below                               |
+| wgrib2                                   | not in this repo; installed on the runner           | see below                               |
+| ECMWF ecCodes                            | site/ renderer (pip wheel), verify/                 | Apache-2.0                              |
+| Natural Earth base map                   | site/render/base/                                   | Public domain                           |
+| Input data: NOAA GFS, archived NAM, MRMS | downloaded at run time from NOAA open-data buckets  | US Government data, public domain       |
+| Input data: ASOS, SNOTEL                 | downloaded for verification (Iowa State IEM, NRCS)  | Public data, cite the providers         |
+
+==========================================================================
+NOAA / NCEP NAM
+==========================================================================
+
+The NAM model source (github.com/MatthewPyle-NOAA/NAM and EricRogers-NOAA/nam_wcoss2_rocoto; the build is
+pinned in build/versions.sh and the upstream commit is recorded by the build manifest) is the work of employees of
+the US Government at NOAA/NCEP/EMC and is distributed without a licence file. Works of US Government employees
+are in the public domain in the United States. This repository does not contain that source: the build scripts
+fetch it, and our patches (build/patches/) are applied to it. A few static input files that NCEP no longer hosts
+were recovered from public web-archive captures; they are US Government data.
+
+NOAA data used as model inputs and for verification (NOAA Open Data Dissemination) is used as distributed.
+FrankenNAM output keeps the operational NAM's file names so that existing tools work unchanged; the files are
+labelled as FrankenNAM in the products README and on every public page.
+
+==========================================================================
+RRTMG radiation (Atmospheric and Environmental Research, Inc.)
+==========================================================================
+
+The NAM source tree includes NCEP's copy of AER's RRTMG longwave and shortwave radiation code and its
+k-distribution tables (Mlawer, Iacono, Clough and co-authors). AER distributes RRTMG under the BSD 3-Clause
+licence. We compile that code as part of the model and do not redistribute it from this repository. Anyone who
+redistributes the built model, or the source, must keep AER's copyright notice, the licence conditions and the
+disclaimer that accompany those files. AER and its contributors are not endorsing FrankenNAM.
+
+==========================================================================
+NCEPLIBS and the NAM's library stack
+==========================================================================
+
+The model and post-processing link to NCEP libraries built from their public releases (versions in
+build/versions.sh): bacio, sp, ip, w3nco, w3emc, g2, g2c, g2tmpl, sigio, sfcio, gfsio, nemsio, NCEPLIBS-bufr,
+CRTM, wrf_io, landsfcutil, together with zlib, libpng, jasper, HDF5 and netCDF. These are separately licensed by
+their authors. Several NCEPLIBS repositories carry the GNU LGPL-3.0 and others a permissive or public-domain
+terms; this repository does not contain or relicense any of them, and a built binary that links them
+statically should be checked against each licence before it is distributed.
+[VERIFY] the licence of each library at the pinned version before anything built is redistributed.
+
+==========================================================================
+ESMF
+==========================================================================
+
+The model runs under the Earth System Modeling Framework, version 7.1.0r, built from its release source with the
+patches in build/patches/esmf-*.patch. ESMF is licensed under the University of Illinois/NCSA Open Source
+License. Our patches to ESMF are provided under that same licence, and its copyright notice and licence text
+must accompany any redistribution of ESMF or a binary containing it.
+
+==========================================================================
+UPP, wgrib2
+==========================================================================
+
+The post-processor (UPP) is built from the tree the NAM uses, with the patches in build/patches/uppgnu-*.patch,
+and keeps the licence terms of that tree. wgrib2 (NOAA/NCEP/CPC, Wesley Ebisuzaki) is installed on the runner and
+used to write the final grid-218 files; it is distributed under its own licence (GPL-2.0 terms, with a bundled
+iplib), and we call it as a separate program and do not redistribute it. [VERIFY] both licences before the
+runner image or any binary is shared.
+
+==========================================================================
+WRF-derived tables
+==========================================================================
+
+Vtable.SEED and METGRID.TBL.seed are adapted from the NAM's own Vtable and from WPS tables, which come from the
+WRF/WPS distribution under its public-domain statement (NCAR/UCAR). Original lines are marked in the files.
+
+==========================================================================
+Python packages, base map
+==========================================================================
+
+site/ and verify/ use numpy, scipy, matplotlib, pyproj, Pillow and ecCodes (BSD or Apache-2.0 or similar
+licences; ecCodes is Apache-2.0), installed from PyPI and not copied here. The base map in site/render/base/
+is derived from Natural Earth, which is in the public domain.
+
+==========================================================================
+To verify before the repository is public
+==========================================================================
+
+1. Licence choice and copyright holder (header of this file; LICENSE).
+2. Licences of NCEPLIBS components, UPP and wgrib2 at the pinned versions.
+3. Whether the build manifest records the NAM source commit, so this file can cite it exactly.
+4. That site/render/base/ files cite their Natural Earth sources.
