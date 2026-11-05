@@ -23,9 +23,11 @@ SPEC = [
     ("validation", "Validation", "validation.html", validation.body(), "Fidelity to the archived NAM, the baseline scorecard, side-by-side plots and hindcast highlights."),
     ("data", "Get Operational Data", "data.html", BODY("data"), "NOAA-identical grid-218 files, swap-in examples and subscription."),
     ("terms", "Terms", "terms.html", BODY("terms"), "Plain-language terms for the paid grids."),
+    ("404", "Page not found", "", '<h1>Page not found</h1><p>That page is not here. Try the <a href="/">home page</a> or the <a href="/maps/">maps</a>.</p>', "Not found."),
 ]
 for name, title, cur, body, desc in SPEC:
-    open(os.path.join(PAGES, name + ".html"), "w").write(shell(title, body, current=cur, desc=desc))
+    root = "/" if name == "404" else ""   # served for any missing path, so its links must be absolute
+    open(os.path.join(PAGES, name + ".html"), "w").write(shell(title, body, current=cur, desc=desc, root=root))
     print("wrote", name + ".html")
 for script in ("costs.py", "scorecard.py"):
     subprocess.run([sys.executable, os.path.join(HERE, script)], check=True)

@@ -6,3 +6,4 @@ __pycache__/
 deploy/.runner
 deploy/.runner-ami
 deploy/.build-box-arm
+deploy/.site-dist
