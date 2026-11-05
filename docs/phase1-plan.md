@@ -302,3 +302,24 @@ Proposed set (7 cases, +$2.35 over the six): Phase 0 case (2026-11-01 00Z); CAD:
 p-type with a printed NAM credit: 2025-01-05 12Z (Snowcrete); Gulf Coast snow 2025-01-21 00Z;
 PNW bomb cyclone 2024-11-19 12Z; Plains severe + blizzard 2025-03-14 12Z; one lake-effect/arctic
 case from winter 2025-26 (agent picks from the archive and NWS write-ups).
+
+## WOOF-NAM verification (decided 5 Nov 2026)
+
+Joe: put WOOF-NAM beside FrankenNAM in the public validation, in two stages.
+
+1. **Now: single case.** The GPU trial (`docs/gpu-woof-trial.md`, `deploy/10-gpu-trial.sh`) runs WOOF-NAM on the
+   2026-11-01 00Z case from the GFS and keeps the history files for the table's valid times
+   (f00/24/48/60/84, in `s3://nam-recast-617711905691/gpu-trial/history/`). A small reader puts their native-grid
+   NetCDF (T2, U10/V10, MSLP, RAINNC+RAINC, Z500 interpolated from PH/PRES) on the same 0.25 deg CONUS-land grid as
+   `run/compare.py`. That adds a WOOF-NAM column to the Validation fidelity table and a line to the RMSE-by-lead chart.
+   Like the rest of that table, it is labelled as one case. The fair partner is our cold-start column (both start
+   from the GFS analysis at C), unless the trial manages a tm06-style start.
+2. **Later: the six hindcast cases.** One WOOF-NAM GPU run per hindcast case, same start choice as stage 1, scored
+   by the same Phase 1 scorecard against the archived NAM (fidelity) and against observations (ASOS, MRMS, SNOTEL,
+   p-type) next to FrankenNAM, the NAM and the GFS. Cost = six times the trial's measured $/run on one g7e.2xlarge
+   (GPU quota is 8 vCPU = one such instance at a time). Budget it separately from Phase 1's $50, after the
+   FrankenNAM hindcast scorecard is published.
+
+Reporting rules: the same gate language as for FrankenNAM (fidelity to the archived NAM, GFS for context), the
+WOOF-NAM commit and start configuration stated beside every number, and no "better than" framing between the
+projects. Their float32 rewrite mixes code and precision differences; the page says so.
