@@ -141,6 +141,47 @@ def g2g(cases, models):
         df = pd.concat([old, df])
     df.to_csv(f, index=False); print(df.to_string())
 
+# ------------------------------------------------------------------------------------------------ reference arms
+def ref(cases):
+    """tm06 vs anl start against the archived NAM, by lead (grid to grid, CONUS land boxes), and a soil diagnostic:
+    the 0-10 cm soil moisture difference to the NAM, and how much of each run's 2 m T / Td departure from the NAM
+    lines up with its soil-moisture departure (spatial correlation over land boxes, by lead)."""
+    mask = score.conus_mask(); nam = Model("nam"); rows = []
+    for c in cases:
+        ms = {k: Model(k) for k in ("fnam", "fnam-anl", "gfs")}
+        sm_n0 = F.box(nam, F.get(nam, c, 0)["soilw0"])
+        for L in range(0, 85, 6):
+            dn = F.get(nam, c, L)
+            for k, m in ms.items():
+                d = F.get(m, c, L)
+                r = dict(case=c, model=k, lead=L)
+                for f in ("t2m", "dpt2m", "wspd10", "mslp", "soilw0"):
+                    x, y = F.box(m, d[f]), F.box(nam, dn[f]); ok = mask & np.isfinite(x) & np.isfinite(y)
+                    r[f + "_rmse"] = float(np.sqrt(np.mean((x - y)[ok] ** 2))); r[f + "_bias"] = float(np.mean((x - y)[ok]))
+                    if f == "soilw0": dsm = np.where(ok, x - y, np.nan)
+                    if f in ("t2m", "dpt2m"): r[f + "_d"] = np.where(ok, x - y, np.nan)
+                for f in ("t2m", "dpt2m"):
+                    ok = np.isfinite(r[f + "_d"]) & np.isfinite(dsm)
+                    r[f + "_corr_sm"] = float(np.corrcoef(r[f + "_d"][ok], dsm[ok])[0, 1]) if ok.sum() > 50 and np.nanstd(dsm[ok]) > 0 else np.nan
+                    del r[f + "_d"]
+                rows.append(r)
+        print("ref", c, flush=True)
+    df = pd.DataFrame(rows); df.to_csv(RES / "ref.csv", index=False)
+    pd.set_option("display.width", 250); print(df.round(3).to_string())
+    fig, axs = plt.subplots(len(cases), 3, figsize=(15, 3.6 * len(cases)), squeeze=False)
+    col = {"fnam": "#009E73", "fnam-anl": "#56B4E9", "gfs": "#D55E00"}
+    for i, c in enumerate(cases):
+        for j, (f, u) in enumerate((("t2m", "K"), ("dpt2m", "K"), ("soilw0", "m3/m3"))):
+            ax = axs[i, j]
+            for k in ("fnam", "fnam-anl", "gfs"):
+                x = df[(df.case == c) & (df.model == k)]
+                ax.plot(x.lead, x[f + "_rmse"], color=col[k], label=LAB[k], lw=1.8)
+                ax.plot(x.lead, x[f + "_bias"], color=col[k], lw=1, ls="--")
+            ax.axhline(0, color="k", lw=.5); ax.set_xticks(range(0, 85, 12)); ax.grid(alpha=.3)
+            ax.set_title(f"{c}: {f} vs archived NAM ({u}); solid RMSE, dashed bias", fontsize=9)
+        axs[i, 0].legend(fontsize=8)
+    fig.tight_layout(); fig.savefig(FIG / "ref_arms.png", dpi=90); plt.close(fig); print("wrote", FIG / "ref_arms.png")
+
 # ------------------------------------------------------------------------------------------------ features
 PT_CMAP = ListedColormap(["#ffffff", "#7fbf7b", "#4575b4", "#d73027", "#9e5fbf"])   # none, rain, snow, fzra, sleet
 PT_NORM = BoundaryNorm([-0.5, 0.5, 1.5, 2.5, 3.5, 4.5], 5)
@@ -302,13 +343,14 @@ def mrms_refc(v):
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("what", choices=["gate", "g2g", "features"])
+    ap.add_argument("what", choices=["gate", "g2g", "features", "ref"])
     ap.add_argument("--case", default=",".join(c for c in CASES if c != "2026110100"))
     ap.add_argument("--models", default="fnam,fnam-anl,gfs,gfs06")
     ap.add_argument("--obs-tag", default="phase1-obs"); ap.add_argument("--ref-tag", default=None)
     a = ap.parse_args(argv)
     if a.what == "gate": gate(a.obs_tag, a.ref_tag)
     elif a.what == "g2g": g2g(a.case.split(","), a.models.split(","))
+    elif a.what == "ref": ref(a.case.split(","))
     else: features(a.case.split(","))
 
 if __name__ == "__main__":

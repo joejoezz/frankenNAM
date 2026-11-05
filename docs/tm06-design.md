@@ -192,6 +192,17 @@ still alive: the Spot vCPU raise to 64 (L-34B43A08) had been approved in the mea
 relay path was never exercised and stays untested; it remains the fallback should the quota
 shrink again. chain-b then popped the acceptance run (section 6).
 
+**Two chains (Brief B, 5 Nov 2026):** with the 64 vCPU quota two 8xlarge runners run at once. The
+queue is no longer rewritten by a pop (two consumers would race on the read-modify-write): each job
+line is claimed by an S3 conditional put (`If-None-Match: *`) of `queue/hindcast.claims/NN`; a claimed
+line stays claimed, its instance id goes to `NN.iid`, and the DONE / FAILED / POST_FAILED marker of
+the job's prefix says whether it finished. Six concurrent `DRYRUN=1` claims on a three-line test queue
+took each line exactly once. The relay now waits until fewer than `MAX_RUNNERS` (2) runners are alive
+instead of none, and was exercised end to end: a NOOP runner finishing while another runner lived got
+`MaxSpotInstanceCountExceeded`, handed over to a t4g.nano relay, which launched the next claimed job
+4 min later. Trap: a terminated Spot instance's request stays `active` for a minute or two and still
+counts against the quota; the relay's six retries at 2 min cover it, a laptop launch must wait for it.
+
 ## 5. Stage clock (measured) and projected live clock
 
 Build box (c8g.8xlarge on-demand, 150 GB gp3 raised to 500 MB/s mid-way) for the 90 h NPS:

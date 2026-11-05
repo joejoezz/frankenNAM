@@ -48,11 +48,20 @@ IC_ONLY=1 run/recast.sh seed metgrid nemsinterp                        # re-seed
 ```
 
 `launch.sh` builds the runner user-data (stock Ubuntu 24.04 + `runner/bundle-*-arm64.tar` + the
-latest `runner/run/` scripts), `--next` pops the queue; when the Spot vCPU quota cannot hold two
+latest `runner/run/` scripts), `--next` claims the first unclaimed queue line (the queue file is never
+rewritten; a line is claimed by a conditional put of `queue/<name>.claims/NN` with `If-None-Match: *`, so
+two chains can pop at once; the launched instance id lands in `NN.iid`; `DRYRUN=1` claims only, a queue
+line with `NOOP=1` makes a runner write DONE at once and chain, for testing); when the Spot vCPU quota cannot hold two
 runners it hands over to a t4g.nano relay that launches the job once the current runner is gone
 (`deploy/07-runner-policy.sh` is the role policy that allows this). `products.sh` needs the
 wgrib2 built with `USE_IPOLATES=1` (the only path that knows UPP's GDT 32769 grid), shipped in
 `exec/wgrib2` by `bundle.sh`.
+
+`MODE=anl` (the analysis-start reference arm) also writes grid-218 products since Brief B: 3 h
+precipitation buckets as tm06 (Phase 0 had 12 h; only the accumulator reset changes) and `products.sh`
+with no clock shift (`FH0=0`). Its f00 uses UPP's analysis control file, so it has 439 records against
+the archive's 446 (no 3 h buckets, no zero accumulations); f03 452, f06 454 as the archive. Without an
+explicit `S3PROD` an anl runner uploads to `$S3RUN/products`, never to the live `products/` prefix.
 
 ## How to run (Phase 0 style, MODE=anl)
 
