@@ -4,6 +4,8 @@
 site/render/    grid-218 awphys GRIB2 -> PNG frames (Python)
 site/viewer/    static image-loop viewer (one HTML file, plain JS)
 site/pages/     homepage, scorecard, costs, subscribe, terms (plain HTML/CSS)
+site/gen/       generators: grid status/index pages, scorecard page, cost page (+ Cost Explorer stub)
+site/products/  README for the grid host
 site/samples/   a handful of rendered PNGs and viewer screenshots
 ```
 
@@ -103,6 +105,37 @@ its frames under `maps/`:
 ```
 mkdir -p /tmp/y/maps && cp site/pages/* /tmp/y/ && python site/render ... --out /tmp/y/maps
 ```
+
+## FrankenNAM and the archived NAM together (compare mode)
+
+Render both into one folder, each under its own `--model`; the viewer lists both and offers a "compare" selector
+(models that share the cycle). Side by side or flip between the two with synced scrubbing; keys `c` (compare on/off)
+and `x` (flip). The hash keeps it (`#frankennam/2026110100/conus/snowku/72/nam`).
+
+```
+aws s3 sync --region us-west-2 s3://nam-recast-617711905691/products/nam.20261101/ ~/data/nam-recast-site/frank/nam.20261101/
+python site/render --cycle 2026110100 --src ~/data/nam-recast-site/frank/nam.20261101 --out OUT --model frankennam --product frankennam --regions conus,northeast
+python site/render --cycle 2026110100 --src ~/data/nam-recast-site/nam.20261101       --out OUT --model nam --product nam --regions conus,northeast
+```
+
+Measured: FrankenNAM 862 frames (15 fields, 29 hours, CONUS + northeast) in 44 s, the archive in 43 s, 8 processes.
+The FrankenNAM footer names the analysis it starts from (the cycle minus 6 h), computed from the cycle.
+
+## Generators (`site/gen/`, standard library only)
+
+- `grid_index.py --src <dir or s3://prefix> --out DIR [--now ISO]`: `status.json`, a root `index.html` (cycles, newest
+  first, 7-day window), `nam.YYYYMMDD/index.html` (every GRIB2/.idx with size and SHA-256) and `nam.tCCz.cycle.json`.
+  States: complete (29 hours with GRIB2 and .idx), running, incomplete (no file for `--stale-minutes`). S3 is read
+  through the aws CLI; hashes are cached in `sha256.json`, so reruns hash only new files (58 files, 1.8 GB: about 1 s of
+  hashing on the laptop, 0.03 s on rerun). Tested on a complete cycle, a partial cycle and an empty window.
+- `scorecard.py [--results DIR ...] [--out FILE]`: the scorecard page from `verify/results/*/` sums. Baseline columns
+  now (NAM, GFS, 6 h older GFS); an empty FrankenNAM column that fills when `fnam` rows exist in any results dir
+  (and then every column is restricted to the cases `fnam` has). A "fidelity to the archived NAM" table applies the
+  Phase 1 margins. Numbers reproduce `docs/baseline-scorecard.md`.
+- `costs.py [--data costs.json] [--out FILE]`: the cost page from `costs.json`; `costs_from_aws.py` is a stub that
+  would fill the JSON from Cost Explorer by the `project=nam-recast` tag. It has not been run.
+
+Pages are regenerated into `site/pages/`; do not edit `scorecard.html` or `costs.html` by hand.
 
 ## Deployment plan (document only; nothing deployed)
 

@@ -64,7 +64,7 @@ NCEPLIBS and the NAM's library stack
 The model and post-processing link to NCEP libraries built from their public releases (versions in
 build/versions.sh): bacio, sp, ip, w3nco, w3emc, g2, g2c, g2tmpl, sigio, sfcio, gfsio, nemsio, NCEPLIBS-bufr,
 CRTM, wrf_io, landsfcutil, together with zlib, libpng, jasper, HDF5 and netCDF. These are separately licensed by
-their authors. Several NCEPLIBS repositories carry the GNU LGPL-3.0 and others a permissive or public-domain
+their authors. Several NCEPLIBS repositories carry the GNU LGPL-3.0 and others permissive or public-domain
 terms; this repository does not contain or relicense any of them, and a built binary that links them
 statically should be checked against each licence before it is distributed.
 [VERIFY] the licence of each library at the pinned version before anything built is redistributed.
