@@ -23,23 +23,26 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SITE = os.path.dirname(HERE)
 REPO = os.path.dirname(SITE)
 OUT = os.path.join(SITE, "pages", "img")
-INK, FN, ANL, GFS = "#1a1a1a", "#1f3fd6", "#d9822b", "#8a8a8a"
+INK, FN, ANL, GFS, WOOF = "#1a1a1a", "#1f3fd6", "#d9822b", "#8a8a8a", "#1a9e77"
 plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 10, "axes.edgecolor": "#999", "axes.spines.top": False,
                      "axes.spines.right": False, "axes.titleweight": "bold", "axes.titlesize": 11})
 
 def rmse_vs_lead():
     rows = list(csv.DictReader(open(os.path.join(REPO, "docs/figs/tm06/stats.csv"))))
+    woof = list(csv.DictReader(open(os.path.join(REPO, "docs/figs/woof/stats.csv"))))
     fields = [("mslp", "MSLP (hPa)"), ("z500", "Z500 (dam)"), ("t2m", "2 m temperature (K)"), ("wspd10", "10 m wind speed (m/s)")]
     fig, axs = plt.subplots(1, 4, figsize=(11.5, 3.1), dpi=150)
     for ax, (f, t) in zip(axs, fields):
         rs = sorted((r for r in rows if r["field"] == f), key=lambda r: int(r["lead"]))
         x = [int(r["lead"]) for r in rs]
-        for col, c, lab, z in (("rmse_GFS_vs_NAM", GFS, "GFS", 1), ("rmse_anl_vs_NAM", ANL, "cold start", 2), ("rmse_tm06_vs_NAM", FN, "FrankenNAM", 3)):
+        for col, c, lab, z in (("rmse_GFS_vs_NAM", GFS, "GFS", 1), ("rmse_anl_vs_NAM", ANL, "cold start", 2), ("rmse_tm06_vs_NAM", FN, "FrankenNAM", 4)):
             ax.plot(x, [float(r[col]) for r in rs], "-o", color=c, lw=2, ms=4.5, label=lab, zorder=z)
+        wr = {int(r["lead"]): float(r["rmse_woof_vs_NAM"]) for r in woof if r["field"] == f}
+        ax.plot(x, [wr[ld] for ld in x], "--s", color=WOOF, lw=1.8, ms=4, label="WOOF-NAM", zorder=3)
         ax.set_title(t); ax.set_xticks(x); ax.set_xlabel("lead (h)"); ax.set_ylim(bottom=0); ax.grid(axis="y", color="#e6e6e6")
     axs[0].set_ylabel("RMSE against archived NAM")
     h, l = axs[0].get_legend_handles_labels()
-    fig.legend(h[::-1], l[::-1], loc="lower center", ncol=3, frameon=False, bbox_to_anchor=(0.5, -0.02))
+    fig.legend(h[::-1], l[::-1], loc="lower center", ncol=4, frameon=False, bbox_to_anchor=(0.5, -0.02))
     fig.tight_layout(rect=(0, 0.08, 1, 1))
     fig.savefig(os.path.join(OUT, "rmse-vs-lead.png")); plt.close(fig)
 

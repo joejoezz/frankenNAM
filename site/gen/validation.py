@@ -28,12 +28,16 @@ def q(label, text):
 
 def fidelity_table() -> str:
     rows = {(r["field"], int(r["lead"])): r for r in csv.DictReader(open(os.path.join(REPO, "docs/figs/tm06/stats.csv")))}
-    out = ['<div class="tblwrap"><table><tr><th>Field</th><th>Lead</th><th class="n">FrankenNAM</th><th class="n">Cold start</th><th class="n">GFS</th></tr>']
+    woof = {(r["field"], int(r["lead"])): r for r in csv.DictReader(open(os.path.join(REPO, "docs/figs/woof/stats.csv")))}
+    out = ['<div class="tblwrap"><table><tr><th>Field</th><th>Lead</th><th class="n">FrankenNAM</th><th class="n">Cold start</th><th class="n">GFS</th><th class="n">WOOF-NAM</th></tr>']
     def row(name, key, lead):
         r = rows[(key, lead)]
         v = [(float(r[f"rmse_{m}_vs_NAM"]), float(r[f"bias_{m}_vs_NAM"])) for m in ("tm06", "anl", "GFS")]
-        best = min(x[0] for x in v)
-        cells = "".join(f'<td class="n{" win" if x[0] == best else ""}">{x[0]:.2f} / {x[1]:+.2f}</td>' for x in v)
+        w = woof.get((key, lead))
+        v.append((float(w["rmse_woof_vs_NAM"]), float(w["bias_woof_vs_NAM"])) if w else None)
+        best = min(x[0] for x in v if x)
+        cells = "".join(f'<td class="n{" win" if x[0] == best else ""}">{x[0]:.2f} / {x[1]:+.2f}</td>' if x
+                        else '<td class="n na">n/a</td>' for x in v)
         out.append(f'<tr><td>{name}</td><td>f{lead:02d}</td>{cells}</tr>')
     for k, n in FIELDS:
         for ld in LEADS:
@@ -96,11 +100,12 @@ def body() -> str:
 
 <h2>Fidelity to the archived NAM</h2>
 <p>RMSE / bias of each run against the archived NAM, over CONUS land on a 0.25&deg; grid, for the 2026-11-01 00Z cycle. &ldquo;FrankenNAM&rdquo; is the product. Its f00 is the FrankenNAM <b>analysis</b>: the GFS analysis from 6&nbsp;h earlier carried forward by 6&nbsp;h of NAM spin-up (the &ldquo;tm06&rdquo; start). No observations are assimilated. &ldquo;Cold start&rdquo; is a test run started straight from the same-cycle GFS analysis. Lowest RMSE in each row is shaded.</p>
+<p><b>WOOF-NAM</b> is a separate project that rewrote the NAM for GPUs in single precision. We ran it ourselves on this case (version 0.1.3, commit <code>49f2742</code>) with the same 6&nbsp;h-early start from the GFS analysis as FrankenNAM, and its default boundaries, which come from the GFS run 6&nbsp;h older than FrankenNAM&rsquo;s. It took 59 minutes on one GPU. Its 60&ndash;84&nbsp;h precipitation is missing because our copy of that output file was damaged. One case: the WOOF-NAM project may score differently on others.</p>
 {fidelity_table()}
 {q("how to read this", "Each row compares one run with the archived NAM at the same forecast hour; a smaller RMSE means closer to the NAM, and a bias near zero means no systematic offset. The GFS column is context: it is a different model and was never meant to match the NAM. f00, the analysis, shows the cost of the 6&nbsp;h lag (a small warm bias in 2 m temperature that is gone by f24). Wind components and the full table are in the repository (<code>docs/figs/tm06/stats.md</code>). One case.")}
 
-{figure("img/rmse-vs-lead.png", "RMSE against the archived NAM by lead. 2026-11-01 00Z.", "RMSE against the archived NAM by lead for FrankenNAM, the cold start and the GFS")}
-{q("what this shows", "Lower is closer to the archived NAM. From f24 on the FrankenNAM line sits at or below the cold start in most panels, and the GFS is furthest away at f24 and f48. By f84 all three have drifted apart, and for Z500 the GFS is closest. One case: the six hindcast cases below are the larger test.")}
+{figure("img/rmse-vs-lead.png", "RMSE against the archived NAM by lead. 2026-11-01 00Z.", "RMSE against the archived NAM by lead for FrankenNAM, the cold start, the GFS and WOOF-NAM")}
+{q("what this shows", "Lower is closer to the archived NAM. From f24 on the FrankenNAM line sits at or below the cold start in most panels, and the GFS is furthest away at f24 and f48. By f84 all of them have drifted apart; on this case WOOF-NAM is closest to the NAM at f84. One case: the six hindcast cases below are the larger test.")}
 
 <h2>Land state: the soil trace</h2>
 {figure("img/soil-f00.png", "Soil at f00, RMSE over CONUS land. 2026-11-01 00Z.", "Soil moisture and temperature at f00: FrankenNAM is close to the NAM and far from the GFS")}
