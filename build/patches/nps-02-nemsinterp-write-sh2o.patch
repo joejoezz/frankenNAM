@@ -1,0 +1,19 @@
+Reason: nemsinterp wrote grid%smc (total soil water) into the sh2o records of the IC (output_nemsinit.F90 line 1773, the SH2O loop is a copy of the SMC loop), discarding the Flerchinger liquid/ice split that NMM_SH2O computes from STC+SMC. NMMB reads sh2o from the IC, so every cold start began with zero soil ice. Write grid%sh2o.
+--- a/sorc/nam_nps.fd/sorc/NMMB_init/NPS/nemsinterp/src/output_nemsinit.F90	2026-11-06 06:15:41
++++ b/sorc/nam_nps.fd/sorc/NMMB_init/NPS/nemsinterp/src/output_nemsinit.F90	2026-11-06 06:15:47
+@@ -1764,13 +1764,13 @@
+          write(0,*) NCOUNT, ' SMC  '
+        endif
+ 
+-!--- SH2O SMC ----------------------------------------------------------
++!--- SH2O (liquid soil water; nam-recast patch nps-02: was grid%smc) --------
+ 
+        do L=1,NSOIL
+ 
+        do J=JTS,min(JTE,JDE_end)
+        do I=ITS,min(ITE,IDE_end)
+-         TEMP1(I,J)=grid%smc(I+ITARG,L,J+JTARG)
++         TEMP1(I,J)=grid%sh2o(I+ITARG,L,J+JTARG)
+        enddo
+        enddo
+ 

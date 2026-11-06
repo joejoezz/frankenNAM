@@ -180,3 +180,13 @@ No `ungribp` exists in this NPS tree; the scripts only use `nam_ungrib` and `nam
 ## x86 build box retired (5 Nov 2026)
 
 The Phase 0 x86 box (i-0ab3bbee9ba7068e7) was terminated with its 300 GB disk to save $24/month; arm64 is the default runner. The x86 fallback is kept as artifacts: `s3://nam-recast-617711905691/build/2026-11-04/` (binaries, logs, MANIFEST) and `runner/bundle-20261104.tar` (11.6 GB). To rebuild: `deploy/01-build-box.sh`, then `build/build_all.sh` (about 18 min clean).
+
+## nemsinterp wrote total soil water into the IC's sh2o (found 6 Nov 2026, patch nps-02)
+
+`output_nemsinit.F90` (SH2O loop, line 1773) copied `grid%smc` instead of `grid%sh2o`, so the IC's
+liquid soil water equalled total soil water everywhere and the Flerchinger split that `NMM_SH2O`
+(module_assorted_definitions.F90:824) computes from STC+SMC was thrown away. NMMB reads `sh2o` from the IC,
+so every cold start began with zero soil ice (Phase 1 frozen-soil defect). `build/patches/nps-02-nemsinterp-write-sh2o.patch`
+fixes it; the seed needs no SOILL. IC check, case 2026012312, cold land (layer-1 STC < 271 K) frozen share
+1 - sh2o/smc, 0-10 / 10-40 cm (`run/ic_frozen.py`): unpatched 0.000 / 0.000; patched tm06 (NAM seed) 0.673 / 0.590
+against the archived NAM analysis 0.669 / 0.593 (grid 218, SOILL/SOILW); patched anl (GFS only) 0.656 / 0.524.
