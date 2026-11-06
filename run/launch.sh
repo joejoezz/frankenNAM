@@ -60,6 +60,10 @@ case ${1:-} in
           CLAIMNO=${got%% *}; line=${got#* }
           echo "queue line $CLAIMNO claimed -> $line"
           [ "${DRYRUN:-0}" = 1 ] && exit 0
+          # a chained launch runs inside the finished runner's environment: its S3SUB/S3PROD/FHMAX/NOOP must
+          # not leak into the next job (5 Nov: a tm06 job chained from an anl runner wrote its logs/DONE under
+          # recast-anl/); only the queue line's own tokens count
+          unset S3SUB S3PROD FHMAX NOOP SKIP_NPS POST_AFTER MODE
           set -- $line ;;
   --relay) RELAY=1; shift ;;
 esac
