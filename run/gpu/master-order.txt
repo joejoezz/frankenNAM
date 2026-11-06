@@ -1,0 +1,455 @@
+# normalized VAR:level:kind in the CPU product's record order (nam.t00z.awphys24 of 2026-11-01 00Z, 454 records)
+PRMSL:mean sea level:INST
+REFD:1 hybrid level:INST
+REFC:entire atmosphere (considered as a single layer):INST
+VIS:surface:INST
+VIS:cloud top:INST
+BMIXL:1 hybrid level:INST
+HGT:planetary boundary layer:INST
+UGRD:planetary boundary layer:INST
+VGRD:planetary boundary layer:INST
+VRATE:planetary boundary layer:INST
+GUST:surface:INST
+RETOP:entire atmosphere (considered as a single layer):INST
+DZDT:5 mb:INST
+DZDT:10 mb:INST
+DZDT:20 mb:INST
+HGT:50 mb:INST
+TMP:50 mb:INST
+RH:50 mb:INST
+VVEL:50 mb:INST
+DZDT:50 mb:INST
+UGRD:50 mb:INST
+VGRD:50 mb:INST
+TKE:50 mb:INST
+HGT:75 mb:INST
+TMP:75 mb:INST
+RH:75 mb:INST
+VVEL:75 mb:INST
+DZDT:75 mb:INST
+UGRD:75 mb:INST
+VGRD:75 mb:INST
+TKE:75 mb:INST
+HGT:100 mb:INST
+TMP:100 mb:INST
+RH:100 mb:INST
+VVEL:100 mb:INST
+DZDT:100 mb:INST
+UGRD:100 mb:INST
+VGRD:100 mb:INST
+TKE:100 mb:INST
+HGT:125 mb:INST
+TMP:125 mb:INST
+RH:125 mb:INST
+VVEL:125 mb:INST
+DZDT:125 mb:INST
+UGRD:125 mb:INST
+VGRD:125 mb:INST
+TKE:125 mb:INST
+HGT:150 mb:INST
+TMP:150 mb:INST
+RH:150 mb:INST
+VVEL:150 mb:INST
+DZDT:150 mb:INST
+UGRD:150 mb:INST
+VGRD:150 mb:INST
+TKE:150 mb:INST
+HGT:175 mb:INST
+TMP:175 mb:INST
+RH:175 mb:INST
+VVEL:175 mb:INST
+DZDT:175 mb:INST
+UGRD:175 mb:INST
+VGRD:175 mb:INST
+TKE:175 mb:INST
+HGT:200 mb:INST
+TMP:200 mb:INST
+RH:200 mb:INST
+VVEL:200 mb:INST
+DZDT:200 mb:INST
+UGRD:200 mb:INST
+VGRD:200 mb:INST
+TKE:200 mb:INST
+HGT:225 mb:INST
+TMP:225 mb:INST
+RH:225 mb:INST
+VVEL:225 mb:INST
+DZDT:225 mb:INST
+UGRD:225 mb:INST
+VGRD:225 mb:INST
+TKE:225 mb:INST
+HGT:250 mb:INST
+TMP:250 mb:INST
+RH:250 mb:INST
+VVEL:250 mb:INST
+DZDT:250 mb:INST
+UGRD:250 mb:INST
+VGRD:250 mb:INST
+ABSV:250 mb:INST
+TKE:250 mb:INST
+HGT:275 mb:INST
+TMP:275 mb:INST
+RH:275 mb:INST
+VVEL:275 mb:INST
+DZDT:275 mb:INST
+UGRD:275 mb:INST
+VGRD:275 mb:INST
+TKE:275 mb:INST
+HGT:300 mb:INST
+TMP:300 mb:INST
+RH:300 mb:INST
+VVEL:300 mb:INST
+DZDT:300 mb:INST
+UGRD:300 mb:INST
+VGRD:300 mb:INST
+TKE:300 mb:INST
+HGT:325 mb:INST
+TMP:325 mb:INST
+RH:325 mb:INST
+VVEL:325 mb:INST
+DZDT:325 mb:INST
+UGRD:325 mb:INST
+VGRD:325 mb:INST
+TKE:325 mb:INST
+HGT:350 mb:INST
+TMP:350 mb:INST
+RH:350 mb:INST
+VVEL:350 mb:INST
+DZDT:350 mb:INST
+UGRD:350 mb:INST
+VGRD:350 mb:INST
+TKE:350 mb:INST
+HGT:375 mb:INST
+TMP:375 mb:INST
+RH:375 mb:INST
+VVEL:375 mb:INST
+DZDT:375 mb:INST
+UGRD:375 mb:INST
+VGRD:375 mb:INST
+TKE:375 mb:INST
+HGT:400 mb:INST
+TMP:400 mb:INST
+RH:400 mb:INST
+VVEL:400 mb:INST
+DZDT:400 mb:INST
+UGRD:400 mb:INST
+VGRD:400 mb:INST
+TKE:400 mb:INST
+HGT:425 mb:INST
+TMP:425 mb:INST
+RH:425 mb:INST
+VVEL:425 mb:INST
+DZDT:425 mb:INST
+UGRD:425 mb:INST
+VGRD:425 mb:INST
+TKE:425 mb:INST
+HGT:450 mb:INST
+TMP:450 mb:INST
+RH:450 mb:INST
+VVEL:450 mb:INST
+DZDT:450 mb:INST
+UGRD:450 mb:INST
+VGRD:450 mb:INST
+TKE:450 mb:INST
+HGT:475 mb:INST
+TMP:475 mb:INST
+RH:475 mb:INST
+VVEL:475 mb:INST
+DZDT:475 mb:INST
+UGRD:475 mb:INST
+VGRD:475 mb:INST
+TKE:475 mb:INST
+HGT:500 mb:INST
+TMP:500 mb:INST
+RH:500 mb:INST
+VVEL:500 mb:INST
+DZDT:500 mb:INST
+UGRD:500 mb:INST
+VGRD:500 mb:INST
+ABSV:500 mb:INST
+TKE:500 mb:INST
+HGT:525 mb:INST
+TMP:525 mb:INST
+RH:525 mb:INST
+VVEL:525 mb:INST
+DZDT:525 mb:INST
+UGRD:525 mb:INST
+VGRD:525 mb:INST
+TKE:525 mb:INST
+HGT:550 mb:INST
+TMP:550 mb:INST
+RH:550 mb:INST
+VVEL:550 mb:INST
+DZDT:550 mb:INST
+UGRD:550 mb:INST
+VGRD:550 mb:INST
+TKE:550 mb:INST
+HGT:575 mb:INST
+TMP:575 mb:INST
+RH:575 mb:INST
+VVEL:575 mb:INST
+DZDT:575 mb:INST
+UGRD:575 mb:INST
+VGRD:575 mb:INST
+TKE:575 mb:INST
+HGT:600 mb:INST
+TMP:600 mb:INST
+RH:600 mb:INST
+VVEL:600 mb:INST
+DZDT:600 mb:INST
+UGRD:600 mb:INST
+VGRD:600 mb:INST
+TKE:600 mb:INST
+HGT:625 mb:INST
+TMP:625 mb:INST
+RH:625 mb:INST
+VVEL:625 mb:INST
+DZDT:625 mb:INST
+UGRD:625 mb:INST
+VGRD:625 mb:INST
+TKE:625 mb:INST
+HGT:650 mb:INST
+TMP:650 mb:INST
+RH:650 mb:INST
+VVEL:650 mb:INST
+DZDT:650 mb:INST
+UGRD:650 mb:INST
+VGRD:650 mb:INST
+TKE:650 mb:INST
+HGT:675 mb:INST
+TMP:675 mb:INST
+RH:675 mb:INST
+VVEL:675 mb:INST
+DZDT:675 mb:INST
+UGRD:675 mb:INST
+VGRD:675 mb:INST
+TKE:675 mb:INST
+HGT:700 mb:INST
+TMP:700 mb:INST
+RH:700 mb:INST
+VVEL:700 mb:INST
+DZDT:700 mb:INST
+UGRD:700 mb:INST
+VGRD:700 mb:INST
+ABSV:700 mb:INST
+TKE:700 mb:INST
+HGT:725 mb:INST
+TMP:725 mb:INST
+RH:725 mb:INST
+VVEL:725 mb:INST
+DZDT:725 mb:INST
+UGRD:725 mb:INST
+VGRD:725 mb:INST
+TKE:725 mb:INST
+HGT:750 mb:INST
+TMP:750 mb:INST
+RH:750 mb:INST
+VVEL:750 mb:INST
+DZDT:750 mb:INST
+UGRD:750 mb:INST
+VGRD:750 mb:INST
+TKE:750 mb:INST
+HGT:775 mb:INST
+TMP:775 mb:INST
+RH:775 mb:INST
+VVEL:775 mb:INST
+DZDT:775 mb:INST
+UGRD:775 mb:INST
+VGRD:775 mb:INST
+TKE:775 mb:INST
+HGT:800 mb:INST
+TMP:800 mb:INST
+RH:800 mb:INST
+VVEL:800 mb:INST
+DZDT:800 mb:INST
+UGRD:800 mb:INST
+VGRD:800 mb:INST
+TKE:800 mb:INST
+HGT:825 mb:INST
+TMP:825 mb:INST
+RH:825 mb:INST
+VVEL:825 mb:INST
+DZDT:825 mb:INST
+UGRD:825 mb:INST
+VGRD:825 mb:INST
+TKE:825 mb:INST
+HGT:850 mb:INST
+TMP:850 mb:INST
+RH:850 mb:INST
+VVEL:850 mb:INST
+DZDT:850 mb:INST
+UGRD:850 mb:INST
+VGRD:850 mb:INST
+ABSV:850 mb:INST
+TKE:850 mb:INST
+HGT:875 mb:INST
+TMP:875 mb:INST
+RH:875 mb:INST
+VVEL:875 mb:INST
+DZDT:875 mb:INST
+UGRD:875 mb:INST
+VGRD:875 mb:INST
+TKE:875 mb:INST
+HGT:900 mb:INST
+TMP:900 mb:INST
+RH:900 mb:INST
+VVEL:900 mb:INST
+DZDT:900 mb:INST
+UGRD:900 mb:INST
+VGRD:900 mb:INST
+TKE:900 mb:INST
+HGT:925 mb:INST
+TMP:925 mb:INST
+RH:925 mb:INST
+VVEL:925 mb:INST
+DZDT:925 mb:INST
+UGRD:925 mb:INST
+VGRD:925 mb:INST
+TKE:925 mb:INST
+HGT:950 mb:INST
+TMP:950 mb:INST
+RH:950 mb:INST
+VVEL:950 mb:INST
+DZDT:950 mb:INST
+UGRD:950 mb:INST
+VGRD:950 mb:INST
+TKE:950 mb:INST
+HINDEX:surface:INST
+HGT:975 mb:INST
+TMP:975 mb:INST
+RH:975 mb:INST
+VVEL:975 mb:INST
+DZDT:975 mb:INST
+UGRD:975 mb:INST
+VGRD:975 mb:INST
+TKE:975 mb:INST
+TMP:1000 mb:INST
+RH:1000 mb:INST
+VVEL:1000 mb:INST
+DZDT:1000 mb:INST
+UGRD:1000 mb:INST
+VGRD:1000 mb:INST
+ABSV:1000 mb:INST
+TKE:1000 mb:INST
+MSLET:mean sea level:INST
+HGT:1000 mb:INST
+REFD:4000 m above ground:INST
+REFD:1000 m above ground:INST
+PRES:surface:INST
+HGT:surface:INST
+TMP:surface:INST
+TSOIL:0-0.1 m below ground:INST
+SOILW:0-0.1 m below ground:INST
+SOILL:0-0.1 m below ground:INST
+TSOIL:0.1-0.4 m below ground:INST
+SOILW:0.1-0.4 m below ground:INST
+SOILL:0.1-0.4 m below ground:INST
+TSOIL:0.4-1 m below ground:INST
+SOILW:0.4-1 m below ground:INST
+SOILL:0.4-1 m below ground:INST
+TSOIL:1-2 m below ground:INST
+SOILW:1-2 m below ground:INST
+SOILL:1-2 m below ground:INST
+TSOIL:3 m underground:INST
+MSTAV:0-1 m below ground:INST
+SOILM:0-2 m below ground:INST
+CNWAT:surface:INST
+WEASD:surface:INST
+SNOWC:surface:INST
+SNOD:surface:INST
+SMDRY:surface:INST
+POROS:surface:INST
+TMP:2 m above ground:INST
+SPFH:2 m above ground:INST
+DPT:2 m above ground:INST
+RH:2 m above ground:INST
+TMAX:2 m above ground:MAX
+TMIN:2 m above ground:MIN
+MAXRH:2 m above ground:MAX
+MINRH:2 m above ground:MIN
+UGRD:10 m above ground:INST
+VGRD:10 m above ground:INST
+MAXUW:10 m above ground:MAX
+MAXVW:10 m above ground:MAX
+HGT:lowest level of the wet bulb zero:INST
+CSNOW:surface:INST
+CICEP:surface:INST
+CFRZR:surface:INST
+CRAIN:surface:INST
+SFCR:surface:INST
+FRICV:surface:INST
+CD:surface:INST
+VEG:surface:INST
+VGTYP:surface:INST
+SOTYP:surface:INST
+RLYRS:surface:INST
+WILT:surface:INST
+SMREF:surface:INST
+LFTX:500-1000 mb:INST
+CAPE:surface:INST
+CIN:surface:INST
+PWAT:entire atmosphere (considered as a single layer):INST
+HGT:cloud base:INST
+HLCY:3000-0 m above ground:INST
+VUCSH:0-6000 m above ground:INST
+VVCSH:0-6000 m above ground:INST
+PRES:tropopause:INST
+TMP:tropopause:INST
+UGRD:tropopause:INST
+VGRD:tropopause:INST
+PRES:max wind:INST
+UGRD:max wind:INST
+VGRD:max wind:INST
+TMP:80 m above ground:INST
+SPFH:80 m above ground:INST
+PRES:80 m above ground:INST
+UGRD:80 m above ground:INST
+VGRD:80 m above ground:INST
+HGT:0C isotherm:INST
+RH:0C isotherm:INST
+TMP:30-0 mb above ground:INST
+RH:30-0 mb above ground:INST
+UGRD:30-0 mb above ground:INST
+VGRD:30-0 mb above ground:INST
+PLI:30-0 mb above ground:INST
+TMP:60-30 mb above ground:INST
+RH:60-30 mb above ground:INST
+UGRD:60-30 mb above ground:INST
+VGRD:60-30 mb above ground:INST
+TMP:90-60 mb above ground:INST
+RH:90-60 mb above ground:INST
+UGRD:90-60 mb above ground:INST
+VGRD:90-60 mb above ground:INST
+TMP:120-90 mb above ground:INST
+RH:120-90 mb above ground:INST
+UGRD:120-90 mb above ground:INST
+VGRD:120-90 mb above ground:INST
+TMP:150-120 mb above ground:INST
+RH:150-120 mb above ground:INST
+UGRD:150-120 mb above ground:INST
+VGRD:150-120 mb above ground:INST
+TMP:180-150 mb above ground:INST
+RH:180-150 mb above ground:INST
+UGRD:180-150 mb above ground:INST
+VGRD:180-150 mb above ground:INST
+4LFTX:180-0 mb above ground:INST
+CAPE:180-0 mb above ground:INST
+CIN:180-0 mb above ground:INST
+HPBL:surface:INST
+RH:0.33-1 sigma layer:INST
+LTNG:surface:INST
+LAND:surface:INST
+ICEC:surface:INST
+ALBDO:surface:INST
+SHTFL:surface:INST
+LHTFL:surface:INST
+TCDC:entire atmosphere (considered as a single layer):INST
+DSWRF:surface:INST
+DLWRF:surface:INST
+USWRF:surface:INST
+ULWRF:surface:INST
+APCP:surface:ACC
+ACPCP:surface:ACC
+WEASD:surface:ACC
+APCP:surface:ACC
+ACPCP:surface:ACC

@@ -1,0 +1,15 @@
+2026-11-05T23:24:03Z gpu runner start C=2026110100 start=2026103118 case=2026-10-31_18z hours=90 commit=49f27429 NVIDIA RTX PRO 6000 Blackwell Server Edition, 97887 MiB 
+2026-11-05T23:24:03Z install
+2026-11-05T23:25:03Z installed woof-nam 0.1.3
+2026-11-05T23:25:03Z fetch GFS 2026103118 f000..f096
+2026-11-05T23:25:24Z static
+2026-11-05T23:25:36Z init (slab_init save, no TDFI)
+2026-11-05T23:27:02Z init saved 13G
+2026-11-05T23:27:03Z seed the Noah state from s3://nam-recast-617711905691/cases/2026110100/seed/nam.t18z.awphys00.tm00.grib2
+2026-11-05T23:27:05Z wgrib2 3.8.0
+2026-11-05T23:27:05Z run: TDFI + 90 h
+2026-11-06T00:17:02Z run rc=0
+2026-11-06T00:17:25Z product follower rc=0
+2026-11-06T00:17:31Z ship rc=0 (29 products shipped)
+2026-11-06T00:17:31Z run summary: fh  87.00  step 12528  wall   2790.1 s    222.7 ms/step fh  88.00  step 12672  wall   2820.9 s    222.6 ms/step fh  89.00  step 12816  wall   2856.4 s    222.9 ms/step fh  90.00  step 12960  wall   2887.4 s    222.8 ms/step 
+2026-11-06T00:17:31Z DONE
