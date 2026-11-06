@@ -1,7 +1,11 @@
 # GPU path: WOOF-NAM behind the FrankenNAM product (proposal, 5 Nov 2026)
 
 Status: built and run once (2026-11-01 00Z, `RUNTAG=accept`); NOT merged into `run/launch.sh` or the queue, NOT used for
-the public product. The CPU path (NOAA Fortran on Graviton) stays the default. Numbers are filled in from that one run.
+the public product. The CPU path (NOAA Fortran on Graviton) stays the default.
+
+**BACKLOGGED 5 Nov 2026 (Joe).** No further GPU work until it is picked up again. Spot G/VT quota is 8 vCPU (one
+g7e.2xlarge) and deploy/11 uses Spot automatically. Revisit if WOOF-NAM's free grids look permanent or go away, or if
+CPU cost/latency becomes the problem. Open gaps when resumed: "Open gaps" below. Numbers are filled in from that one run.
 
 ## What it is
 

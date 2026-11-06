@@ -66,3 +66,7 @@ products README, site copy and memory, nothing shipped yet; half an hour when de
   community service) and whether BUFKIT files sit in the free or paid tier.
 - Region of the R2 bucket, custom domain for grids, status/alerting page.
 - The comp ratio (1 per 5 proposed).
+
+## Backlog
+
+- GPU engine (WOOF-NAM behind our product), built and run once 5 Nov 2026, backlogged the same day: docs/gpu-path.md.
