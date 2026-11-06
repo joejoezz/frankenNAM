@@ -37,26 +37,25 @@ about 0.05 m3/m3 wetter than the NAM over CONUS. (The `tm00` in the file name is
 compatibility; it has nothing to do with `tm06`.) The design is in `docs/tm06-design.md` of the nam-recast
 repository.
 
-## Where, and the key
+## Where
 
-Free: maps and the viewer at `nam.theconvergencezone.com/maps/` (planned host). Paid: these files at
+Free, no key: maps and the viewer at `nam.theconvergencezone.com/maps/`, and these files, for the re-run cases, at
 
 ```
-https://grids.theconvergencezone.com/<key>/nam.YYYYMMDD/nam.tCCz.awphysFF.tm00.grib2
+https://nam.theconvergencezone.com/grids/nam.YYYYMMDD/nam.tCCz.awphysFF.tm00.grib2
 ```
 
-The key is part of the URL path, is checked and removed at the edge, and is not part of the file path. Treat it
-like a password. `status.json` and the per-cycle index (names, sizes, SHA-256) sit beside the files; the
-status page says whether a cycle is running, complete or incomplete. Hosts and paths are the plan, not live.
+`status.json` and the per-date index (names, sizes, SHA-256) sit beside the files. Until DNS for the domain exists,
+the same paths are served from the preview host `dzat3kduvlnwx.cloudfront.net`.
 
 ## Swap-in
 
-Only the base changes. Below, `KEY` is your key and the examples use cycle 12Z on 2 Nov 2026.
+Only the base changes. The examples use cycle 00Z on 1 Nov 2026.
 
 ### curl: one file, or one field by byte range
 
 ```sh
-BASE=https://grids.theconvergencezone.com/$KEY/nam.20261102
+BASE=https://nam.theconvergencezone.com/grids/nam.20261101
 F=nam.t12z.awphys24.tm00.grib2
 
 # the whole file and its inventory
@@ -88,7 +87,7 @@ Any code that reads GRIB2 by byte range from an `.idx` needs only the new base U
 
 ```python
 import urllib.request, eccodes as ec
-base = "https://grids.theconvergencezone.com/KEY/nam.20261102/nam.t12z.awphys24.tm00.grib2"
+base = "https://nam.theconvergencezone.com/grids/nam.20261101/nam.t00z.awphys24.tm00.grib2"
 rows = [l.split(":") for l in urllib.request.urlopen(base + ".idx").read().decode().splitlines()]
 i = next(k for k, r in enumerate(rows) if r[3] == "TMP" and r[4] == "2 m above ground")
 end = int(rows[i + 1][1]) - 1
@@ -98,11 +97,11 @@ g = ec.codes_new_from_message(urllib.request.urlopen(req).read())
 
 (The same byte-range read, from local files, is what the maps renderer uses.) For Herbie, point the NAM
 `awphys` source at the same base; the `.idx` layout is the NOMADS one. [PLACEHOLDER: a tested Herbie snippet,
-posted before subscriptions open.]
+posted before launch.]
 
 ### BUFKIT
 
-[PLACEHOLDER: whether soundings are free or paid, their path and station list, once the sounding product
+[PLACEHOLDER: the sounding product, its path and station list, once the sounding product
 exists and has been tested.]
 
 ## Retention

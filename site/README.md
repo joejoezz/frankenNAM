@@ -3,7 +3,7 @@
 ```
 site/render/    grid-218 awphys GRIB2 -> PNG frames (Python)
 site/viewer/    static image-loop viewer (one HTML file, plain JS)
-site/pages/     homepage, scorecard, costs, subscribe, terms (plain HTML/CSS)
+site/pages/     homepage, scorecard, costs, grids, terms (plain HTML/CSS)
 site/gen/       generators: grid status/index pages, scorecard page, cost page (+ Cost Explorer stub)
 site/products/  README for the grid host
 site/samples/   a handful of rendered PNGs and viewer screenshots
