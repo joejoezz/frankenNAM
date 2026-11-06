@@ -3,8 +3,7 @@
   "preview_base": "https://dzat3kduvlnwx.cloudfront.net/grids",
   "cases": [
     {"cycle": "2026-11-01 00Z", "date": "20261101", "hour": "00", "event": "Autumn, CONUS-wide (the Phase 0 case)",
-     "status": "available", "bytes": 1822515157,
-     "note": "Made before the frozen-soil fix (patch nps-02). Autumn, so little frozen ground: the 2 m temperature cost was about 0.04 K."},
+     "status": "coming after the rerun"},
     {"cycle": "2026-01-23 12Z", "event": "CAD ice storm, Georgia and the Carolinas", "status": "coming after the rerun"},
     {"cycle": "2025-01-05 12Z", "event": "Snowcrete, Washington DC, snow to sleet", "status": "coming after the rerun"},
     {"cycle": "2025-01-21 00Z", "event": "Gulf Coast snow", "status": "coming after the rerun"},

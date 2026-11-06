@@ -112,7 +112,7 @@ def build(d):
 </ul>
 
 <h2>For context: the GPU path</h2>
-<p>WOOF-NAM, the GPU rewrite of the NAM by Recast Systems, ran on a {g['type']} at {usd(g['od'], 2)} an hour on-demand. A run took {gpu_lo}{DASH}{gpu_hi}&nbsp;minutes, about {usd(g['trial_run_usd'])} for the run alone in our trial. The GPU Spot quota read zero, so there is no Spot figure. The GPU work is backlogged: WOOF-NAM&rsquo;s grids are free, and its output lacks the snowfall and precipitation-type records (see <a href="about.html#strategies">Strategies we tried</a>). Sources: <code>docs/gpu-path.md</code>, <code>docs/gpu-woof-trial.md</code>.</p>
+<p>WOOF-NAM, the GPU rewrite of the NAM by Recast Systems, ran on a {g['type']} at {usd(g['od'], 2)} an hour on-demand. A run took {gpu_lo}{DASH}{gpu_hi}&nbsp;minutes, about {usd(g['trial_run_usd'])} for the run alone in our trial. The GPU Spot quota read zero, so there is no Spot figure. The GPU work is backlogged: WOOF-NAM&rsquo;s grids are currently free, and its output lacks the snowfall and precipitation-type records (see <a href="about.html#strategies">Strategies we tried</a>). Sources: <code>docs/gpu-path.md</code>, <code>docs/gpu-woof-trial.md</code>.</p>
 
 <h2>What a run-it-yourself setup costs per month</h2>
 <p>Two cases. <b>Occasional:</b> {oc['runs']} runs a month and {oc['download_gb']}&nbsp;GB of downloads. <b>If you ran it daily:</b> twice a day, about {dy['runs']} runs a month and {dy['download_gb']}&nbsp;GB of downloads. The second is arithmetic, not a promise: nothing here runs daily.</p>
