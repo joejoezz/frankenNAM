@@ -1,4 +1,44 @@
-# FrankenNAM product plan (agreed 4 Nov 2026, evening)
+# FrankenNAM product plan
+
+## Pivot, 6 Nov 2026 (Joe): no payments, a community service
+
+WOOF-NAM (a GPU rewrite of the NAM by Recast Systems) told Joe their grids will stay free indefinitely. A paid
+FrankenNAM would charge for what a free service gives. So FrankenNAM drops all payments and still launches, and is
+promoted, as a community service.
+
+**Dropped:** subscription, Stripe, pledge, founding members, comped keys, access keys, the key-checking edge function,
+Cloudflare R2, the separate grid host and its domain, the live verification clock as a paid deliverable.
+
+**The site is now mostly an explanation** of the strategies for bringing the NAM back (About, "Strategies we tried"),
+with Validation for the numbers, plus:
+- **Grids** (`grids.html`, replaces "Get Operational Data"; `data.html` is a redirect). Free, no key, NOAA-identical
+  names `grids/nam.YYYYMMDD/nam.tCCz.awphysFF.tm00.grib2` + `.idx`, only for our re-run cases, served from the site
+  S3 bucket through CloudFront under `/grids/` (cache 1 day). One row per case with an index page (sizes, SHA-256).
+  Publish: `deploy/12-publish-grids.sh CASE...` (server-side copy, `site/gen/grid_index.py`, invalidation).
+  `deploy/09-publish-site.sh` leaves `grids/` alone. Phase 0 case 2026110100 is up; the five hindcast cases follow
+  their rerun with the soil fix (patch nps-02).
+- **Costs** (`costs.html`): how we ran it on AWS, given away: what one run costs (measured), the x86/Graviton and
+  on-demand/Spot price table (computed from `costs.json`; refresh with `site/gen/refresh_prices.py`), the GPU path for
+  context, what a run-it-yourself setup costs per month, what it cost to get here, and a reproducible walkthrough.
+- **Live runs:** occasional only. Notable events are run on demand and added as cases. There is no 00Z/12Z schedule,
+  no delivery clock as a service and no "latest cycle". "What a live cycle would take" on About is measured and projected,
+  not promised.
+- **Terms** are short terms of use for free data: no warranty, not for safety decisions, attribute as FrankenNAM, the
+  service can change or stop, standard access logs, who runs it.
+
+**Costs of the pivot to Joe:** AWS storage and CloudFront egress for the grids (pennies for a few cases; see Costs for
+the per-month arithmetic), and the occasional run at about $2.5-3 each.
+
+**Still open:** the engineering-time statement on Costs; the final terms wording and log retention; the GitHub URL
+(repo not public yet); the rerun of the Phase 0 case with the soil fix (its grids were made before it); Herbie snippet;
+BUFKIT soundings (free if they exist); the name (FrankenNAM stays).
+
+---
+
+## Superseded: the plan of 4 Nov 2026 (paid grids)
+
+*Everything below was the plan until 6 Nov 2026 and is kept for the record. Where it conflicts with the pivot above,
+the pivot wins.*
 
 FrankenNAM is **a service to the community**: forecasters lost the 12 km NAM on 3 Nov 2026 and
 this project keeps its physics running, honestly labelled. Pricing covers costs and the time to

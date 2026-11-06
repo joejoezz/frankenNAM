@@ -9,7 +9,7 @@ from playwright.sync_api import sync_playwright
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(os.path.dirname(HERE), "samples")
 M = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser("~/data/nam-recast-site/mockup"))
-PAGES = ["index", "about", "validation", "data", "costs", "terms", "scorecard"]
+PAGES = ["index", "about", "validation", "grids", "costs", "terms", "scorecard"]
 with sync_playwright() as p:
     b = p.chromium.launch()
     for tag, w, h in (("desktop", 1280, 900), ("phone", 390, 800)):

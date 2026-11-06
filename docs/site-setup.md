@@ -1,6 +1,6 @@
 # Site setup: nam.theconvergencezone.com
 
-Status 5 Nov 2026: the site is published in **preview** (robots.txt blocks crawlers) at
+Status 6 Nov 2026 (payments dropped, see docs/product-plan.md): the site is published in **preview** (robots.txt blocks crawlers) at
 https://dzat3kduvlnwx.cloudfront.net/. The name waits on two DNS records at WordPress.com.
 
 | Piece | Where | State |
@@ -9,8 +9,7 @@ https://dzat3kduvlnwx.cloudfront.net/. The name waits on two DNS records at Word
 | CloudFront | E2Z8GL5ZGL3NHX, dzat3kduvlnwx.cloudfront.net, dir-index function, 404 page | done |
 | Certificate | ACM us-east-1, e16b85e4-3ee3-482b-bd21-f6c57f8a9878 | pending validation CNAME |
 | DNS | WordPress.com zone for theconvergencezone.com | Joe pastes two CNAMEs |
-| Payments | Stripe Payment Link, $14.99/month | Joe creates the account |
-| Grids | Cloudflare R2 | Joe creates the account; not started |
+| Grids | `/grids/` in the site bucket, `deploy/12-publish-grids.sh` | Phase 0 case published (preview) |
 
 ## Steps
 
@@ -20,9 +19,6 @@ https://dzat3kduvlnwx.cloudfront.net/. The name waits on two DNS records at Word
 2. **Name.** Add `CNAME  nam  ->  dzat3kduvlnwx.cloudfront.net`. It replaces the wildcard that sends
    nam.* to the WordPress blog today.
 3. **Publish.** `bash deploy/09-publish-site.sh` (preview) or `LAUNCH=1 bash deploy/09-publish-site.sh` (crawlers allowed).
-4. **Stripe.** Account in Joe's name as a sole proprietor; product "FrankenNAM grids", $14.99/month recurring;
-   a Payment Link; a coupon for the founding $9.99 rate (applied once the pledge of 20 is met). Paste the link
-   into `site/pages/config.js` (STRIPE_PAYMENT_LINK). Keep the link unpublished, or the button hidden, until
-   live verification has run 2-4 weeks. The webhook that issues access keys comes with the R2 step.
-5. **R2.** Cloudflare account, bucket for the grids; separate small domain for the grid host recommended
-   (the theconvergencezone.com zone stays at WordPress.com).
+4. **Grids.** Free files under `/grids/` of the same bucket and CloudFront (no payments, no keys, no R2).
+   `bash deploy/12-publish-grids.sh CASE...` copies `cases/<CASE>/products/` into `grids/` server-side and rebuilds the
+   index pages; `deploy/09-publish-site.sh` never touches `grids/`. Cache is one day.

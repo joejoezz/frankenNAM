@@ -4,6 +4,7 @@
 #   LAUNCH=1 bash deploy/09-publish-site.sh   # launch: crawlers allowed
 # Builds the pages, assembles them with the viewer and the sample frames (frames are copied, not symlinked),
 # syncs with --delete, and invalidates CloudFront. Pages and JSON cache 5 min; frames and images 1 day.
+# grids/ is NOT touched (excluded from the sync and from --delete): deploy/12-publish-grids.sh owns it.
 # Laptop-only for the mockup stage: in Phase 2 the runner publishes frames and runs.js itself.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -33,8 +34,8 @@ for d, _, fs in os.walk(root):
 PY
 echo "== $(du -sh "$STAGE/www" | cut -f1) to s3://$BUCKET"
 aws s3 sync "$STAGE/www" "s3://$BUCKET" --delete --only-show-errors --exclude "*" \
-  --include "*.png" --include "*.jpg" --include "*.svg" --include "*.ico" --cache-control "public, max-age=86400"
-aws s3 sync "$STAGE/www" "s3://$BUCKET" --delete --only-show-errors --exclude "*.png" --exclude "*.jpg" --exclude "*.svg" --exclude "*.ico" \
+  --include "*.png" --include "*.jpg" --include "*.svg" --include "*.ico" --exclude "grids/*" --cache-control "public, max-age=86400"
+aws s3 sync "$STAGE/www" "s3://$BUCKET" --delete --only-show-errors --exclude "*.png" --exclude "*.jpg" --exclude "*.svg" --exclude "*.ico" --exclude "grids/*" \
   --cache-control "public, max-age=300"
 aws cloudfront create-invalidation --distribution-id "$DIST" --paths "/*" --query Invalidation.Id --output text >/dev/null
 echo "published: https://$CF/  (and https://nam.theconvergencezone.com/ once its CNAME is live)"
