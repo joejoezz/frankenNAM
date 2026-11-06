@@ -190,3 +190,7 @@ so every cold start began with zero soil ice (Phase 1 frozen-soil defect). `buil
 fixes it; the seed needs no SOILL. IC check, case 2026012312, cold land (layer-1 STC < 271 K) frozen share
 1 - sh2o/smc, 0-10 / 10-40 cm (`run/ic_frozen.py`): unpatched 0.000 / 0.000; patched tm06 (NAM seed) 0.673 / 0.590
 against the archived NAM analysis 0.669 / 0.593 (grid 218, SOILL/SOILW); patched anl (GFS only) 0.656 / 0.524.
+
+Check run (6 Nov 2026, `verify/check_ice.py`; bundle `runner/bundle-20261106-tm06-arm64.tar`, c8g Spot, FHMAX=12, prefix `cases/2026012312/check-ice/`): NMMB keeps the ice.
+Frozen share over cold land (0-10 / 10-40 cm), NAM / patched / old: f00 0.664/0.576, 0.671/0.578, 0.047/0.006; f03 0.661/0.568, 0.666/0.568, 0.074/0.010; f06 0.656/0.569, 0.658/0.563, 0.087/0.013.
+Versus the archived NAM, patched (old) f00/f06: 0-10 cm TSOIL bias land +0.29/+0.27 C (+0.99/+0.99); 2 m T bias land +0.93/+0.34 K (+0.58/+0.21). Soil temperature is fixed; the 2 m T bias did not improve (slightly warmer) in the first hours.
