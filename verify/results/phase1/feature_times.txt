@@ -1,0 +1,4 @@
+2026012312: valid leads [39, 51] (NAM metric peak f39)
+2025010512: valid leads [21, 36] (NAM metric peak f21)
+2025012100: valid leads [30, 42] (NAM metric peak f30)
+2024111912: valid leads [12, 24] (NAM metric peak f12)

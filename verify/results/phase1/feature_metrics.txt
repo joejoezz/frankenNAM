@@ -1,0 +1,8 @@
+2026012312 f39 | fnam: FZRA/sleet 279k km2, T2m<0 389k km2 | nam: FZRA/sleet 295k km2, T2m<0 397k km2 | gfs: FZRA/sleet 172k km2, T2m<0 341k km2
+2026012312 f51 | fnam: FZRA/sleet 238k km2, T2m<0 270k km2 | nam: FZRA/sleet 215k km2, T2m<0 264k km2 | gfs: FZRA/sleet 280k km2, T2m<0 294k km2
+2025010512 f21 | fnam: snow 131k, sleet 63k, fzra 15k km2 | nam: snow 153k, sleet 41k, fzra 45k km2 | gfs: snow 173k, sleet 17k, fzra 30k km2
+2025010512 f36 | fnam: snow 166k, sleet 1k, fzra 1k km2 | nam: snow 174k, sleet 1k, fzra 1k km2 | gfs: snow 154k, sleet 0k, fzra 0k km2
+2025012100 f30 | fnam: max 24h snow 29.8 cm, area>5cm 255k km2 | nam: max 24h snow 23.6 cm, area>5cm 201k km2 | gfs: max 24h snow 26.9 cm, area>5cm 349k km2
+2025012100 f42 | fnam: max 24h snow 24.8 cm, area>5cm 166k km2 | nam: max 24h snow 23.6 cm, area>5cm 116k km2 | gfs: max 24h snow 25.3 cm, area>5cm 202k km2
+2024111912 f12 | fnam: min MSLP 946.9 hPa at 46.9N -132.0, max 10m wind 29.2 m/s | nam: min MSLP 941.0 hPa at 46.7N -132.2, max 10m wind 29.7 m/s | gfs: min MSLP 940.9 hPa at 46.8N -131.8, max 10m wind 33.2 m/s
+2024111912 f24 | fnam: min MSLP 954.2 hPa at 47.7N -132.9, max 10m wind 24.4 m/s | nam: min MSLP 950.3 hPa at 47.6N -133.0, max 10m wind 24.7 m/s | gfs: min MSLP 948.0 hPa at 47.8N -132.5, max 10m wind 27.2 m/s
