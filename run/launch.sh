@@ -133,7 +133,7 @@ launch_runner() { # try the types in order and the zones in order for each; echo
     nodeenv=""; case $ty in c?g.*) nodeenv="POST_AFTER=1" ;; esac   # 64 GB c-class: UPP after the forecast
     ud=${USERDATA//__NODEENV__/$nodeenv}
     for sn in ${SUBNETS//,/ }; do
-      if iid=$(run_instances "$ty" "$sn" "$ud" $NAME-runner "${MARKET[@]}" 2>/tmp/launch.err); then
+      if iid=$(run_instances "$ty" "$sn" "$ud" $NAME-runner ${MARKET[@]+"${MARKET[@]}"} 2>/tmp/launch.err); then
         TYPE=$ty; echo "$iid"; return 0
       fi
       err=$(cat /tmp/launch.err)
