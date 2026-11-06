@@ -1,9 +1,10 @@
 <h1>Why?</h1>
 <p class="lede">The 12&nbsp;km NAM ran for over two decades, and forecasters still rely on it.</p>
-<p>They reach for it for what it does well: cold-air damming and wedge setups, soundings, precipitation type, and mesoscale structure that coarser models smooth away. NOAA retired the NAM on 3 November 2026. The model's own code is a US-government work and was public, and one run costs under $3 on cloud hardware (measured: about $2.60 per cycle). Keeping it running is an inexpensive project that keeps providing value to the community.</p>
-<p>FrankenNAM runs that code twice a day and says plainly what is different from the operational NAM. <a href="about.html">About FrankenNAM</a> has the design; <a href="validation.html">Validation</a> has the numbers.</p>
+<p>They reach for it for what it does well: cold-air damming and wedge setups, soundings, precipitation type, and mesoscale structure that coarser models smooth away. NOAA retired the NAM on 3 November 2026. This site is a community service about bringing it back: several groups are trying, and each approach gives something different.</p>
+<p>WOOF-NAM, from Recast Systems, rewrites the NAM for GPUs and runs it for everyone, free. FrankenNAM shows the other route: the NAM&rsquo;s own code, which is a US-government work and was public, running on ordinary CPUs on AWS. It costs a few dollars a run, and we explain how to run it yourself. We run it occasionally, not on a schedule: notable events, run on demand and added as cases.</p>
+<p>Start with <a href="about.html">About FrankenNAM</a> for the strategies we tried. <a href="validation.html">Validation</a> has the numbers, <a href="grids.html">Grids</a> has free files for the re-run cases, and <a href="costs.html">Costs</a> shows what it took on AWS.</p>
 
-<h1 id="latest">Latest fNAM</h1>
-<p>fNAM is shorthand for FrankenNAM. Free maps from the latest cycle: pick a field, region and hour, or press play.</p>
-<div class="viewer full"><iframe title="fNAM maps" src="maps/index.html?single=1&amp;embed=1&amp;sample=1#frankennam/2026110100/conus/mslp_precip6/48"></iframe></div>
-<p class="small">Sample: the run for 2026-11-01 00Z, made as a test of the product. It is labelled a sample until live cycles exist. <a href="maps/index.html?single=1&amp;sample=1#frankennam/2026110100/conus/mslp_precip6/48">Open full screen</a>.</p>
+<h1 id="viewer">Case viewer</h1>
+<p>Maps from one re-run case: pick a field, region and hour, or press play.</p>
+<div class="viewer full"><iframe title="FrankenNAM case maps" src="maps/index.html?single=1&amp;embed=1&amp;sample=1#frankennam/2026110100/conus/mslp_precip6/48"></iframe></div>
+<p class="small">Case: 2026-11-01 00Z, sample, made as a test of the product. <a href="maps/index.html?single=1&amp;sample=1#frankennam/2026110100/conus/mslp_precip6/48">Open full screen</a>.</p>

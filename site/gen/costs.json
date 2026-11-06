@@ -1,30 +1,160 @@
 {
-  "as_of": "2026-11-05",
-  "note": "Planning figures. Every row says whether it is a measurement or an estimate; costs_from_aws.py replaces the compute, transfer and storage rows with Cost Explorer numbers once cycles run.",
-  "pledge": {"target": 20, "founding_cap": 15, "paying": 0, "founding": 0,
-             "price": 14.99, "founding_price": 9.99, "source": "estimate"},
-  "stripe": {"percent": 2.9, "fixed_usd": 0.30, "note": "Assumed standard US card rate; confirm against the Stripe account before launch."},
-  "monthly": [
-    {"item": "Compute: forecast", "per_cycle": 2.60, "per_month": 156.0, "kind": "estimate",
-     "basis": "One m8g.8xlarge Spot instance for about 5.0 h per cycle at about $0.52 an hour (measured on the tm06 acceptance run), 60 cycles a month"},
-    {"item": "Compute: post-processing and maps", "per_cycle": 0.05, "per_month": 3.0, "kind": "estimate",
-     "basis": "Lambda renders measured on a laptop (about 3 s of work per forecast hour); roughly $0.03-0.05 per cycle for all regions"},
-    {"item": "Transfer", "per_cycle": null, "per_month": 13.0, "kind": "estimate",
-     "basis": "About 2-3 GB per cycle copied from AWS to the grid host at $0.09 per GB; downloads from the grid host carry no egress fee"},
-    {"item": "Storage", "per_cycle": null, "per_month": 3.0, "kind": "estimate",
-     "basis": "About 150 GB for a 30-day archive on the grid host at $0.015 per GB-month, plus pennies for the 7-day map frames"},
-    {"item": "Workers, key checks", "per_cycle": null, "per_month": 5.0, "kind": "estimate",
-     "basis": "Cloudflare Workers paid plan"}
+ "as_of": "2026-11-06",
+ "note": "Measured rows come from docs/graviton-port.md, docs/run-notes.md, docs/phase1-scorecard.md and the GPU docs. Prices are refreshed by refresh_prices.py. Everything derived is computed in costs.py.",
+ "region": "us-west-2",
+ "measured": [
+  {
+   "what": "Graviton, c8g.8xlarge Spot",
+   "price": 0.466,
+   "hours": 5.0,
+   "sfh": 200,
+   "note": "84 h run plus post-processing, 32 cores, restarts off, 43 GB peak memory (docs/graviton-port.md)"
+  },
+  {
+   "what": "x86, r7a.8xlarge Spot",
+   "price": 0.82,
+   "hours": 4.65,
+   "sfh": 189,
+   "note": "Phase 0 run, restarts on, 77 GB peak memory (docs/run-notes.md)"
+  }
+ ],
+ "check_run": "The patched f84 check run (soil fix, case 2026-01-23 12Z) took 5 h 25 min on a c8g Spot node with no reclaim.",
+ "pricing": {
+  "as_of": "2026-11-06 22:30Z",
+  "integ_h": 90,
+  "prep_h": 0.25,
+  "rows": [
+   {
+    "type": "c8g.8xlarge",
+    "chip": "Graviton4 (arm64)",
+    "ram": 64,
+    "sfh": 200,
+    "basis": "measured",
+    "od": 1.27616,
+    "spot_min": 0.4695,
+    "spot_max": 0.5476
+   },
+   {
+    "type": "m8g.8xlarge",
+    "chip": "Graviton4 (arm64)",
+    "ram": 128,
+    "sfh": 200,
+    "basis": "scaled",
+    "od": 1.43616,
+    "spot_min": 0.5108,
+    "spot_max": 0.6405
+   },
+   {
+    "type": "c7g.8xlarge",
+    "chip": "Graviton3 (arm64)",
+    "ram": 64,
+    "sfh": 278,
+    "basis": "scaled",
+    "od": 1.16,
+    "spot_min": 0.4709,
+    "spot_max": 0.5554
+   },
+   {
+    "type": "r7a.8xlarge",
+    "chip": "AMD Genoa (x86)",
+    "ram": 256,
+    "sfh": 189,
+    "basis": "measured",
+    "od": 2.4344,
+    "spot_min": 0.8128,
+    "spot_max": 0.8554
+   },
+   {
+    "type": "c7a.8xlarge",
+    "chip": "AMD Genoa (x86)",
+    "ram": 64,
+    "sfh": 189,
+    "basis": "scaled",
+    "od": 1.64224,
+    "spot_min": 0.5662,
+    "spot_max": 0.671
+   }
+  ]
+ },
+ "gpu": {
+  "type": "g7e.2xlarge",
+  "od": 3.363,
+  "min_per_run": [
+   54,
+   59
   ],
-  "startup": [
-    {"stage": "Phase 0: build the model on AWS and run one historical cycle", "usd": 10.6, "status": "spent", "kind": "measured"},
-    {"stage": "Port to Graviton (cheaper chips)", "usd": 9.4, "status": "spent", "kind": "measured"},
-    {"stage": "tm06 product configuration (brief A)", "usd": 7.0, "status": "spent", "kind": "measured"},
-    {"stage": "Staging the hindcast inputs", "usd": 2.9, "status": "spent", "kind": "measured"},
-    {"stage": "Phase 1 hindcast cases and rehearsal", "usd": null, "status": "in progress", "kind": "target",
-     "note": "Phase 1 as a whole is planned at under $50"}
-  ],
-  "startup_scope": "Cloud compute and transfer for the build and early cases. Storage for the build and the early cases is not included.",
-  "engineering_time": "Engineering time is not billed and is not in any figure on this page. It is the larger cost.",
-  "engineering_time_decision": "Joe to state the real engineering time in words before launch"
+  "trial_run_usd": 3.3,
+  "note": "WOOF-NAM, on-demand. The GPU Spot quota read 0."
+ },
+ "ongoing": {
+  "ebs_per_h": 0.073,
+  "s3_gb_month": 0.023,
+  "cloudfront_gb": 0.085,
+  "bundle_gb": 9.3,
+  "products_gb_per_run": 1.8,
+  "occasional": {
+   "runs": 4,
+   "download_gb": 50
+  },
+  "daily": {
+   "runs": 60,
+   "download_gb": 500
+  }
+ },
+ "startup": [
+  {
+   "stage": "Phase 0: build the model on AWS and run one historical cycle",
+   "usd": 10.6,
+   "status": "spent",
+   "kind": "measured"
+  },
+  {
+   "stage": "Port to Graviton (cheaper chips)",
+   "usd": 9.4,
+   "status": "spent",
+   "kind": "measured"
+  },
+  {
+   "stage": "tm06 product configuration (brief A)",
+   "usd": 7.0,
+   "status": "spent",
+   "kind": "measured"
+  },
+  {
+   "stage": "Staging the hindcast inputs",
+   "usd": 2.9,
+   "status": "spent",
+   "kind": "measured"
+  },
+  {
+   "stage": "Phase 1 hindcast cases and rehearsal",
+   "usd": 26.8,
+   "status": "spent",
+   "kind": "measured",
+   "note": "Nine Spot reclaims, and one case on demand, cost about $7 of that"
+  },
+  {
+   "stage": "Soil-fix investigation and check runs",
+   "usd": 4.0,
+   "status": "spent",
+   "kind": "estimate",
+   "note": "About; the five-case rerun is not included"
+  },
+  {
+   "stage": "GPU trial: WOOF-NAM as it ships",
+   "usd": 4.3,
+   "status": "spent",
+   "kind": "measured"
+  },
+  {
+   "stage": "GPU engine: WOOF-NAM behind our pipeline",
+   "usd": 4.2,
+   "status": "spent",
+   "kind": "estimate",
+   "note": "Backlogged"
+  }
+ ],
+ "startup_scope": "Cloud compute and transfer for the build, the cases and the GPU work. Storage is not included.",
+ "engineering_time": "Engineering time is not billed and is not in any figure on this page. It is the larger cost.",
+ "engineering_time_decision": "Joe to state the real engineering time in words before launch"
 }

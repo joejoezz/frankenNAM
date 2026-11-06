@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Grids</title>
+<meta name="description" content="Free NOAA-named grid-218 files for the re-run cases, with swap-in examples.">
+<link rel="stylesheet" href="style.css">
+<script src="config.js"></script>
+</head>
+<body>
+<header class="top"><div class="bar"><a class="logo" href="index.html"><img src="assets/nam-logo.png" alt="NAM: the North American Mesoscale Forecast System" width="96" height="64"></a><div class="id"><a class="brand" href="index.html">FrankenNAM</a><span class="tag">an open source project to keep the NAM model alive</span><span class="na">A community project. Not affiliated with or endorsed by NOAA or the National Weather Service.</span></div></div><nav><a href="about.html">About FrankenNAM</a><a href="validation.html">Validation</a><a href="grids.html" aria-current="page">Grids</a><a href="costs.html">Costs</a><a href="https://theconvergencezone.com/contact/">Contact</a></nav></header>
+<main>
+
+<h1>Grids</h1>
+<p class="lede">Free GRIB2 files for the cases we have re-run. NOAA&rsquo;s file names, no key, no sign-up.</p>
+
+<div class="honest"><p><b>What these files are.</b> Initialized from the (C&minus;6)Z GFS analysis with a 6&nbsp;h NAM spin-up; no observations after (C&minus;6)Z. Not produced by NOAA. Read <a href="validation.html">Validation</a> before you use them.</p></div>
+
+<h2>Cases</h2>
+<p>Grids exist only for the cases we have re-run. There is no daily feed. Notable events are run on demand and added here. Each row links to an index page with every file&rsquo;s size and SHA-256.</p>
+<div class="tblwrap"><table><tr><th>Cycle</th><th>Event</th><th>Status</th><th>Files</th><th class="n">Total size</th></tr><tr><td>2026-11-01 00Z</td><td>Autumn, CONUS-wide (the Phase 0 case)<br><span class="small">Made before the frozen-soil fix (patch nps-02). Autumn, so little frozen ground: the 2 m temperature cost was about 0.04 K.</span></td><td>available</td><td><a href="grids/nam.20261101/index.html">Index, sizes and SHA-256</a></td><td class="n">1.7 GB</td></tr><tr><td>2026-01-23 12Z</td><td>CAD ice storm, Georgia and the Carolinas</td><td>coming after the rerun</td><td>&ndash;</td><td class="n">&ndash;</td></tr><tr><td>2025-01-05 12Z</td><td>Snowcrete, Washington DC, snow to sleet</td><td>coming after the rerun</td><td>&ndash;</td><td class="n">&ndash;</td></tr><tr><td>2025-01-21 00Z</td><td>Gulf Coast snow</td><td>coming after the rerun</td><td>&ndash;</td><td class="n">&ndash;</td></tr><tr><td>2024-11-19 12Z</td><td>Pacific Northwest bomb cyclone and atmospheric river</td><td>coming after the rerun</td><td>&ndash;</td><td class="n">&ndash;</td></tr></table></div>
+
+<h2>Paths and names</h2>
+<pre>grids/nam.YYYYMMDD/nam.tCCz.awphysFF.tm00.grib2
+grids/nam.YYYYMMDD/nam.tCCz.awphysFF.tm00.grib2.idx</pre>
+<p>Grid 218 <code>awphys</code>, f00 to f84 every 3&nbsp;h: one GRIB2 and one <code>.idx</code> per hour, 454 records at most (446 at f00), as in the operational file. The names match NOAA&rsquo;s so that existing scripts need only a new base URL. Byte-range reads from the <code>.idx</code> work as they do on NOMADS. Files can be cached for a day.</p>
+
+<h2>Swapping it into your tools</h2>
+<p>Only the base URL changes. The base is <code>https://nam.theconvergencezone.com/grids</code>.</p>
+<p class="small">Until that name resolves, use the preview host <code>https://dzat3kduvlnwx.cloudfront.net/grids</code>. <span class="ph">[PLACEHOLDER: remove this line once nam.theconvergencezone.com resolves]</span></p>
+
+<h3>curl: one file, or one field by byte range</h3>
+<pre>BASE=https://nam.theconvergencezone.com/grids/nam.20261101
+F=nam.t00z.awphys24.tm00.grib2
+
+# the whole file and its inventory
+curl -s -O "$BASE/$F" -O "$BASE/$F.idx"
+
+# only the 2 m temperature message: offsets come from the .idx
+R=$(curl -s "$BASE/$F.idx" | awk -F: -v pat=':TMP:2 m above ground:' \
+      '$0 ~ pat {s=$2; if ((getline) &gt; 0) print s "-" ($2-1); else print s "-"; exit}')
+curl -s -r "$R" "$BASE/$F" -o t2m.grib2</pre>
+<h3>wgrib2</h3>
+<pre>wgrib2 "$F" -match ':(TMP|DPT):2 m above ground:' -csv t2m_td2m.csv
+wgrib2 "$F" -s | head</pre>
+<h3>Python</h3>
+<pre>import urllib.request, eccodes as ec
+base = "https://nam.theconvergencezone.com/grids/nam.20261101/nam.t00z.awphys24.tm00.grib2"
+rows = [l.split(":") for l in urllib.request.urlopen(base + ".idx").read().decode().splitlines()]
+i = next(k for k, r in enumerate(rows) if r[3] == "TMP" and r[4] == "2 m above ground")
+end = int(rows[i + 1][1]) - 1
+req = urllib.request.Request(base, headers={"Range": f"bytes={rows[i][1]}-{end}"})
+g = ec.codes_new_from_message(urllib.request.urlopen(req).read())</pre>
+<p>Herbie: point the NAM <code>awphys</code> source at the same base. <span class="ph">[PLACEHOLDER: a tested Herbie snippet]</span></p>
+<details class="q"><summary>? how the .idx works</summary><div>Each line is <code>n:offset:d=YYYYMMDDHH:VAR:level:step:</code>. A message runs from its offset to the byte before the next line&rsquo;s offset.</div></details>
+
+<h2>More</h2>
+<ul><li><a href="validation.html">Validation</a>: how close these files are to the archived NAM.</li>
+<li><a href="costs.html">Costs</a>: what a run costs, and how to make your own.</li>
+<li><a href="terms.html">Terms</a>: short, for free data.</li></ul>
+
+</main>
+<footer class="bot"><p><b>Initialized from the (C&minus;6)Z GFS analysis with a 6&nbsp;h NAM spin-up. No observations after (C&minus;6)Z.</b></p><p>A community project. Not affiliated with or endorsed by NOAA or the National Weather Service. Operated by Joe Boomgard-Zagrodnik.</p><p><a href="costs.html">Costs</a> &middot; <a href="grids.html">Grids</a> &middot; <a href="terms.html">Terms</a> &middot; <a href="scorecard.html">Baseline scorecard</a> &middot; <a data-cfg-href="GITHUB_URL" href="#">GitHub</a> <span class="ph">[PLACEHOLDER: repository URL]</span> &middot; <a href="https://theconvergencezone.com/contact/">Contact</a></p></footer>
+<script src="site.js"></script>
+</body>
+</html>
