@@ -56,7 +56,7 @@ Only the base changes. The examples use cycle 00Z on 1 Nov 2026.
 
 ```sh
 BASE=https://nam.theconvergencezone.com/grids/nam.20261101
-F=nam.t12z.awphys24.tm00.grib2
+F=nam.t00z.awphys24.tm00.grib2
 
 # the whole file and its inventory
 curl -s -O "$BASE/$F" -O "$BASE/$F.idx"

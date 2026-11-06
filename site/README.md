@@ -1,5 +1,7 @@
 # site/: FrankenNAM maps, viewer and pages (nothing deployed)
 
+> **Pivot, 6 Nov 2026:** no paid tier. The subscribe page, keys, Stripe and the R2 + Worker key check described below are superseded: grids are free for the re-run cases under `/grids/` on the site CloudFront (deploy/12-publish-grids.sh). See docs/product-plan.md.
+
 ```
 site/render/    grid-218 awphys GRIB2 -> PNG frames (Python)
 site/viewer/    static image-loop viewer (one HTML file, plain JS)
