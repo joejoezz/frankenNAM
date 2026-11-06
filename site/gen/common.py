@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import html
 
-NAV = [("about.html", "About FrankenNAM"), ("validation.html", "Validation"), ("data.html", "Get Operational Data"),
+NAV = [("about.html", "About FrankenNAM"), ("validation.html", "Validation"), ("grids.html", "Grids"), ("costs.html", "Costs"),
        ("https://theconvergencezone.com/contact/", "Contact")]
 
 TAGLINE = "an open source project to keep the NAM model alive"
@@ -16,7 +16,7 @@ HONESTY = HONESTY_SHORT + " Not produced by NOAA and not affiliated with NOAA."
 
 # The footer links resolve against the page root; config.js (one config spot) fills the GitHub link.
 FOOT = ('<p><b>{h}</b></p><p>{n} Operated by Joe Boomgard-Zagrodnik.</p>'
-        '<p><a href="{r}costs.html">What it costs</a> &middot; <a href="{r}terms.html">Terms</a> &middot; '
+        '<p><a href="{r}costs.html">Costs</a> &middot; <a href="{r}grids.html">Grids</a> &middot; <a href="{r}terms.html">Terms</a> &middot; '
         '<a href="{r}scorecard.html">Baseline scorecard</a> &middot; '
         '<a data-cfg-href="GITHUB_URL" href="#">GitHub</a> <span class="ph">[PLACEHOLDER: repository URL]</span> &middot; '
         '<a href="https://theconvergencezone.com/contact/">Contact</a></p>')

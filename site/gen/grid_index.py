@@ -143,7 +143,7 @@ def stamp(iso):
     return iso.replace("T", " ").replace("Z", "Z") if iso else "&ndash;"
 
 
-def date_page(date, cycles):
+def date_page(date, cycles, up=0):
     body = [f"<h1>nam.{date}</h1>",
             '<p class="lede">File names here are the operational NAM&rsquo;s, on purpose, so existing tools work with a changed base URL only. '
             "The contents are not the NAM&rsquo;s.</p>",
@@ -161,12 +161,12 @@ def date_page(date, cycles):
             body.append(f'<tr><td><a href="{esc(r["name"])}">{esc(r["name"])}</a></td><td class="n">{human_bytes(r["size"])}</td>'
                         f'<td>{stamp(r["modified"])}</td><td><code style="font-size:11px;word-break:break-all">{r["sha256"]}</code></td></tr>')
         body.append("</table>")
-    return shell(f"FrankenNAM nam.{date}", "\n".join(body), root="../", desc="Files of one date, with sizes and SHA-256.")
+    return shell(f"FrankenNAM nam.{date}", "\n".join(body), root="../" * (up + 1), desc="Files of one date, with sizes and SHA-256.")
 
 
-def root_page(cycles, now, window_days):
+def root_page(cycles, now, window_days, up=0):
     body = ["<h1>FrankenNAM grids</h1>",
-            '<p class="lede">Every FrankenNAM cycle of the last %d days, newest first. File names follow NOMADS: '
+            '<p class="lede">Every FrankenNAM cycle on this host (window: %d days back), newest first. File names follow NOMADS: '
             "<code>nam.YYYYMMDD/nam.tCCz.awphysFF.tm00.grib2</code> and its <code>.idx</code>. "
             "The names are NOAA-identical on purpose so that wgrib2, Herbie and curl scripts work unchanged; the files are not NOAA&rsquo;s.</p>" % window_days,
             f'<div class="honest"><p><b>What these files are.</b> {HONESTY}</p></div>',
@@ -180,7 +180,7 @@ def root_page(cycles, now, window_days):
     if not cycles:
         body.append('<tr><td colspan="7">No cycles in the window.</td></tr>')
     body.append("</table>")
-    return shell("FrankenNAM grids", "\n".join(body), root="", desc="FrankenNAM cycle status and file index.")
+    return shell("FrankenNAM grids", "\n".join(body), root="../" * up, desc="FrankenNAM cycle status and file index.")
 
 
 def main(argv=None):
@@ -190,6 +190,8 @@ def main(argv=None):
     ap.add_argument("--region", default="us-west-2")
     ap.add_argument("--window-days", type=int, default=7)
     ap.add_argument("--stale-minutes", type=int, default=90)
+    ap.add_argument("--up", type=int, default=0,
+                    help="how many levels --out sits below the site root (grids/ is 1), so the pages find style.css")
     ap.add_argument("--now", default=None, help="ISO UTC time for the window (default: now); the sample cycle is old")
     a = ap.parse_args(argv)
     now = datetime.fromisoformat(a.now.replace("Z", "+00:00")).astimezone(UTC) if a.now else datetime.now(UTC)
@@ -203,7 +205,7 @@ def main(argv=None):
     status = {"generated": now.strftime("%Y-%m-%dT%H:%M:%SZ"), "window_days": a.window_days, "note": HONESTY.replace("&minus;", "-").replace("&nbsp;", " "),
               "cycles": [{k: v for k, v in c.items() if k != "files"} for c in cycles]}
     json.dump(status, open(os.path.join(out, "status.json"), "w"), indent=1)
-    open(os.path.join(out, "index.html"), "w").write(root_page(cycles, now, a.window_days))
+    open(os.path.join(out, "index.html"), "w").write(root_page(cycles, now, a.window_days, a.up))
     bydate = {}
     for c in cycles:
         bydate.setdefault(c["date"], []).append(c)
@@ -211,7 +213,7 @@ def main(argv=None):
         os.makedirs(d, exist_ok=True)
         json.dump(c, open(os.path.join(d, f"nam.t{c['hour']}z.cycle.json"), "w"), indent=1)
     for date, cs in bydate.items():
-        open(os.path.join(out, f"nam.{date}", "index.html"), "w").write(date_page(date, cs))
+        open(os.path.join(out, f"nam.{date}", "index.html"), "w").write(date_page(date, cs, a.up))
     print(f"{len(cycles)} cycles, {sum(c['file_count'] for c in cycles)} files -> {out}")
 
 

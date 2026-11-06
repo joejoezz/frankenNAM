@@ -31,8 +31,6 @@ pre,code{font:13.5px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 pre{background:#fff;border:1px solid var(--line);border-radius:6px;padding:10px 12px;overflow-x:auto}
 .clock{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-variant-numeric:tabular-nums}
 .clock b{font-weight:600}
-.pledge{height:14px;background:#eee;border-radius:7px;overflow:hidden;border:1px solid var(--line)}
-.pledge i{display:block;height:100%;background:var(--accent);width:0}
 footer.bot{border-top:1px solid var(--line);padding:14px 20px;color:var(--muted);font-size:13px;background:#fff}
 footer.bot a{color:var(--muted)}
 .small{color:var(--muted);font-size:14px}
@@ -76,10 +74,6 @@ figcaption{font-size:13.5px;color:var(--muted);margin-top:4px}
 .card img{display:block;width:100%;height:auto;border:1px solid var(--line)}
 .slot{display:flex;align-items:center;justify-content:center;text-align:center;aspect-ratio:2/0.66;background:var(--warn);border:2px dashed #c9b360;color:#6b5a1a;font-size:13.5px;padding:8px;border-radius:4px}
 .card ul{margin:.5em 0 0;padding-left:1.1em;font-size:14.5px}
-.price{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:none}
-@media (max-width:760px){.price{grid-template-columns:1fr}}
-.price>div{background:#fff;border:1px solid var(--line);border-radius:6px;padding:10px 16px 14px}
-.price .big{font-size:26px;font-weight:700}
 .btn.go{background:var(--accent);border-color:var(--accent);font-size:16px;padding:10px 20px}
 .tblwrap{overflow-x:auto;max-width:none}
 .tblwrap table{min-width:640px}
