@@ -138,7 +138,14 @@
    "usd": 4.0,
    "status": "spent",
    "kind": "estimate",
-   "note": "About; the five-case rerun is not included"
+   "note": "About"
+  },
+  {
+   "stage": "Five-case rerun with the soil fix",
+   "usd": 14.0,
+   "status": "spent",
+   "kind": "estimate",
+   "note": "About 26 Spot runner hours; one reclaim"
   },
   {
    "stage": "GPU trial: WOOF-NAM as it ships",
