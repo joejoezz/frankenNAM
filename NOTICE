@@ -1,8 +1,8 @@
 FrankenNAM / nam-recast
 Copyright 2026 Joe Boomgard-Zagrodnik
 
-[DECISION NEEDED: Joe] DRAFT. Licence choice for our own code (recommended: Apache-2.0, see LICENSE) is not decided (the copyright holder is Joe Boomgard-Zagrodnik). This NOTICE is the provenance record; keep it accurate, and have each
-third-party component's current licence text checked before the repository is made public (see "To verify").
+Code and documentation written for this project are licensed under the Apache License 2.0 (see LICENSE).
+This NOTICE is the provenance record for everything else the project uses.
 
 This repository holds the scripts, build recipes, patches, documentation and web pages that build and run the
 12 km NAM (NMMB core, NAM v4.2) on cloud computers and publish its output as FrankenNAM. It is not affiliated
@@ -36,7 +36,8 @@ NOAA / NCEP NAM
 ==========================================================================
 
 The NAM model source (github.com/MatthewPyle-NOAA/NAM and EricRogers-NOAA/nam_wcoss2_rocoto; the build is
-pinned in build/versions.sh and the upstream commit is recorded by the build manifest) is the work of employees of
+pinned in build/versions.sh; the current build uses MatthewPyle-NOAA/NAM main @ 83df4e13c115d197db67b972cb3befec8511291a,
+as recorded by the build manifest) is the work of employees of
 the US Government at NOAA/NCEP/EMC and is distributed without a licence file. Works of US Government employees
 are in the public domain in the United States. This repository does not contain that source: the build scripts
 fetch it, and our patches (build/patches/) are applied to it. A few static input files that NCEP no longer hosts
@@ -63,10 +64,10 @@ NCEPLIBS and the NAM's library stack
 The model and post-processing link to NCEP libraries built from their public releases (versions in
 build/versions.sh): bacio, sp, ip, w3nco, w3emc, g2, g2c, g2tmpl, sigio, sfcio, gfsio, nemsio, NCEPLIBS-bufr,
 CRTM, wrf_io, landsfcutil, together with zlib, libpng, jasper, HDF5 and netCDF. These are separately licensed by
-their authors. Several NCEPLIBS repositories carry the GNU LGPL-3.0 and others permissive or public-domain
-terms; this repository does not contain or relicense any of them, and a built binary that links them
-statically should be checked against each licence before it is distributed.
-[VERIFY] the licence of each library at the pinned version before anything built is redistributed.
+their authors. The NCEPLIBS repositories (for example g2, bacio, nemsio) are released by NOAA under the GNU LGPL-3.0;
+others in the list carry permissive or public-domain terms. This repository does not contain or
+relicense any of them. We do not distribute built binaries; anyone who does must meet each library's
+licence (for the LGPL, the relinking and source-offer terms).
 
 ==========================================================================
 ESMF
@@ -82,10 +83,11 @@ UPP, wgrib2
 ==========================================================================
 
 The post-processor (UPP) is built from the tree the NAM uses, with the patches in build/patches/uppgnu-*.patch,
-and keeps the licence terms of that tree. wgrib2 (NOAA/NCEP/CPC, Wesley Ebisuzaki) is installed on the runner and
+and keeps the licence terms of that tree (NOAA-EMC/UPP is released under the GNU LGPL-3.0; our UPP patches
+are offered under that licence). wgrib2 (NOAA/NCEP/CPC, Wesley Ebisuzaki) is installed on the runner and
 used to write the final grid-218 files; it is distributed under its own licence (GPL-2.0 terms, with a bundled
-iplib), and we call it as a separate program and do not redistribute it. [VERIFY] both licences before the
-runner image or any binary is shared.
+iplib), and we call it as a separate program and do not redistribute it. The runner image is
+not distributed.
 
 ==========================================================================
 WRF-derived tables
@@ -101,12 +103,3 @@ Python packages, base map
 site/ and verify/ use numpy, scipy, matplotlib, pyproj, Pillow and ecCodes (BSD or Apache-2.0 or similar
 licences; ecCodes is Apache-2.0), installed from PyPI and not copied here. The base map in site/render/base/
 is derived from Natural Earth, which is in the public domain.
-
-==========================================================================
-To verify before the repository is public
-==========================================================================
-
-1. Licence choice and copyright holder (header of this file; LICENSE).
-2. Licences of NCEPLIBS components, UPP and wgrib2 at the pinned versions.
-3. Whether the build manifest records the NAM source commit, so this file can cite it exactly.
-4. That site/render/base/ files cite their Natural Earth sources.

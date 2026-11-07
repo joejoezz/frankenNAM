@@ -51,7 +51,21 @@ i = next(k for k, r in enumerate(rows) if r[3] == "TMP" and r[4] == "2 m above g
 end = int(rows[i + 1][1]) - 1
 req = urllib.request.Request(base, headers={"Range": f"bytes={rows[i][1]}-{end}"})
 g = ec.codes_new_from_message(urllib.request.urlopen(req).read())</pre>
-<p>Herbie: point the NAM <code>awphys</code> source at the same base. <span class="ph">[PLACEHOLDER: a tested Herbie snippet]</span></p>
+<h3>Herbie</h3>
+<p>Herbie&rsquo;s NAM template with the base swapped (tested with herbie-data 2026.10.0):</p>
+<pre>import herbie.models
+from herbie import Herbie
+
+class frankennam:
+    def template(self):
+        herbie.models.nam.template(self)  # NAM products and file names
+        self.DESCRIPTION = "FrankenNAM 12 km NAM recast"
+        self.SOURCES = {"frankennam": "https://nam.theconvergencezone.com/grids/"
+            f"nam.{self.date:%Y%m%d}/nam.t{self.date:%H}z.{self.product}{self.fxx:02d}.tm00.grib2"}
+
+herbie.models.frankennam = frankennam
+H = Herbie("2026-11-01 00:00", model="frankennam", product="awphys", fxx=24)
+ds = H.xarray(":TMP:2 m above ground")</pre>
 <details class="q"><summary>? how the .idx works</summary><div>Each line is <code>n:offset:d=YYYYMMDDHH:VAR:level:step:</code>. A message runs from its offset to the byte before the next line&rsquo;s offset.</div></details>
 
 <h2>More</h2>
@@ -60,7 +74,7 @@ g = ec.codes_new_from_message(urllib.request.urlopen(req).read())</pre>
 <li><a href="terms.html">Terms</a>: short, for free data.</li></ul>
 
 </main>
-<footer class="bot"><p><b>Initialized from the (C&minus;6)Z GFS analysis with a 6&nbsp;h NAM spin-up. No observations after (C&minus;6)Z.</b></p><p>A community project. Not affiliated with or endorsed by NOAA or the National Weather Service. Operated by Joe Boomgard-Zagrodnik.</p><p><a href="costs.html">Costs</a> &middot; <a href="grids.html">Grids</a> &middot; <a href="terms.html">Terms</a> &middot; <a href="scorecard.html">Baseline scorecard</a> &middot; <a data-cfg-href="GITHUB_URL" href="#">GitHub</a> <span class="ph">[PLACEHOLDER: repository URL]</span> &middot; <a href="https://theconvergencezone.com/contact/">Contact</a></p></footer>
+<footer class="bot"><p><b>Initialized from the (C&minus;6)Z GFS analysis with a 6&nbsp;h NAM spin-up. No observations after (C&minus;6)Z.</b></p><p>A community project. Not affiliated with or endorsed by NOAA or the National Weather Service. Operated by Joe Boomgard-Zagrodnik.</p><p><a href="costs.html">Costs</a> &middot; <a href="grids.html">Grids</a> &middot; <a href="terms.html">Terms</a> &middot; <a href="scorecard.html">Baseline scorecard</a> &middot; <a data-cfg-href="GITHUB_URL" href="#">GitHub</a> &middot; <a href="https://theconvergencezone.com/contact/">Contact</a></p></footer>
 <script src="site.js"></script>
 </body>
 </html>

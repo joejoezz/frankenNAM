@@ -1,4 +1,8 @@
-# nam-recast
+# FrankenNAM (nam-recast)
+
+The retired 12 km NAM, re-run from its own code on AWS. Site, maps and free grids for the re-run cases:
+https://nam.theconvergencezone.com. Not produced by NOAA and not affiliated with NOAA. Code written for this
+project is Apache-2.0 (LICENSE); everything else keeps its own terms (NOTICE).
 
 Re-running the retired 12 km NAM (NMMB core, NAM v4.2 physics) as a cold-start recast on
 AWS. Scoping, costs and hurdles: [docs/scoping.md](docs/scoping.md). Phase 0 (approved

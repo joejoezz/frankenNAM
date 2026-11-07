@@ -89,7 +89,6 @@ def build(d):
                        f"{(' &middot; ' + note) if note else ''}</td></tr>")
     body = f"""<h1>Costs</h1>
 <p class="lede">How we ran the NAM on AWS, given away: what a run costs, what it ran on, and how to build your own.</p>
-<p class="draft"><b>Draft.</b> Highlighted boxes like <span class="ph">[PLACEHOLDER: this]</span> mark items that need a number, a decision or a link before launch.</p>
 
 <h2>What one 84&nbsp;h run costs</h2>
 <table>
@@ -132,7 +131,7 @@ def build(d):
 <p>{esc(d['engineering_time'])}</p>
 
 <h2 id="how">How we run it on AWS</h2>
-<p>A short, reproducible walkthrough. Paths are in the repository; the repository link is on the footer once it is public. <span class="ph">[PLACEHOLDER: repository URL]</span></p>
+<p>A short, reproducible walkthrough. Paths are in the <a data-cfg-href="GITHUB_URL" href="https://github.com/joejoezz/frankenNAM">repository</a>.</p>
 
 <h3>1. Build the model</h3>
 <p>The model is NMMB/NEMS, the preprocessor NPS and the post-processor UPP, from the NAM v4.2 source, with ESMF 7.1.0r underneath. The first build used Intel oneAPI on x86. The Graviton port uses gfortran and OpenMPI from apt on stock Ubuntu 24.04 arm64. The build scripts are in <code>build/</code> (<code>build_all.sh</code>, <code>libs.sh</code>, <code>build_nems.sh</code>, <code>build_nps.sh</code>, <code>build_upp.sh</code>), the source patches in <code>build/patches/</code>, and the story in <code>docs/build-notes.md</code> and <code>docs/graviton-port.md</code>. Thirteen patches; most are ESMF and compiler portability. Build on an EC2 node of the target architecture, not on a laptop.</p>

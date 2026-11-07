@@ -105,8 +105,8 @@ exists and has been tested.]
 
 ## Retention
 
-Design plan: the last 30 days of cycles are kept (about 60 cycles, 2-3 GB each); the status index lists the
-last 7 days. [DECISION NEEDED: Joe: confirm the retention before launch.]
+Grids are published for the re-run cases listed on the Grids page and kept there. Live runs are occasional;
+there is no rolling daily archive.
 
 ## Contact
 

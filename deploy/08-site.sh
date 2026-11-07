@@ -140,6 +140,32 @@ if [ "$CHANGED" = "yes" ]; then
 else
   echo "  already attached"
 fi
+echo "== access logs (kept 90 days, as the Terms page says)"
+LOGS="nam-recast-logs-$ACCOUNT"
+if ! aws s3api head-bucket --bucket "$LOGS" 2>/dev/null; then
+  aws s3api create-bucket --bucket "$LOGS" --create-bucket-configuration LocationConstraint=$REGION >/dev/null
+  aws s3api put-bucket-tagging --bucket "$LOGS" --tagging "TagSet=[{Key=project,Value=nam-recast}]"
+fi
+# CloudFront standard logging writes with ACLs, so the bucket needs BucketOwnerPreferred.
+aws s3api put-bucket-ownership-controls --bucket "$LOGS" --ownership-controls 'Rules=[{ObjectOwnership=BucketOwnerPreferred}]'
+aws s3api put-public-access-block --bucket "$LOGS" --public-access-block-configuration \
+  BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+aws s3api put-bucket-lifecycle-configuration --bucket "$LOGS" --lifecycle-configuration \
+  '{"Rules":[{"ID":"expire-90d","Status":"Enabled","Filter":{"Prefix":""},"Expiration":{"Days":90}}]}' >/dev/null
+if [ "$(aws cloudfront get-distribution-config --id "$DIST" --query DistributionConfig.Logging.Enabled)" != true ]; then
+  aws cloudfront get-distribution-config --id "$DIST" > "$TMP/cur.json"
+  python3 - "$TMP/cur.json" "$TMP/new.json" "$LOGS" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1])); c = d["DistributionConfig"]
+c["Logging"] = {"Enabled": True, "IncludeCookies": False, "Bucket": sys.argv[3] + ".s3.amazonaws.com", "Prefix": "cf/"}
+json.dump(c, open(sys.argv[2], "w"))
+PY
+  aws cloudfront update-distribution --id "$DIST" --if-match "$(python3 -c "import json;print(json.load(open('$TMP/cur.json'))['ETag'])")" \
+    --distribution-config "file://$TMP/new.json" >/dev/null
+  echo "  logging enabled"
+else
+  echo "  already on"
+fi
 cat <<EOF
 
 == last step, at WordPress.com: point the name at CloudFront

@@ -18,7 +18,7 @@ HONESTY = HONESTY_SHORT + " Not produced by NOAA and not affiliated with NOAA."
 FOOT = ('<p><b>{h}</b></p><p>{n} Operated by Joe Boomgard-Zagrodnik.</p>'
         '<p><a href="{r}costs.html">Costs</a> &middot; <a href="{r}grids.html">Grids</a> &middot; <a href="{r}terms.html">Terms</a> &middot; '
         '<a href="{r}scorecard.html">Baseline scorecard</a> &middot; '
-        '<a data-cfg-href="GITHUB_URL" href="#">GitHub</a> <span class="ph">[PLACEHOLDER: repository URL]</span> &middot; '
+        '<a data-cfg-href="GITHUB_URL" href="#">GitHub</a> &middot; '
         '<a href="https://theconvergencezone.com/contact/">Contact</a></p>')
 
 def esc(s) -> str:

@@ -277,7 +277,6 @@ def build(D, names, tag_note=""):
     cl = "; ".join(f"<code>{c}</code> {esc(names.get(c, ''))}" for c in D.cases)
     body = f"""<h1>Scorecard</h1>
 <p class="lede">FrankenNAM is the NAM&rsquo;s physics started from a GFS analysis. It is scored for <em>fidelity</em> to the archived operational NAM and, for context, against observations next to the GFS. It is not offered as a GFS-beater.</p>
-<p class="draft"><b>Draft.</b> Highlighted boxes like <span class="ph">[PLACEHOLDER: this]</span> mark items that need a number, a decision or a tested snippet before launch.</p>
 <div class="honest"><p><b>{'No FrankenNAM scores yet.' if not D.have_fnam else 'Scores are from archived cases, not live cycles.'}</b> {'The FrankenNAM column is empty and fills from the hindcast verification runs. The other columns are the baseline the hindcast is judged against.' if not D.have_fnam else 'Cases were picked for weather and are not independent samples. Differences of a few hundredths are noise.'}</p>
 <p>The archived NAM did not beat the same-cycle GFS against observations on these cases, so the bar for FrankenNAM is closeness to the NAM, not to the GFS. Read the tables with that in mind.</p></div>
 
@@ -311,7 +310,7 @@ def build(D, names, tag_note=""):
 {snotel_table(D) or '<p>No SNOTEL results in the data.</p>'}
 
 <h2>Live cycles</h2>
-<p>Once cycles run daily, each is scored against observations and the GFS and added here as a running record. None has been scored yet. <span class="ph">[PLACEHOLDER: running record table (cycles scored, first scored cycle, cycles missed or late) from the live verification job]</span></p>
+<p>Live runs are occasional and are not scored here.</p>
 """
     return shell("FrankenNAM scorecard", body, current="scorecard.html", desc="FrankenNAM verification against observations, next to the archived NAM and the GFS.")
 

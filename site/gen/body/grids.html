@@ -37,7 +37,21 @@ i = next(k for k, r in enumerate(rows) if r[3] == "TMP" and r[4] == "2 m above g
 end = int(rows[i + 1][1]) - 1
 req = urllib.request.Request(base, headers={"Range": f"bytes={rows[i][1]}-{end}"})
 g = ec.codes_new_from_message(urllib.request.urlopen(req).read())</pre>
-<p>Herbie: point the NAM <code>awphys</code> source at the same base. <span class="ph">[PLACEHOLDER: a tested Herbie snippet]</span></p>
+<h3>Herbie</h3>
+<p>Herbie&rsquo;s NAM template with the base swapped (tested with herbie-data 2026.10.0):</p>
+<pre>import herbie.models
+from herbie import Herbie
+
+class frankennam:
+    def template(self):
+        herbie.models.nam.template(self)  # NAM products and file names
+        self.DESCRIPTION = "FrankenNAM 12 km NAM recast"
+        self.SOURCES = {"frankennam": "https://nam.theconvergencezone.com/grids/"
+            f"nam.{self.date:%Y%m%d}/nam.t{self.date:%H}z.{self.product}{self.fxx:02d}.tm00.grib2"}
+
+herbie.models.frankennam = frankennam
+H = Herbie("2026-11-01 00:00", model="frankennam", product="awphys", fxx=24)
+ds = H.xarray(":TMP:2 m above ground")</pre>
 <details class="q"><summary>? how the .idx works</summary><div>Each line is <code>n:offset:d=YYYYMMDDHH:VAR:level:step:</code>. A message runs from its offset to the byte before the next line&rsquo;s offset.</div></details>
 
 <h2>More</h2>
