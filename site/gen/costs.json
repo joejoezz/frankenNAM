@@ -155,6 +155,5 @@
   }
  ],
  "startup_scope": "Cloud compute and transfer for the build, the cases and the GPU work. Storage is not included.",
- "engineering_time": "Engineering time is not billed and is not in any figure on this page. It is the larger cost.",
- "engineering_time_decision": "Joe to state the real engineering time in words before launch"
+ "engineering_time": "Engineering time is not billed and is not in any figure on this page. It is the larger cost."
 }

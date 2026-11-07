@@ -129,7 +129,7 @@ def build(d):
 <tr><td><b>Spent so far (stages with a figure)</b></td><td class="n"><b>{usd(st_total)}</b></td><td>&nbsp;</td></tr>
 </table>
 <p class="small">{esc(d['startup_scope'])}</p>
-<p>{esc(d['engineering_time'])} <span class="ph">[DECISION NEEDED: {esc(d['engineering_time_decision'])}]</span></p>
+<p>{esc(d['engineering_time'])}</p>
 
 <h2 id="how">How we run it on AWS</h2>
 <p>A short, reproducible walkthrough. Paths are in the repository; the repository link is on the footer once it is public. <span class="ph">[PLACEHOLDER: repository URL]</span></p>
