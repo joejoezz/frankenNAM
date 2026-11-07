@@ -45,8 +45,7 @@ Free, no key: maps and the viewer at `nam.theconvergencezone.com/maps/`, and the
 https://nam.theconvergencezone.com/grids/nam.YYYYMMDD/nam.tCCz.awphysFF.tm00.grib2
 ```
 
-`status.json` and the per-date index (names, sizes, SHA-256) sit beside the files. Until DNS for the domain exists,
-the same paths are served from the preview host `dzat3kduvlnwx.cloudfront.net`.
+`status.json` and the per-date index (names, sizes, SHA-256) sit beside the files.
 
 ## Swap-in
 
