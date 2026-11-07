@@ -26,8 +26,8 @@ from .common import CASES, cycle, OBS
 from .gribio import Model
 
 ROOT = Path(__file__).resolve().parents[1]
-RES = ROOT / "verify" / "results" / "phase1"; RES.mkdir(parents=True, exist_ok=True)
-FIG = ROOT / "docs" / "figs" / "hindcast"; FIG.mkdir(parents=True, exist_ok=True)
+RES = ROOT / "verify" / "results" / os.environ.get("NR_RES", "phase1"); RES.mkdir(parents=True, exist_ok=True)
+FIG = ROOT / "docs" / "figs" / os.environ.get("NR_FIG", "hindcast"); FIG.mkdir(parents=True, exist_ok=True)
 LAB = {"fnam": "FrankenNAM (tm06)", "fnam-anl": "FrankenNAM anl start", "nam": "Archived NAM", "gfs": "GFS (same cycle)",
        "gfs06": "GFS (6 h older)"}
 
