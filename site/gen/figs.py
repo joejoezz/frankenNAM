@@ -4,8 +4,8 @@
     ~/data/nam-recast-site/venv/bin/python site/gen/figs.py
 
 Writes into site/pages/img/:
-  rmse-vs-lead.png   RMSE against the archived NAM by lead, from docs/figs/tm06/stats.csv
-  soil-f00.png       f00 soil trace, from docs/figs/tm06/soil.md
+  rmse-vs-lead.png   RMSE against the archived NAM by lead, from docs/figs/tm06-nps02/stats.csv
+  soil-f00.png       f00 soil trace, from docs/figs/tm06-nps02/soil.md
 """
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 10, "axes.edgeco
                      "axes.spines.right": False, "axes.titleweight": "bold", "axes.titlesize": 11})
 
 def rmse_vs_lead():
-    rows = list(csv.DictReader(open(os.path.join(REPO, "docs/figs/tm06/stats.csv"))))
+    rows = list(csv.DictReader(open(os.path.join(REPO, "docs/figs/tm06-nps02/stats.csv"))))
     woof = list(csv.DictReader(open(os.path.join(REPO, "docs/figs/woof/stats.csv"))))
     fields = [("mslp", "MSLP (hPa)"), ("z500", "Z500 (dam)"), ("t2m", "2 m temperature (K)"), ("wspd10", "10 m wind speed (m/s)")]
     fig, axs = plt.subplots(1, 4, figsize=(11.5, 3.1), dpi=150)
@@ -48,7 +48,7 @@ def rmse_vs_lead():
 
 
 def soil():
-    t = open(os.path.join(REPO, "docs/figs/tm06/soil.md")).read()
+    t = open(os.path.join(REPO, "docs/figs/tm06-nps02/soil.md")).read()
     def cell(name, col):   # col index in the table after the field name
         m = re.search(r"^\| %s \([^)]*\) \|(.*)$" % re.escape(name), t, re.M)
         return float(m.group(1).split("|")[col].split("/")[0])
