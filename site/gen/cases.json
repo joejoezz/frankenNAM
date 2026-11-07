@@ -6,13 +6,13 @@
    "date": "20261101",
    "hour": "00",
    "event": "Autumn, CONUS-wide (the Phase 0 case)",
-   "status": "coming soon",
+   "status": "available",
    "bytes": 1821290078
   },
   {
    "cycle": "2026-01-23 12Z",
    "event": "CAD ice storm, Georgia and the Carolinas",
-   "status": "coming soon",
+   "status": "available",
    "bytes": 1710071770,
    "date": "20260123",
    "hour": "12"
@@ -20,7 +20,7 @@
   {
    "cycle": "2025-01-05 12Z",
    "event": "Snowcrete, Washington DC, snow to sleet",
-   "status": "coming soon",
+   "status": "available",
    "bytes": 1726611143,
    "date": "20250105",
    "hour": "12"
@@ -28,7 +28,7 @@
   {
    "cycle": "2025-01-21 00Z",
    "event": "Gulf Coast snow",
-   "status": "coming soon",
+   "status": "available",
    "bytes": 1737095598,
    "date": "20250121",
    "hour": "00"
@@ -36,7 +36,7 @@
   {
    "cycle": "2024-11-19 12Z",
    "event": "Pacific Northwest bomb cyclone and atmospheric river",
-   "status": "coming soon",
+   "status": "available",
    "bytes": 1779186870,
    "date": "20241119",
    "hour": "12"
