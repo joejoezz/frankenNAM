@@ -5,8 +5,8 @@
 ```
 site/render/    grid-218 awphys GRIB2 -> PNG frames (Python)
 site/viewer/    static image-loop viewer (one HTML file, plain JS)
-site/pages/     homepage, scorecard, costs, grids, terms (plain HTML/CSS)
-site/gen/       generators: grid status/index pages, scorecard page, cost page (+ Cost Explorer stub)
+site/pages/     homepage, validation, costs, grids, terms (plain HTML/CSS)
+site/gen/       generators: grid status/index pages, validation page, cost page (+ Cost Explorer stub)
 site/products/  README for the grid host
 site/samples/   a handful of rendered PNGs and viewer screenshots
 ```
@@ -130,14 +130,11 @@ The FrankenNAM footer names the analysis it starts from (the cycle minus 6 h), c
   States: complete (29 hours with GRIB2 and .idx), running, incomplete (no file for `--stale-minutes`). S3 is read
   through the aws CLI; hashes are cached in `sha256.json`, so reruns hash only new files (58 files, 1.8 GB: about 1 s of
   hashing on the laptop, 0.03 s on rerun). Tested on a complete cycle, a partial cycle and an empty window.
-- `scorecard.py [--results DIR ...] [--out FILE]`: the scorecard page from `verify/results/*/` sums. Baseline columns
-  now (NAM, GFS, 6 h older GFS); an empty FrankenNAM column that fills when `fnam` rows exist in any results dir
-  (and then every column is restricted to the cases `fnam` has). A "fidelity to the archived NAM" table applies the
-  Phase 1 margins. Numbers reproduce `docs/baseline-scorecard.md`.
 - `costs.py [--data costs.json] [--out FILE]`: the cost page from `costs.json`; `costs_from_aws.py` is a stub that
   would fill the JSON from Cost Explorer by the `project=nam-recast` tag. It has not been run.
 
-Pages are regenerated into `site/pages/`; do not edit `scorecard.html` or `costs.html` by hand.
+Pages are regenerated into `site/pages/`; do not edit `costs.html` or `validation.html` by hand.
+`scorecard.html` is a redirect to `validation.html` (the obs-based scorecard was removed 7 Nov 2026).
 
 ## Deployment plan (document only; nothing deployed)
 
