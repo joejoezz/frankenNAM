@@ -34,10 +34,10 @@ def cases_table() -> str:
 
 BODY = lambda n: open(os.path.join(HERE, "body", n + ".html")).read()  # noqa: E731
 SPEC = [
-    ("index", "FrankenNAM: an open source project to keep the NAM model alive", "", BODY("index").replace("{{HOW_CLOSE}}", validation.how_close(validation.pooled())),
-     "A community service explaining how the retired NAM can be brought back, with a case viewer."),
+    ("index", "FrankenNAM: an open source project to keep the NAM model alive", "", BODY("index").replace("{{HOW_CLOSE}}", validation.how_close(validation.pooled())).replace("{{FEATURES}}", validation.hindcast()),
+     "A community service explaining how the retired NAM can be brought back, with feature cases and a case viewer."),
     ("about", "About FrankenNAM", "about.html", BODY("about"), "The design, how a run starts, the strategies we tried for bringing the NAM back, what a live cycle would take, and the comparison with the operational NAM."),
-    ("validation", "Validation", "validation.html", validation.body(), "How close FrankenNAM is to the archived NAM and how far from the GFS: grid-to-grid distances, dew point, feature cases and side-by-side maps."),
+    ("validation", "Validation", "validation.html", validation.body(), "How close FrankenNAM is to the archived NAM and how far from the GFS: grid-to-grid distances, dew point and side-by-side maps."),
     ("grids", "Grids", "grids.html", BODY("grids").replace("{{CASES_TABLE}}", cases_table()),
      "Free NOAA-named grid-218 files for the re-run cases, with swap-in examples."),
     ("data", "Moved: Grids", "", '<h1>Moved</h1><p>This page is now <a href="grids.html">Grids</a>.</p>', "Moved to the Grids page."),
