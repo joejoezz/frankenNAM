@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
-"""Drop the six-case hindcast highlights into the Validation page (standard library only).
+"""Drop the hindcast feature cards into the Validation page (standard library only).
 
-    python site/gen/hindcast_dropin.py --figs docs/figs/hindcast [--table docs/figs/hindcast/results.csv] \
-                                       [--text text.json] [--dry-run]
+    python site/gen/hindcast_dropin.py --figs docs/figs/hindcast-site [--text text.json] [--dry-run]
     python site/gen/build_pages.py            # rebuilds validation.html (and the other pages)
 
 --figs   folder of double-panel images; each image goes to the case whose key (date, case id or short name,
          see hindcast.json) appears in the file name. If several match, the first by name is used; a case
          may also be given explicitly as  --image CASEID=path.png  (repeatable). Images are copied to
          site/pages/img/hindcast/ and recorded in hindcast.json.
---table  CSV with the header  metric,fnam,nam,gfs,gfs06,gate  replaces the results rows (empty cell = pending).
 --text   JSON {"CASEID": ["line", "line"]} sets the 2-3 lines of text per case.
 Nothing here reads the hindcast outputs unless you point it at them."""
 from __future__ import annotations
@@ -27,7 +25,7 @@ JS = os.path.join(HERE, "hindcast.json")
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--figs"); ap.add_argument("--table"); ap.add_argument("--text")
+    ap.add_argument("--figs"); ap.add_argument("--text")
     ap.add_argument("--image", action="append", default=[], metavar="CASEID=FILE")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
@@ -56,11 +54,6 @@ def main():
     if a.text:
         for cid, lines in json.load(open(a.text)).items():
             cases[cid]["text"] = lines
-    if a.table:
-        rows = []
-        for r in csv.DictReader(open(a.table)):
-            rows.append([r["metric"]] + [(r[k] or None) for k in ("fnam", "nam", "gfs", "gfs06", "gate")])
-        d["results"]["rows"] = rows
     if not a.dry_run:
         json.dump(d, open(JS, "w"), indent=2); open(JS, "a").write("\n")
 

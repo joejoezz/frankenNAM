@@ -4,15 +4,13 @@
     ~/data/nam-recast-site/venv/bin/python site/gen/figs.py
 
 Writes into site/pages/img/:
-  rmse-vs-lead.png   RMSE against the archived NAM by lead, from docs/figs/tm06-nps02/stats.csv
-  soil-f00.png       f00 soil trace, from docs/figs/tm06-nps02/soil.md
+  g2g-lead-wide.png, g2g-lead-narrow.png   RMS difference from the archived NAM by lead, from verify/results/phase1b/g2g.csv
 """
 from __future__ import annotations
 
 import argparse
-import csv
 import os
-import re
+import sys
 
 import matplotlib
 matplotlib.use("Agg")
@@ -23,52 +21,38 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SITE = os.path.dirname(HERE)
 REPO = os.path.dirname(SITE)
 OUT = os.path.join(SITE, "pages", "img")
-INK, FN, ANL, GFS, WOOF = "#1a1a1a", "#1f3fd6", "#d9822b", "#8a8a8a", "#1a9e77"
+INK, FN, OR, GFS = "#1a1a1a", "#1f3fd6", "#d9822b", "#555555"
 plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 10, "axes.edgecolor": "#999", "axes.spines.top": False,
                      "axes.spines.right": False, "axes.titleweight": "bold", "axes.titlesize": 11})
 
-def rmse_vs_lead():
-    rows = list(csv.DictReader(open(os.path.join(REPO, "docs/figs/tm06-nps02/stats.csv"))))
-    woof = list(csv.DictReader(open(os.path.join(REPO, "docs/figs/woof/stats.csv"))))
-    fields = [("mslp", "MSLP (hPa)"), ("z500", "Z500 (dam)"), ("t2m", "2 m temperature (K)"), ("wspd10", "10 m wind speed (m/s)")]
-    fig, axs = plt.subplots(1, 4, figsize=(11.5, 3.1), dpi=150)
-    for ax, (f, t) in zip(axs, fields):
-        rs = sorted((r for r in rows if r["field"] == f), key=lambda r: int(r["lead"]))
-        x = [int(r["lead"]) for r in rs]
-        for col, c, lab, z in (("rmse_GFS_vs_NAM", GFS, "GFS", 1), ("rmse_anl_vs_NAM", ANL, "cold start", 2), ("rmse_tm06_vs_NAM", FN, "FrankenNAM", 4)):
-            ax.plot(x, [float(r[col]) for r in rs], "-o", color=c, lw=2, ms=4.5, label=lab, zorder=z)
-        wr = {int(r["lead"]): float(r["rmse_woof_vs_NAM"]) for r in woof if r["field"] == f}
-        ax.plot(x, [wr[ld] for ld in x], "--s", color=WOOF, lw=1.8, ms=4, label="WOOF-NAM", zorder=3)
-        ax.set_title(t); ax.set_xticks(x); ax.set_xlabel("lead (h)"); ax.set_ylim(bottom=0); ax.grid(axis="y", color="#e6e6e6")
-    axs[0].set_ylabel("RMSE against archived NAM")
-    h, l = axs[0].get_legend_handles_labels()
-    fig.legend(h[::-1], l[::-1], loc="lower center", ncol=4, frameon=False, bbox_to_anchor=(0.5, -0.02))
-    fig.tight_layout(rect=(0, 0.08, 1, 1))
-    fig.savefig(os.path.join(OUT, "rmse-vs-lead.png")); plt.close(fig)
-
-
-def soil():
-    t = open(os.path.join(REPO, "docs/figs/tm06-nps02/soil.md")).read()
-    def cell(name, col):   # col index in the table after the field name
-        m = re.search(r"^\| %s \([^)]*\) \|(.*)$" % re.escape(name), t, re.M)
-        return float(m.group(1).split("|")[col].split("/")[0])
-    # columns: tm06 vs seed, tm06 vs NAM, tm06 vs GFS, tm06 vs anl, anl vs GFS, anl vs NAM, NAM vs seed
-    spec = [("sm0", "Soil moisture 0-10 cm (m$^3$/m$^3$)", "{:.3f}"), ("st0", "Soil temperature 0-10 cm (K)", "{:.2f}")]
-    fig, axs = plt.subplots(1, 2, figsize=(8.6, 3.0), dpi=150)
-    for ax, (n, title, fmt) in zip(axs, spec):
-        vals = [cell(n, 1), cell(n, 5), cell(n, 2)]
-        labs = ["FrankenNAM\nvs NAM", "cold start\nvs NAM", "FrankenNAM\nvs GFS"]
-        bars = ax.bar(labs, vals, color=[FN, ANL, GFS], width=0.62)
-        for b, v in zip(bars, vals):
-            ax.text(b.get_x() + b.get_width() / 2, v, fmt.format(v), ha="center", va="bottom", fontsize=9)
-        ax.set_title(title); ax.set_ylim(0, max(vals) * 1.18); ax.tick_params(axis="x", labelsize=8.5); ax.grid(axis="y", color="#e6e6e6"); ax.set_axisbelow(True)
-    axs[0].set_ylabel("RMSE, CONUS land, f00")
-    fig.tight_layout(); fig.savefig(os.path.join(OUT, "soil-f00.png")); plt.close(fig)
+def g2g_lead():
+    """RMS difference from the archived NAM against forecast hour, five cases pooled (validation.pooled), one panel per field.
+    Writes a wide 3 x 2 version and a narrow single-column version for phones."""
+    sys.path.insert(0, HERE)
+    import validation as V
+    P = V.pooled()
+    style = {"fnam": (FN, "-", "o", "FrankenNAM", 4), "gfs": (OR, "-", "s", "GFS", 2), "gfs06": (GFS, "--", "^", "GFS from 6 h earlier (FrankenNAM's start)", 3)}
+    titles = {"mslp": "Sea-level pressure (hPa)", "z500": "500 hPa height (dam)", "t2m": "2 m temperature (K)", "td2m": "2 m dew point (K)",
+              "wspd10": "10 m wind speed (m/s)", "precip24": "24 h precipitation (mm)"}
+    for tag, (rows, cols, size) in {"wide": (2, 3, (11, 6.6)), "narrow": (6, 1, (5.2, 14.5))}.items():
+        fig, axs = plt.subplots(rows, cols, figsize=size, dpi=150 if tag == "wide" else 130)
+        for ax, (k, _) in zip(axs.ravel(), V.FIELDS):
+            for m, (c, ls, mk, lab, z) in style.items():
+                xs = sorted(l for (f, mm, l) in P if f == k and mm == m)
+                ax.plot(xs, [P[(k, m, l)][0] for l in xs], ls, color=c, marker=mk, lw=2.2 if m == "fnam" else 1.8, ms=5, label=lab, zorder=z)
+            ax.set_title(titles[k]); ax.set_ylim(bottom=0); ax.grid(axis="y", color="#e6e6e6"); ax.set_axisbelow(True)
+            ax.set_xlabel("forecast hour" + (" (window ends)" if k == "precip24" else "")); ax.set_ylabel("RMS difference")
+            ax.set_xticks([24, 48, 84] if k == "precip24" else range(0, 85, 12))
+        h, l = axs.ravel()[0].get_legend_handles_labels()
+        fig.suptitle("Distance from the archived NAM, five cases pooled. Lower = closer to the NAM." if tag == "wide" else "Distance from the archived NAM\nFive cases pooled. Lower = closer to the NAM.", fontsize=11 if tag == "wide" else 10, fontweight="bold")
+        fig.tight_layout(rect=(0, 0.07 if tag == "wide" else 0.045, 1, 0.97 if tag == "wide" else 0.975))
+        fig.legend(h, l, loc="lower center", ncol=3 if tag == "wide" else 1, frameon=False, fontsize=9.5)
+        fig.savefig(os.path.join(OUT, f"g2g-lead-{tag}.png")); plt.close(fig)
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     a = ap.parse_args()
     os.makedirs(OUT, exist_ok=True)
-    rmse_vs_lead(); soil()   # side-by-side panels are now loopers over the rendered frames (validation.py)
+    g2g_lead()   # side-by-side panels are loopers over the rendered frames (validation.py)
     print("wrote", sorted(os.listdir(OUT)))

@@ -1,10 +1,10 @@
 {
-  "note": "Drop-in data for the Hindcast highlights section of validation.html. Edit by hand or with hindcast_dropin.py, then run build_pages.py. image: path under site/pages (null = placeholder box). text: 2-3 short lines (empty = placeholder). results.rows: [metric, fnam, nam, gfs, gfs06, within-gate]; null cells print as pending.",
+  "note": "Feature cards for validation.html. Edit by hand or with hindcast_dropin.py, then run build_pages.py. image: path under site/pages. text: one to three short lines of plain comparison with the archived NAM.",
   "cases": [
     {
       "id": "2026012312",
       "title": "CAD ice storm",
-      "when": "23 Jan 2026, Georgia and the Carolinas",
+      "when": "23 Jan 2026 12Z run, Georgia and the Carolinas, f39",
       "keys": [
         "20260123",
         "2026012312",
@@ -12,14 +12,13 @@
       ],
       "image": "img/hindcast/2026012312.png",
       "text": [
-        "Freezing rain and sleet cover 295k km&sup2; at f39, the same as the NAM; the sub-freezing wedge is 393k km&sup2; against the NAM&rsquo;s 397k.",
-        "Gate: pass. The soil fix took this case&rsquo;s 2 m temperature error against the NAM from +0.42 K to +0.04 K."
+        "Freezing rain and sleet cover 295k km&sup2;, the same as the NAM&rsquo;s. The sub-freezing wedge covers 393k km&sup2; against the NAM&rsquo;s 397k."
       ]
     },
     {
       "id": "2025010512",
       "title": "Snowcrete",
-      "when": "5 Jan 2025, Washington DC, snow to sleet",
+      "when": "5 Jan 2025 12Z run, Washington DC, snow to sleet, f21",
       "keys": [
         "20250105",
         "2025010512",
@@ -27,14 +26,13 @@
       ],
       "image": "img/hindcast/2025010512.png",
       "text": [
-        "Snow, sleet and freezing rain pattern at f21 as before: 130k, 66k and 16k km&sup2; against the NAM&rsquo;s 153k, 41k and 45k. By f36 it is snow in both.",
-        "Gate: pass. The pattern is the NAM&rsquo;s, with a little more sleet and less freezing rain."
+        "Snow, sleet and freezing rain cover 130k, 66k and 16k km&sup2; against the NAM&rsquo;s 153k, 41k and 45k: the same pattern, with more sleet and less freezing rain. By f36 both are all snow."
       ]
     },
     {
       "id": "2025012100",
       "title": "Gulf Coast snow",
-      "when": "21 Jan 2025",
+      "when": "21 Jan 2025 00Z run, f30",
       "keys": [
         "20250121",
         "2025012100",
@@ -42,14 +40,14 @@
       ],
       "image": "img/hindcast/2025012100.png",
       "text": [
-        "Heaviest 24 h snow is 32.2 cm at f30, heavier than the NAM&rsquo;s 23.6 cm, and 20.9 cm at f42, lighter than its 23.6 cm.",
-        "Gate: pass on features. This case has the largest 2 m temperature gap (+0.20 K) and a dry dew-point bias (see the dew-point note below)."
+        "The same snow band as the NAM&rsquo;s, with a larger area: 24 h snow above 5&nbsp;cm covers 255k km&sup2; against the NAM&rsquo;s 201k at f30 (27&nbsp;% larger), and 163k against 116k at f42 (40&nbsp;% larger).",
+        "Heaviest 24 h snow: 32.2&nbsp;cm against 23.6&nbsp;cm at f30, 20.9 against 23.6&nbsp;cm at f42."
       ]
     },
     {
       "id": "2024111912",
       "title": "PNW bomb cyclone",
-      "when": "19 Nov 2024, with an atmospheric river",
+      "when": "19 Nov 2024 12Z run, with an atmospheric river, f12",
       "keys": [
         "20241119",
         "2024111912",
@@ -57,169 +55,8 @@
       ],
       "image": "img/hindcast/2024111912.png",
       "text": [
-        "The low is 946.9 hPa at f12 and 954.1 at f24, about 6 and 4 hPa weaker than the NAM&rsquo;s 941.0 and 950.3. The track is within 0.2&deg;.",
-        "Gate: partial. The low is too weak and mountain precipitation is drier; the dew-point dry bias is largest here."
+        "The low is 946.9&nbsp;hPa at f12 and 954.1 at f24, against the NAM&rsquo;s 941.0 and 950.3: about 6 and 4&nbsp;hPa weaker. The track is within 0.2&deg;; peak 10&nbsp;m wind is 29.2 against 29.7&nbsp;m/s."
       ]
     }
-  ],
-  "results": {
-    "columns": [
-      "Measure, 12-84 h, CONUS, five cases pooled",
-      "FrankenNAM",
-      "NAM (archived)",
-      "GFS (same cycle)",
-      "GFS (6 h older)",
-      "Within the fidelity margin"
-    ],
-    "rows": [
-      [
-        "2 m temperature RMSE (K)",
-        "2.80",
-        "2.70",
-        "2.72",
-        "2.77",
-        "Yes: +0.09 K (margin 0.1)"
-      ],
-      [
-        "2 m dew point RMSE (K)",
-        "3.34",
-        "3.04",
-        "3.03",
-        "3.07",
-        "No: +0.31 K (margin 0.1)"
-      ],
-      [
-        "10 m wind speed RMSE (m/s)",
-        "2.06",
-        "2.08",
-        "2.08",
-        "2.08",
-        "Yes: &minus;0.02 m/s (margin 0.1)"
-      ],
-      [
-        "24 h precipitation ETS, 2.5 mm",
-        "0.552",
-        "0.566",
-        "0.604",
-        "0.585",
-        "Yes: &minus;0.015 (margin 0.03)"
-      ],
-      [
-        "24 h precipitation ETS, 10 mm",
-        "0.510",
-        "0.510",
-        "0.573",
-        "0.549",
-        "Yes: +0.000 (margin 0.03)"
-      ],
-      [
-        "24 h precipitation ETS, 25 mm",
-        "0.325",
-        "0.347",
-        "0.390",
-        "0.371",
-        "Yes: &minus;0.023 (margin 0.03)"
-      ]
-    ]
-  },
-  "bycase": {
-    "columns": [
-      "Case",
-      "2 m T",
-      "2 m Td",
-      "10 m wind"
-    ],
-    "note": "FrankenNAM RMSE minus the NAM&rsquo;s against stations, 12-84 h (K, K, m/s). Before the fix in brackets.",
-    "rows": [
-      [
-        "2026-11-01 00Z, autumn",
-        "+0.06 (+0.04)",
-        "+0.17 (+0.16)",
-        "&minus;0.05 (&minus;0.05)"
-      ],
-      [
-        "2026-01-23 12Z, CAD ice storm",
-        "+0.04 (+0.42)",
-        "+0.26 (+0.48)",
-        "+0.03 (+0.04)"
-      ],
-      [
-        "2025-01-05 12Z, Snowcrete",
-        "+0.03 (+0.17)",
-        "+0.01 (&minus;0.06)",
-        "+0.00 (+0.01)"
-      ],
-      [
-        "2025-01-21 00Z, Gulf Coast snow",
-        "+0.20 (+0.39)",
-        "+0.60 (+0.43)",
-        "+0.03 (+0.05)"
-      ],
-      [
-        "2024-11-19 12Z, PNW bomb cyclone",
-        "+0.11 (+0.12)",
-        "+0.38 (+0.38)",
-        "&minus;0.10 (&minus;0.10)"
-      ]
-    ]
-  },
-  "frozen": {
-    "columns": [
-      "Case",
-      "f00: NAM",
-      "f00: before fix",
-      "f00: after fix",
-      "f48: NAM",
-      "f48: before fix",
-      "f48: after fix"
-    ],
-    "note": "Share of the 0-10 cm soil water that is frozen, over cold land (0-10 cm soil below &minus;2&nbsp;&deg;C), grid 218.",
-    "rows": [
-      [
-        "2026-11-01",
-        "0.645",
-        "0.008",
-        "0.642",
-        "0.640",
-        "0.316",
-        "0.646"
-      ],
-      [
-        "2026-01-23",
-        "0.664",
-        "0.047",
-        "0.671",
-        "0.643",
-        "0.286",
-        "0.643"
-      ],
-      [
-        "2025-01-05",
-        "0.638",
-        "0.024",
-        "0.642",
-        "0.630",
-        "0.189",
-        "0.629"
-      ],
-      [
-        "2025-01-21",
-        "0.656",
-        "0.014",
-        "0.657",
-        "0.649",
-        "0.199",
-        "0.650"
-      ],
-      [
-        "2024-11-19",
-        "0.582",
-        "0.056",
-        "0.589",
-        "0.561",
-        "0.359",
-        "0.560"
-      ]
-    ]
-  }
+  ]
 }
