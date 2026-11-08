@@ -8,7 +8,8 @@
 # saves. The account's on-demand quota is 32 vCPU: the x86 box must stay STOPPED while this one
 # runs (a stopped instance does not count). STOP THE INSTANCE WHEN IDLE (deploy/06-stop-arm.sh).
 #
-# Source arrives via the git bundles in s3://tcz-backups-.../nam-recast/upstream/ (as for 01).
+# Source arrives via the git bundles in s3://tcz-backups-.../nam-recast/upstream/ (as for 01); the build
+# scripts are cloned from the public repo to ~/frankenNAM. Full recipe and timings: docs/rebuild.md.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 NAME=nam-recast
@@ -23,6 +24,7 @@ SUBNET=${SUBNET:-subnet-0a8ec3e6a00a142ff}      # default VPC, us-west-2a
 INSTANCE_TYPE=${INSTANCE_TYPE:-c8g.8xlarge}      # 32 Graviton4 cores / 64 GB, on-demand ≈ $1.28/h
 DISK_GB=${DISK_GB:-150}
 TAG=$NAME-build-arm
+SEED=${SEED:-1}   # 1: unpack libs + fix from the newest arm64 runner bundle (skips the library build); 0: fix only, libraries from source
 AMI=$(aws ssm get-parameter --name /aws/service/canonical/ubuntu/server/24.04/stable/current/arm64/hvm/ebs-gp3/ami-id --query Parameter.Value --output text)
 MYIP=$(curl -s https://checkip.amazonaws.com)/32
 export AWS_DEFAULT_REGION=$REGION
@@ -57,6 +59,8 @@ sudo -u ubuntu bash -c '
     git clone -q \$n.bundle \$n
   done
   cd MatthewPyle-NOAA-NAM && git checkout -q main && ls
+  git clone -q https://github.com/joejoezz/frankenNAM /home/ubuntu/frankenNAM
+  if [ "$SEED" = 1 ]; then /home/ubuntu/frankenNAM/build/seed_from_bundle.sh; else PARTS=fix /home/ubuntu/frankenNAM/build/seed_from_bundle.sh; fi
 '
 echo READY > /opt/nam/READY
 EOS
