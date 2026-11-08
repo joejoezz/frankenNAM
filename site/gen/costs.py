@@ -4,7 +4,7 @@
     python site/gen/costs.py                                   # site/gen/costs.json -> site/pages/costs.html
     python site/gen/costs.py --data /path/costs.json --out /tmp/costs.html
 
-The page is how the project ran the NAM on AWS, given away: what one run costs, the Spot and on-demand price table, the
+The page is how the project ran the NAM on AWS: what one run costs, the Spot and on-demand price table, the
 GPU path, what a run-it-yourself setup costs a month, what it cost to get here, and a walkthrough. Per-run dollars are
 computed here from the prices and seconds per forecast hour in costs.json (prices come from refresh_prices.py), never typed in."""
 from __future__ import annotations
@@ -88,7 +88,7 @@ def build(d):
         st_rows.append(f"<tr><td>{esc(r['stage'])}</td><td class=\"n\">{usd(r['usd'])}</td><td>{KIND.get(r['kind'], esc(r['kind']))}"
                        f"{(' &middot; ' + note) if note else ''}</td></tr>")
     body = f"""<h1>Costs</h1>
-<p class="lede">How we ran the NAM on AWS, given away: what a run costs, what it ran on, and how to build your own.</p>
+<p class="lede">How we ran the NAM on AWS: what a run costs, what it ran on, and how to build your own.</p>
 
 <h2>What one 84&nbsp;h run costs</h2>
 <div class="tblwrap"><table>
