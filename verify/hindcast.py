@@ -237,7 +237,7 @@ STYLE = {
     "mslp": dict(cmap="viridis", levels=np.arange(940, 1052, 4), units="MSLP (hPa)", contour=True),
     "cape": dict(cmap="magma_r", levels=[100, 250, 500, 750, 1000, 1500, 2000, 2500, 3000, 4000], units="surface CAPE (J/kg)"),
     "refc": dict(cmap="turbo", levels=np.arange(5, 71, 5), units="composite reflectivity (dBZ)"),
-    "precip24": dict(cmap="GnBu", levels=[1, 2.5, 5, 10, 15, 20, 30, 40, 60, 80, 100, 150], units="24 h precip (mm)"),
+    "precip24": dict(cmap="GnBu", levels=[1, 2.5, 5, 10, 15, 20, 30, 40, 60], units="24 h precip (mm)"),
     "snow24": dict(cmap="cool", levels=[1, 2.5, 5, 7.5, 10, 15, 20, 25, 30, 40, 50], units="24 h snowfall, 10:1 from 3 h precip x CSNOW (cm)"),
     "wspd10": dict(cmap="YlOrRd", levels=np.arange(4, 32, 2), units="10 m wind (m/s)"),
     "ptype": dict(units="p-type (rain / snow / freezing rain / sleet)"),
@@ -266,11 +266,23 @@ def _draw(ax, d, f, kind, ext, mslp=None, mlev=None):
     return cf
 
 COLS = ("fnam", "nam", "gfs")
+FIG_LAB = {"fnam": "FrankenNAM", "nam": "Archived NAM", "gfs": "GFS"}          # plain names for the figures
+ROW_LAB = {"t2m": "2 m temperature", "t850": "850 hPa temperature", "mslp": "Sea-level pressure", "ptype": "Precipitation type",
+           "snow24": "24 h snowfall", "precip24": "Precipitation", "wspd10": "10 m wind", "cape": "CAPE", "refc": "Radar reflectivity"}
+CASE_NAME = {"2026012312": "CAD ice storm", "2025010512": "Snowcrete", "2025012100": "Gulf Coast snow", "2024111912": "PNW bomb cyclone",
+             "2025031412": "Plains storm", "2025122912": "Lake-effect snow", "2026110100": "Autumn case"}
+def _units(kind, L):
+    if kind == "precip24": return "24 h precip (mm)" if L >= 24 else f"precip, f00 to f{L:02d} (mm)"
+    if kind == "snow24": return "24 h snowfall, 10:1 ratio (cm)"
+    return STYLE[kind]["units"]
 def features(cases):
     log = []
     for c in cases:
         cfg = CASE_CFG[c]; C = cycle(c)
-        times, peak, s = pick_times(c)
+        if os.environ.get("NR_FEATURE_LEADS"):      # reuse the hours already chosen from the archived NAM (feature_times.txt)
+            times = [int(x) for x in os.environ["NR_FEATURE_LEADS"].split(",")]; peak, s = times[0], {}
+        else:
+            times, peak, s = pick_times(c)
         log.append(f"{c}: valid leads {times} (NAM metric peak f{peak:02d})")
         print(log[-1], flush=True)
         for L in times:
@@ -286,16 +298,21 @@ def features(cases):
                     if f is None: ax.set_visible(False); continue
                     over = d["mslp"] if kind in ("ptype", "t2m", "snow24") and "mslp" not in cfg["rows"] else None
                     cf = _draw(ax, d, f, kind, cfg["ext"], mslp=over, mlev=cfg.get("mslp"))
-                    if r == 0: ax.set_title(LAB[m.name], fontsize=12)
+                    if r == 0: ax.set_title(FIG_LAB[m.name], fontsize=12)
+                    if j == 0: ax.text(-0.03, 0.5, ROW_LAB[kind], transform=ax.transAxes, rotation=90, ha="right", va="center", fontsize=11)
+                    if kind == "mslp" and c == "2024111912":        # the case is about the depth of the low: label it
+                        bx = inbox(d, cfg["box"]); k = np.nanargmin(np.where(bx, d["mslp"], np.nan)); jj, ii = np.unravel_index(k, d["mslp"].shape)
+                        ax.text(d["lon"][jj, ii], d["lat"][jj, ii], f"L {d['mslp'][jj, ii]:.0f}", transform=ccrs.PlateCarree(), fontsize=13,
+                                fontweight="bold", ha="center", va="center", color="w", bbox=dict(boxstyle="round,pad=0.15", fc="k", ec="none", alpha=0.75))
                 if cf is not None:
                     if kind == "ptype":
                         cb = fig.colorbar(cf, ax=axs[r, :], shrink=0.85, pad=0.01, ticks=[1, 2, 3, 4])
                         cb.ax.set_yticklabels(["rain", "snow", "fzra", "sleet"])
-                    else: fig.colorbar(cf, ax=axs[r, :], shrink=0.85, pad=0.01, label=STYLE[kind]["units"])
+                    else: fig.colorbar(cf, ax=axs[r, :], shrink=0.85, pad=0.01, label=_units(kind, L))
             v = C + dt.timedelta(hours=L)
-            fig.suptitle(f"{c} {CASES[c]}: init {C:%Y-%m-%d %HZ}, f{L:02d} valid {v:%Y-%m-%d %HZ}", fontsize=13)
+            fig.suptitle(f"{CASE_NAME[c]}  \u00b7  {C:%HZ} {C.day} {C:%b %Y} run  \u00b7  f{L:02d}, valid {v:%HZ} {v.day} {v:%b}", fontsize=14)
             fn = FIG / f"features_{c}_f{L:02d}.png"; fig.savefig(fn, dpi=85); plt.close(fig); print("wrote", fn)
-        if cfg["mrms"]:
+        if cfg["mrms"] and not os.environ.get("NR_NO_MRMS"):
             L = peak; v = C + dt.timedelta(hours=L)
             lat, lon, refl = mrms_refc(v)
             fig, axs = plt.subplots(1, 3, figsize=(15, 4.6), layout="constrained",
