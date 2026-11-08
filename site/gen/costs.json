@@ -15,7 +15,7 @@
    "price": 0.82,
    "hours": 4.65,
    "sfh": 189,
-   "note": "Phase 0 run, restarts on, 77 GB peak memory (docs/run-notes.md)"
+   "note": "2026-11-01 run, restarts on, 77 GB peak memory (docs/run-notes.md)"
   }
  ],
  "check_run": "The patched f84 check run (soil fix, case 2026-01-23 12Z) took 5 h 25 min on a c8g Spot node with no reclaim.",

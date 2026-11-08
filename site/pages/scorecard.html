@@ -3,136 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FrankenNAM scorecard</title>
-<meta name="description" content="FrankenNAM verification against observations, next to the archived NAM and the GFS.">
+<title>Moved: Validation</title>
+<meta name="description" content="Moved to the Validation page.">
 <link rel="stylesheet" href="style.css">
 <script src="config.js"></script>
+<meta http-equiv="refresh" content="0; url=validation.html">
+<link rel="canonical" href="validation.html">
 </head>
 <body>
-<header class="top"><div class="bar"><a class="logo" href="index.html"><img src="assets/nam-logo.png" alt="NAM: the North American Mesoscale Forecast System" width="96" height="64"></a><div class="id"><a class="brand" href="index.html">FrankenNAM</a><span class="tag">an open source project to keep the NAM model alive</span><span class="na">A community project. Not affiliated with or endorsed by NOAA or the National Weather Service.</span></div></div><nav><a href="about.html">About FrankenNAM</a><a href="validation.html">Validation</a><a href="grids.html">Grids</a><a href="costs.html">Costs</a><a href="https://theconvergencezone.com/contact/">Contact</a></nav></header>
+<header class="top"><div class="bar"><a class="logo" href="index.html"><img src="assets/nam-logo.png" alt="NAM: the North American Mesoscale Forecast System" width="96" height="64"></a><div class="id"><a class="brand" href="index.html">FrankenNAM</a><span class="tag">an open source project to keep the NAM model alive</span></div></div><nav><a href="about.html">About FrankenNAM</a><a href="validation.html">Validation</a><a href="grids.html">Grids</a><a href="costs.html">Costs</a><a href="https://theconvergencezone.com/contact/">Contact</a></nav></header>
 <main>
 
-<h1>Scorecard</h1>
-<p class="lede">FrankenNAM is the NAM&rsquo;s physics started from a GFS analysis. It is scored for <em>fidelity</em> to the archived operational NAM and, for context, against observations next to the GFS. It is not offered as a GFS-beater.</p>
-<div class="honest"><p><b>No FrankenNAM scores yet.</b> The FrankenNAM column is empty and fills from the hindcast verification runs. The other columns are the baseline the hindcast is judged against.</p>
-<p>The archived NAM did not beat the same-cycle GFS against observations on these cases, so the bar for FrankenNAM is closeness to the NAM, not to the GFS. Read the tables with that in mind.</p></div>
-
-<h2>The sample</h2>
-<p>7 cases, 12-84 h, all against observations: ASOS/AWOS stations, MRMS 24 h precipitation (gauge-corrected) and SNOTEL. <code>2024111912</code> PNW bomb cyclone + atmospheric river; <code>2025010512</code> Snowcrete, DC (snow to sleet); <code>2025012100</code> Gulf Coast snow; <code>2025031412</code> Plains severe + blizzard; <code>2025122912</code> Lake-effect / Great Lakes snow, late Dec 2025; <code>2026012312</code> CAD ice storm, GA/Carolinas; <code>2026110100</code> Phase 0 case (autumn, CONUS-wide).</p>
-<details class="q"><summary>? how to read</summary><div>Cases were chosen for weather, not at random, and they overlap in time and space, so the pooled numbers are not independent samples of anything. No significance tests are applied. Temperatures use a lapse-rate correction to station height and a 400 m terrain filter, so mountain stations are only partly represented. MRMS under-catches snow in the mountain West. SNOTEL values are coarse (0.1 in per reading) and not terrain-adjusted. Precipitation boxes are 0.25 degrees; the GFS is sampled bilinearly and the NAM by box mean.</div></details>
-
-<h2>Fidelity to the archived NAM</h2>
-<p>The Phase 1 measure: pooled 12-84 h CONUS RMSE of 2 m temperature, dew point and 10 m wind within 0.1 K, 0.1 K and 0.1 m/s of the archived NAM, and 24 h precipitation ETS within 0.03 at 2.5, 10 and 25 mm.</p>
-<p>No FrankenNAM hindcast has been scored against observations yet, so this table is empty. It fills from the same verification runs as every other table here.</p>
-
-<h2>Surface stations, CONUS, pooled</h2>
-<p class="small">RMSE (bias), model minus observation, units as shown. Same stations and times for every column.</p>
-<h3>2 m temperature (K)</h3>
-<table><tr><th>Lead &middot; RMSE (bias)</th><th class="n fn">FrankenNAM</th><th class="n">NAM (archived)</th><th class="n">GFS (same cycle)</th><th class="n">GFS (6 h older cycle)</th></tr>
-<tr><td>3-24 h</td><td class="n fn">&ndash;</td><td class="n">2.35 (+0.09)</td><td class="n">2.31 (+0.30)</td><td class="n">2.39 (+0.32)</td></tr>
-<tr><td>27-48 h</td><td class="n fn">&ndash;</td><td class="n">2.64 (+0.11)</td><td class="n">2.61 (+0.50)</td><td class="n">2.67 (+0.53)</td></tr>
-<tr><td>51-84 h</td><td class="n fn">&ndash;</td><td class="n">2.89 (-0.03)</td><td class="n">2.91 (+0.25)</td><td class="n">2.96 (+0.28)</td></tr>
-<tr><td>12-84 h</td><td class="n fn">&ndash;</td><td class="n">2.72 (+0.05)</td><td class="n">2.72 (+0.34)</td><td class="n">2.77 (+0.37)</td></tr>
-</table>
-<h3>2 m dew point (K)</h3>
-<table><tr><th>Lead &middot; RMSE (bias)</th><th class="n fn">FrankenNAM</th><th class="n">NAM (archived)</th><th class="n">GFS (same cycle)</th><th class="n">GFS (6 h older cycle)</th></tr>
-<tr><td>3-24 h</td><td class="n fn">&ndash;</td><td class="n">2.67 (+0.38)</td><td class="n">2.84 (-0.66)</td><td class="n">2.90 (-0.68)</td></tr>
-<tr><td>27-48 h</td><td class="n fn">&ndash;</td><td class="n">2.94 (-0.06)</td><td class="n">2.93 (-0.54)</td><td class="n">2.96 (-0.52)</td></tr>
-<tr><td>51-84 h</td><td class="n fn">&ndash;</td><td class="n">3.25 (+0.05)</td><td class="n">3.25 (-0.08)</td><td class="n">3.32 (-0.09)</td></tr>
-<tr><td>12-84 h</td><td class="n fn">&ndash;</td><td class="n">3.06 (+0.06)</td><td class="n">3.07 (-0.34)</td><td class="n">3.12 (-0.34)</td></tr>
-</table>
-<h3>10 m wind speed (m/s)</h3>
-<table><tr><th>Lead &middot; RMSE (bias)</th><th class="n fn">FrankenNAM</th><th class="n">NAM (archived)</th><th class="n">GFS (same cycle)</th><th class="n">GFS (6 h older cycle)</th></tr>
-<tr><td>3-24 h</td><td class="n fn">&ndash;</td><td class="n">2.03 (+0.52)</td><td class="n">2.03 (+0.52)</td><td class="n">2.05 (+0.52)</td></tr>
-<tr><td>27-48 h</td><td class="n fn">&ndash;</td><td class="n">2.09 (+0.47)</td><td class="n">2.09 (+0.49)</td><td class="n">2.10 (+0.47)</td></tr>
-<tr><td>51-84 h</td><td class="n fn">&ndash;</td><td class="n">2.17 (+0.47)</td><td class="n">2.15 (+0.37)</td><td class="n">2.17 (+0.34)</td></tr>
-<tr><td>12-84 h</td><td class="n fn">&ndash;</td><td class="n">2.13 (+0.49)</td><td class="n">2.12 (+0.45)</td><td class="n">2.13 (+0.43)</td></tr>
-</table>
-
-<h2>By region, 12-84 h</h2>
-<h3>2 m temperature (K)</h3><table><tr><th>Region, 12-84 h</th><th class="n fn">FrankenNAM</th><th class="n">NAM (archived)</th><th class="n">GFS (same cycle)</th><th class="n">GFS (6 h older cycle)</th></tr>
-<tr><td>CONUS</td><td class="n fn">&ndash;</td><td class="n">2.72 (+0.05)</td><td class="n">2.72 (+0.34)</td><td class="n">2.77 (+0.37)</td></tr>
-<tr><td>NE</td><td class="n fn">&ndash;</td><td class="n">2.77 (+0.08)</td><td class="n">2.40 (+0.13)</td><td class="n">2.49 (+0.10)</td></tr>
-<tr><td>SE</td><td class="n fn">&ndash;</td><td class="n">2.37 (-0.09)</td><td class="n">2.38 (-0.03)</td><td class="n">2.37 (-0.05)</td></tr>
-<tr><td>Midwest</td><td class="n fn">&ndash;</td><td class="n">2.51 (+0.06)</td><td class="n">2.51 (+0.19)</td><td class="n">2.61 (+0.20)</td></tr>
-<tr><td>Plains</td><td class="n fn">&ndash;</td><td class="n">2.73 (+0.22)</td><td class="n">2.77 (+0.66)</td><td class="n">2.87 (+0.74)</td></tr>
-<tr><td>West</td><td class="n fn">&ndash;</td><td class="n">3.28 (+0.05)</td><td class="n">3.37 (+0.81)</td><td class="n">3.41 (+0.89)</td></tr>
-</table><h3>2 m dew point (K)</h3><table><tr><th>Region, 12-84 h</th><th class="n fn">FrankenNAM</th><th class="n">NAM (archived)</th><th class="n">GFS (same cycle)</th><th class="n">GFS (6 h older cycle)</th></tr>
-<tr><td>CONUS</td><td class="n fn">&ndash;</td><td class="n">3.06 (+0.06)</td><td class="n">3.07 (-0.34)</td><td class="n">3.12 (-0.34)</td></tr>
-<tr><td>NE</td><td class="n fn">&ndash;</td><td class="n">2.70 (+0.78)</td><td class="n">2.76 (+1.00)</td><td class="n">2.85 (+0.79)</td></tr>
-<tr><td>SE</td><td class="n fn">&ndash;</td><td class="n">2.96 (-0.31)</td><td class="n">2.81 (-0.26)</td><td class="n">2.85 (-0.31)</td></tr>
-<tr><td>Midwest</td><td class="n fn">&ndash;</td><td class="n">2.85 (-0.03)</td><td class="n">3.07 (-0.49)</td><td class="n">3.23 (-0.54)</td></tr>
-<tr><td>Plains</td><td class="n fn">&ndash;</td><td class="n">3.15 (+0.15)</td><td class="n">3.18 (-0.42)</td><td class="n">3.24 (-0.30)</td></tr>
-<tr><td>West</td><td class="n fn">&ndash;</td><td class="n">3.47 (+0.26)</td><td class="n">3.40 (-0.82)</td><td class="n">3.37 (-0.70)</td></tr>
-</table><h3>10 m wind speed (m/s)</h3><table><tr><th>Region, 12-84 h</th><th class="n fn">FrankenNAM</th><th class="n">NAM (archived)</th><th class="n">GFS (same cycle)</th><th class="n">GFS (6 h older cycle)</th></tr>
-<tr><td>CONUS</td><td class="n fn">&ndash;</td><td class="n">2.13 (+0.49)</td><td class="n">2.12 (+0.45)</td><td class="n">2.13 (+0.43)</td></tr>
-<tr><td>NE</td><td class="n fn">&ndash;</td><td class="n">2.30 (+0.87)</td><td class="n">2.24 (+0.68)</td><td class="n">2.29 (+0.68)</td></tr>
-<tr><td>SE</td><td class="n fn">&ndash;</td><td class="n">2.09 (+0.80)</td><td class="n">2.08 (+0.75)</td><td class="n">2.06 (+0.71)</td></tr>
-<tr><td>Midwest</td><td class="n fn">&ndash;</td><td class="n">2.08 (+0.65)</td><td class="n">2.03 (+0.59)</td><td class="n">2.05 (+0.57)</td></tr>
-<tr><td>Plains</td><td class="n fn">&ndash;</td><td class="n">1.98 (-0.01)</td><td class="n">2.08 (+0.45)</td><td class="n">2.11 (+0.44)</td></tr>
-<tr><td>West</td><td class="n fn">&ndash;</td><td class="n">2.28 (+0.20)</td><td class="n">2.24 (-0.19)</td><td class="n">2.26 (-0.22)</td></tr>
-</table>
-
-<h2>By case, 12-84 h</h2>
-<h3>2 m temperature (K)</h3><table><tr><th>Case, 12-84 h CONUS RMSE</th><th class="n fn">FrankenNAM</th><th class="n">NAM (archived)</th><th class="n">GFS (same cycle)</th><th class="n">GFS (6 h older cycle)</th></tr>
-<tr><td><code>2024111912</code> PNW bomb cyclone + atmospheric river</td><td class="n fn">&ndash;</td><td class="n">2.43</td><td class="n">2.42</td><td class="n">2.43</td></tr>
-<tr><td><code>2025010512</code> Snowcrete, DC (snow to sleet)</td><td class="n fn">&ndash;</td><td class="n">2.39</td><td class="n">2.63</td><td class="n">2.61</td></tr>
-<tr><td><code>2025012100</code> Gulf Coast snow</td><td class="n fn">&ndash;</td><td class="n">3.12</td><td class="n">3.09</td><td class="n">3.18</td></tr>
-<tr><td><code>2025031412</code> Plains severe + blizzard</td><td class="n fn">&ndash;</td><td class="n">2.74</td><td class="n">2.47</td><td class="n">2.56</td></tr>
-<tr><td><code>2025122912</code> Lake-effect / Great Lakes snow, late Dec 2025</td><td class="n fn">&ndash;</td><td class="n">2.79</td><td class="n">2.96</td><td class="n">3.01</td></tr>
-<tr><td><code>2026012312</code> CAD ice storm, GA/Carolinas</td><td class="n fn">&ndash;</td><td class="n">3.00</td><td class="n">3.03</td><td class="n">3.10</td></tr>
-<tr><td><code>2026110100</code> Phase 0 case (autumn, CONUS-wide)</td><td class="n fn">&ndash;</td><td class="n">2.50</td><td class="n">2.33</td><td class="n">2.42</td></tr>
-</table><h3>2 m dew point (K)</h3><table><tr><th>Case, 12-84 h CONUS RMSE</th><th class="n fn">FrankenNAM</th><th class="n">NAM (archived)</th><th class="n">GFS (same cycle)</th><th class="n">GFS (6 h older cycle)</th></tr>
-<tr><td><code>2024111912</code> PNW bomb cyclone + atmospheric river</td><td class="n fn">&ndash;</td><td class="n">2.80</td><td class="n">2.75</td><td class="n">2.79</td></tr>
-<tr><td><code>2025010512</code> Snowcrete, DC (snow to sleet)</td><td class="n fn">&ndash;</td><td class="n">2.77</td><td class="n">2.87</td><td class="n">2.77</td></tr>
-<tr><td><code>2025012100</code> Gulf Coast snow</td><td class="n fn">&ndash;</td><td class="n">3.77</td><td class="n">3.52</td><td class="n">3.60</td></tr>
-<tr><td><code>2025031412</code> Plains severe + blizzard</td><td class="n fn">&ndash;</td><td class="n">3.10</td><td class="n">2.91</td><td class="n">3.07</td></tr>
-<tr><td><code>2025122912</code> Lake-effect / Great Lakes snow, late Dec 2025</td><td class="n fn">&ndash;</td><td class="n">3.16</td><td class="n">3.36</td><td class="n">3.42</td></tr>
-<tr><td><code>2026012312</code> CAD ice storm, GA/Carolinas</td><td class="n fn">&ndash;</td><td class="n">3.21</td><td class="n">3.40</td><td class="n">3.48</td></tr>
-<tr><td><code>2026110100</code> Phase 0 case (autumn, CONUS-wide)</td><td class="n fn">&ndash;</td><td class="n">2.49</td><td class="n">2.52</td><td class="n">2.60</td></tr>
-</table><h3>10 m wind speed (m/s)</h3><table><tr><th>Case, 12-84 h CONUS RMSE</th><th class="n fn">FrankenNAM</th><th class="n">NAM (archived)</th><th class="n">GFS (same cycle)</th><th class="n">GFS (6 h older cycle)</th></tr>
-<tr><td><code>2024111912</code> PNW bomb cyclone + atmospheric river</td><td class="n fn">&ndash;</td><td class="n">2.29</td><td class="n">2.28</td><td class="n">2.20</td></tr>
-<tr><td><code>2025010512</code> Snowcrete, DC (snow to sleet)</td><td class="n fn">&ndash;</td><td class="n">2.02</td><td class="n">2.01</td><td class="n">1.99</td></tr>
-<tr><td><code>2025012100</code> Gulf Coast snow</td><td class="n fn">&ndash;</td><td class="n">2.00</td><td class="n">1.91</td><td class="n">1.96</td></tr>
-<tr><td><code>2025031412</code> Plains severe + blizzard</td><td class="n fn">&ndash;</td><td class="n">2.46</td><td class="n">2.42</td><td class="n">2.49</td></tr>
-<tr><td><code>2025122912</code> Lake-effect / Great Lakes snow, late Dec 2025</td><td class="n fn">&ndash;</td><td class="n">2.04</td><td class="n">2.01</td><td class="n">2.03</td></tr>
-<tr><td><code>2026012312</code> CAD ice storm, GA/Carolinas</td><td class="n fn">&ndash;</td><td class="n">2.05</td><td class="n">2.10</td><td class="n">2.12</td></tr>
-<tr><td><code>2026110100</code> Phase 0 case (autumn, CONUS-wide)</td><td class="n fn">&ndash;</td><td class="n">2.00</td><td class="n">2.07</td><td class="n">2.11</td></tr>
-</table>
-
-<h2>Precipitation against MRMS</h2>
-<p class="small">24 h totals in 0.25 degree boxes over the lower 48, windows ending 24, 48, 72 and 84 h.</p>
-<table><tr><th>24 h precipitation, equitable threat score</th><th class="n fn">FrankenNAM</th><th class="n">NAM (archived)</th><th class="n">GFS (same cycle)</th><th class="n">GFS (6 h older cycle)</th></tr>
-<tr><td>&ge; 2.5 mm</td><td class="n fn">&ndash;</td><td class="n">0.536</td><td class="n">0.567</td><td class="n">0.553</td></tr>
-<tr><td>&ge; 10 mm</td><td class="n fn">&ndash;</td><td class="n">0.496</td><td class="n">0.545</td><td class="n">0.525</td></tr>
-<tr><td>&ge; 25 mm</td><td class="n fn">&ndash;</td><td class="n">0.353</td><td class="n">0.391</td><td class="n">0.374</td></tr>
-</table>
-<table><tr><th>Frequency bias and error</th><th class="n fn">FrankenNAM</th><th class="n">NAM (archived)</th><th class="n">GFS (same cycle)</th><th class="n">GFS (6 h older cycle)</th></tr>
-<tr><td>Frequency bias, &ge; 2.5 mm</td><td class="n fn">&ndash;</td><td class="n">1.12</td><td class="n">1.13</td><td class="n">1.10</td></tr>
-<tr><td>Frequency bias, &ge; 10 mm</td><td class="n fn">&ndash;</td><td class="n">1.04</td><td class="n">1.01</td><td class="n">0.97</td></tr>
-<tr><td>Frequency bias, &ge; 25 mm</td><td class="n fn">&ndash;</td><td class="n">1.00</td><td class="n">0.94</td><td class="n">0.89</td></tr>
-<tr><td>Mean absolute error (mm per 24 h)</td><td class="n fn">&ndash;</td><td class="n">1.76</td><td class="n">1.58</td><td class="n">1.62</td></tr></table>
-
-<h2>Precipitation type</h2>
-<p class="small">Categorical flag at the nearest grid point against ASOS present weather, on the three cases with a type event.</p>
-<table><tr><th>Area, lead &middot; share of observed precipitation hours with the model's type among the observed</th><th class="n fn">FrankenNAM</th><th class="n">NAM (archived)</th><th class="n">GFS (same cycle)</th><th class="n">GFS (6 h older cycle)</th></tr>
-<tr><td>CONUS, 3-36 h</td><td class="n fn">&ndash;</td><td class="n">61.8%</td><td class="n">63.5%</td><td class="n">62.1%</td></tr>
-<tr><td>CONUS, 39-84 h</td><td class="n fn">&ndash;</td><td class="n">58.3%</td><td class="n">55.2%</td><td class="n">52.8%</td></tr>
-<tr><td>event region, 3-36 h</td><td class="n fn">&ndash;</td><td class="n">57.2%</td><td class="n">76.2%</td><td class="n">75.9%</td></tr>
-<tr><td>event region, 39-84 h</td><td class="n fn">&ndash;</td><td class="n">40.5%</td><td class="n">43.6%</td><td class="n">42.7%</td></tr>
-</table>
-
-<h2>SNOTEL</h2>
-<table><tr><th>SNOTEL 24 h precipitation, model / observed (correlation)</th><th class="n fn">FrankenNAM</th><th class="n">NAM (archived)</th><th class="n">GFS (same cycle)</th><th class="n">GFS (6 h older cycle)</th></tr>
-<tr><td><code>2024111912</code></td><td class="n fn">&ndash;</td><td class="n">0.87 (0.69)</td><td class="n">0.71 (0.72)</td><td class="n">0.66 (0.75)</td></tr>
-<tr><td><code>2025031412</code></td><td class="n fn">&ndash;</td><td class="n">0.85 (0.76)</td><td class="n">0.87 (0.79)</td><td class="n">0.85 (0.77)</td></tr>
-</table>
-
-<h2>Live cycles</h2>
-<p>Live runs are occasional and are not scored here.</p>
-
+<h1>Moved</h1><p>This page is now <a href="validation.html">Validation</a>.</p>
 </main>
-<footer class="bot"><p><b>Initialized from the (C&minus;6)Z GFS analysis with a 6&nbsp;h NAM spin-up. No observations after (C&minus;6)Z.</b></p><p>A community project. Not affiliated with or endorsed by NOAA or the National Weather Service. Operated by Joe Boomgard-Zagrodnik.</p><p><a href="costs.html">Costs</a> &middot; <a href="grids.html">Grids</a> &middot; <a href="terms.html">Terms</a> &middot; <a href="scorecard.html">Baseline scorecard</a> &middot; <a data-cfg-href="GITHUB_URL" href="#">GitHub</a> &middot; <a href="https://theconvergencezone.com/contact/">Contact</a></p></footer>
+<footer class="bot"><p><b>Initialized from the GFS analysis 6&nbsp;h before the cycle time, with a 6&nbsp;h NAM spin-up. No observations after that start. Not the operational NAM.</b></p><p>A community project. Not affiliated with or endorsed by NOAA or the National Weather Service. Operated by Joe Boomgard-Zagrodnik.</p><p><a href="costs.html">Costs</a> &middot; <a href="grids.html">Grids</a> &middot; <a href="terms.html">Terms</a> &middot; <a data-cfg-href="GITHUB_URL" href="#">GitHub</a> &middot; <a href="https://theconvergencezone.com/contact/">Contact</a></p></footer>
 <script src="site.js"></script>
 </body>
 </html>

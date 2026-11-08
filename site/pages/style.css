@@ -92,3 +92,6 @@ figure.looper figcaption{font-size:15px;margin-bottom:6px}
 .lp-slider{flex:1;accent-color:var(--accent)}
 @media (max-width:700px){.lp-panes{grid-template-columns:1fr}}
 td.na{color:#999}
+.tblwrap table.narrow{min-width:0}
+header.top .id{min-width:0}
+header.top .brand,header.top .tag{overflow-wrap:anywhere}

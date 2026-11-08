@@ -10,15 +10,14 @@ NAV = [("about.html", "About FrankenNAM"), ("validation.html", "Validation"), ("
 TAGLINE = "an open source project to keep the NAM model alive"
 NOT_AFFILIATED = "A community project. Not affiliated with or endorsed by NOAA or the National Weather Service."
 
-HONESTY_SHORT = ("Initialized from the (C&minus;6)Z GFS analysis with a 6&nbsp;h NAM spin-up. "
-                 "No observations after (C&minus;6)Z.")
+HONESTY_SHORT = ("Initialized from the GFS analysis 6&nbsp;h before the cycle time, with a 6&nbsp;h NAM spin-up. "
+                 "No observations after that start. Not the operational NAM.")
 HONESTY = HONESTY_SHORT + " Not produced by NOAA and not affiliated with NOAA."
 
 # The footer links resolve against the page root; config.js (one config spot) fills the GitHub link.
 FOOT = ('<p><b>{h}</b></p><p>{n} Operated by Joe Boomgard-Zagrodnik.</p>'
         '<p><a href="{r}costs.html">Costs</a> &middot; <a href="{r}grids.html">Grids</a> &middot; <a href="{r}terms.html">Terms</a> &middot; '
-        '<a href="{r}scorecard.html">Baseline scorecard</a> &middot; '
-        '<a data-cfg-href="GITHUB_URL" href="#">GitHub</a> &middot; '
+                '<a data-cfg-href="GITHUB_URL" href="#">GitHub</a> &middot; '
         '<a href="https://theconvergencezone.com/contact/">Contact</a></p>')
 
 def esc(s) -> str:
@@ -33,7 +32,7 @@ def shell(title: str, body: str, current: str = "", desc: str = "", root: str = 
     head = (f'<header class="top"><div class="bar"><a class="logo" href="{root}index.html"><img src="{root}assets/nam-logo.png" '
             f'alt="NAM: the North American Mesoscale Forecast System" width="96" height="64"></a>'
             f'<div class="id"><a class="brand" href="{root}index.html">FrankenNAM</a><span class="tag">{TAGLINE}</span>'
-            f'<span class="na">{NOT_AFFILIATED}</span></div></div><nav>{nav}</nav></header>')
+            f'</div></div><nav>{nav}</nav></header>')
     return (f'<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
             f'<meta name="viewport" content="width=device-width,initial-scale=1">\n<title>{esc(title)}</title>\n{d}'
             f'<link rel="stylesheet" href="{root}style.css">\n<script src="{root}config.js"></script>\n{extra_head}</head>\n<body>\n'
