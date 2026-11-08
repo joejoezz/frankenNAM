@@ -101,8 +101,7 @@ def hindcast() -> str:
         img = f'<img src="{c["image"]}" alt="FrankenNAM beside the archived NAM and the GFS, {c["title"]}" loading="lazy">'
         li = "".join(f"<li>{x}</li>" for x in c["text"])
         cards.append(f'<div class="card"><h3>{c["title"]}</h3><p class="when">{c["when"]}</p>{img}<ul>{li}</ul></div>')
-    return f'''<p>Four cases, each judged on the event forecasters used the NAM for. Each figure shows FrankenNAM, the archived NAM and the GFS at one hour, on the same colour scale; the scales differ from case to case. The cards say how FrankenNAM compares with the NAM.</p>
-<div class="cards">{"".join(cards)}</div>'''
+    return f'''<div class="cards">{"".join(cards)}</div>'''
 
 
 def body() -> str:
@@ -123,7 +122,7 @@ def body() -> str:
 <p class="small">Bias, model minus archived NAM, K, pooled over the five cases. Negative = drier than the NAM. The GFS is also drier than the NAM, and FrankenNAM starts from the GFS.</p>
 {dewpoint_table(P)}
 
-<p>The four feature cases (cold-air damming, Snowcrete, Gulf Coast snow, the PNW bomb cyclone) are on the <a href="index.html#features">home page</a>.</p>
+<p>The four validation cases (cold-air damming, Snowcrete, Gulf Coast snow, the PNW bomb cyclone) are on the <a href="index.html#features">home page</a>.</p>
 
 <h2>Side by side with the archived NAM</h2>
 <p>FrankenNAM (left) and the archived NAM (right): same field, forecast hour and colour scale, for the 2026-11-01 00Z cycle. Drag the slider or press play to step through f00 to f84. <a href="maps/index.html?single=1&amp;sample=1#frankennam/2026110100/conus/mslp_precip6/48">Open the full viewer</a>.</p>
