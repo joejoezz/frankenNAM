@@ -1,7 +1,7 @@
 <h1>Why?</h1>
-<p class="lede">The 12&nbsp;km NAM ran for over two decades, and forecasters still rely on it.</p>
-<p>They reach for it for what it does well: cold-air damming and wedge setups, soundings, precipitation type, and mesoscale structure that coarser models smooth away. NOAA retired the NAM on 3 November 2026.</p>
-<p>WOOF-NAM, from Recast Systems, rewrites the NAM for GPUs and runs it daily; its grids are currently free. FrankenNAM shows the other route: the NAM&rsquo;s own code, which is a US-government work and was public, running on ordinary CPUs on AWS. It costs a few dollars a run, and we explain how to run it yourself. We run it occasionally, not on a schedule: notable events, run on demand and added as cases.</p>
+<p class="lede">The 12&nbsp;km NAM ran for over two decades, and forecasters were sad to see it go. NOAA retired the NAM on 3 November 2026.</p>
+<p>FrankenNAM brings the NAM back to life &mdash; in a modified, lower-cost form. It uses the NAM&rsquo;s own physics, which is a US-government work and was public, running on ordinary CPUs on AWS. By skipping the data assimilation, it costs only a few dollars a run, and we explain how to run it yourself. We run it occasionally, not on a schedule: notable events, run on demand and added as cases.</p>
+<p>WOOF-NAM, from Recast Systems, rewrites the NAM for GPUs and runs it daily; its grids are currently free and <a href="https://github.com/recastsystems/woof-nam">available here</a>. Differences between FrankenNAM and WOOF-NAM are <a href="about.html#compare">described here</a>.</p>
 <p><b>How close is it?</b> {{HOW_CLOSE}}</p>
 <p>Start with <a href="about.html">About FrankenNAM</a> for the strategies we tried. <a href="validation.html">Validation</a> has the numbers, <a href="grids.html">Grids</a> has free files for the re-run cases, and <a href="costs.html">Costs</a> shows what it took on AWS.</p>
 

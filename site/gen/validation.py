@@ -70,7 +70,7 @@ def how_close(P) -> str:
             f"{f('t2m', 'fnam', 24):.1f}&nbsp;K against {f('t2m', 'gfs', 24):.1f}&nbsp;K in 2&nbsp;m temperature, "
             f"{f('mslp', 'fnam', 24):.1f} against {f('mslp', 'gfs', 24):.1f}&nbsp;hPa in sea-level pressure (RMS difference). "
             f"Near the surface it runs drier than the NAM, by about {abs(day):.1f}&nbsp;K in 2&nbsp;m dew point over the first day; "
-            f"the cause is not yet found. Details on <a href=\"validation.html\">Validation</a>.")
+            f"the cause is not yet found. Details on the <a href=\"validation.html\">Validation page</a>.")
 
 
 def figure(src, cap, alt):
