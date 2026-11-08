@@ -5,7 +5,7 @@ from __future__ import annotations
 import html
 
 NAV = [("about.html", "About FrankenNAM"), ("validation.html", "Validation"), ("grids.html", "Grids"), ("costs.html", "Costs"),
-       ("https://theconvergencezone.com/contact/", "Contact")]
+       ("https://github.com/joejoezz/frankenNAM", "GitHub"), ("https://theconvergencezone.com/contact/", "Contact")]
 
 TAGLINE = "an open source project to keep the NAM model alive"
 NOT_AFFILIATED = "A community project. Not affiliated with or endorsed by NOAA or the National Weather Service."
