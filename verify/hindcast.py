@@ -111,13 +111,14 @@ def gate(obs_tag, ref_tag=None):
     text = "\n".join(out); (RES / "gate.md").write_text(text); print(text)
 
 # ------------------------------------------------------------------------------------------------ grid to grid
-G2G_FIELDS = ("mslp", "z500", "t2m", "wspd10")
+G2G_FIELDS = ("mslp", "z500", "t2m", "dpt2m", "wspd10")          # dpt2m is written as td2m
+G2G_LEADS = tuple(int(x) for x in os.environ.get("NR_G2G_LEADS", "24,48,84").split(","))   # NR_G2G_LEADS=0,12,24,...
 def g2g(cases, models):
     mask = score.conus_mask()
     nam = Model("nam"); rows = []
     for c in cases:
         ms = [Model.parse(m) for m in models]
-        for L in (24, 48, 84):
+        for L in G2G_LEADS:
             ref = F.get(nam, c, L)
             for k in G2G_FIELDS:
                 r = F.box(nam, ref[k])
@@ -125,7 +126,7 @@ def g2g(cases, models):
                     try: x = F.box(m, F.get(m, c, L)[k])
                     except Exception as e: print("skip", m.name, c, L, k, e); continue
                     d = (x - r)[mask & np.isfinite(x) & np.isfinite(r)]
-                    rows.append(dict(case=c, model=m.name, field=k, lead=L, rmse=float(np.sqrt(np.mean(d ** 2))), bias=float(np.mean(d))))
+                    rows.append(dict(case=c, model=m.name, field="td2m" if k == "dpt2m" else k, lead=L, rmse=float(np.sqrt(np.mean(d ** 2))), bias=float(np.mean(d))))
         for a, b in ((0, 24), (24, 48), (60, 84)):
             r = F.box(nam, F.precip(nam, c, a, b))
             for m in ms:
