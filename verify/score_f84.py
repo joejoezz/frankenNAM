@@ -1,5 +1,7 @@
+import os
 import sys, numpy as np, pandas as pd, eccodes as ec
-sys.path.insert(0, "/Users/josephboomgard-zagrodnik/projects/nam-recast")
+REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, REPO)
 from verify import fields as F, score
 from verify.gribio import Model, _read, OURS
 case="2026012312"
@@ -9,7 +11,7 @@ LEADS=[12,24,36,48,60,72,84]; ALL=list(range(12,85,3))
 out=[]
 def P(s=""): print(s,flush=True); out.append(s)
 # A stations
-S=pd.read_csv("/Users/josephboomgard-zagrodnik/projects/nam-recast/verify/results/check-ice-f84/station_sums.csv")
+S=pd.read_csv(os.path.join(REPO, "verify/results/check-ice-f84/station_sums.csv"))
 S=S[(S.interp=="bilinear")&(S.region=="CONUS")].replace({"fnam":"old","fnew":"new"})
 P("## A. Stations (CONUS ASOS, bilinear): RMSE / bias, model-minus-obs. old | new | NAM")
 def st(d): n=d.n.sum(); return f"{np.sqrt(d.ssq.sum()/n):.2f}/{d.sd.sum()/n:+.2f}"
