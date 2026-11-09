@@ -1,5 +1,5 @@
-import sys, numpy as np, eccodes as ec
-sys.path.insert(0, "/Users/josephboomgard-zagrodnik/projects/nam-recast")
+import os, sys, numpy as np, eccodes as ec
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from verify.gribio import Model, _read, OURS
 case="2026012312"
 T=f"s3://{OURS}/cases/{{case}}/check-ice/products/nam.{{ymd}}/nam.t{{hh}}z.awphys{{fh:02d}}.tm00.grib2"

@@ -231,7 +231,7 @@ thread. One card only.
   in San Francisco; "2026 Season Recap ... cloud seeding operations in New Mexico and Texas".
   PitchBook (via search) lists a seed round 1 May 2026 (Asylum Ventures), 6 employees. Their main
   model repo `recastsystems/woof` (64 stars, 13 forks, releases v1.0.0 30 Sep to v1.1.5 31 Oct 2026)
-  is committed by Andrew Snyder <andrew@recastsystems.com>; WOOF "continues an engine released
+  is committed by Recast Systems; WOOF "continues an engine released
   before under another name" (ArWen, PyPI `gpuwm`, github.com/FahrenheitResearch/arwen, 17 stars).
   Other repos: `recast-wxmod` (AgI seeding physics for WRF), `recast-radar-tools` (Rust NEXRAD
   toolkit), `hermes-woof` (an LLM-agent plugin to run WOOF).
